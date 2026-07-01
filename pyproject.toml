@@ -1,0 +1,31 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "synarmo"
+version = "0.1.0"
+description = "Local, personalized type-ahead suggestions for AAC and communication workflows."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Synarmo contributors" }]
+dependencies = []
+
+[project.optional-dependencies]
+llama = ["llama-cpp-python>=0.2.90"]
+service = ["fastapi>=0.111", "uvicorn[standard]>=0.30"]
+dev = ["pytest>=8.2", "ruff>=0.5"]
+
+[project.scripts]
+synarmo = "synarmo.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/synarmo"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
