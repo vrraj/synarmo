@@ -1,15 +1,15 @@
 # Synarmo
 
 Synarmo is a local AI communication companion for extremely low-latency,
-personalized type-ahead suggestions. It is designed for AAC users and people
-who type to communicate, while keeping the core broad enough for messaging,
-email, chat, and other writing workflows.
+personalized type-ahead suggestions. It is designed for people who type to
+communicate, while keeping the core broad enough for messaging, email, chat,
+and other writing workflows.
 
 This repository starts with the reusable engine first:
 
 - `synarmo` Python package for inference, memory, context, ranking, and config
 - pluggable model backends, including a `llama.cpp` GGUF backend
-- local service mode for desktop, web, keyboard, and AAC front ends
+- local service mode for desktop, web, keyboard, and communication front ends
 - tests that run without downloading a model
 
 ## Quick Start

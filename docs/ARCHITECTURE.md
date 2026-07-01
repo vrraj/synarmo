@@ -38,7 +38,7 @@ Applications contain only UI and integration code:
 - desktop app
 - web app
 - local website
-- AAC communication app
+- communication app
 - keyboard integration
 - browser extension
 - mobile app
