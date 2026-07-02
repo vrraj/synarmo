@@ -1,0 +1,52 @@
+from pathlib import Path
+
+from synarmo.config import (
+    configured_max_suggestions,
+    configured_model_path,
+    configured_models_cache,
+    load_env_file,
+)
+
+
+def test_load_env_file_sets_model_cache(tmp_path, monkeypatch) -> None:
+    monkeypatch.delenv("LOCAL_MODELS_CACHE", raising=False)
+    env_file = tmp_path / ".env"
+    env_file.write_text("LOCAL_MODELS_CACHE=~/models/synarmo\n", encoding="utf-8")
+
+    load_env_file(env_file)
+
+    assert configured_models_cache() == Path("~/models/synarmo").expanduser()
+
+
+def test_configured_model_path_resolves_relative_env_path_from_cache(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("LOCAL_MODELS_CACHE", str(tmp_path / "models"))
+    monkeypatch.setenv("SYNARMO_MODEL_PATH", "tiny.gguf")
+
+    assert configured_model_path() == tmp_path / "models" / "tiny.gguf"
+
+
+def test_explicit_model_path_overrides_env_model_path(tmp_path, monkeypatch) -> None:
+    explicit_model = tmp_path / "override.gguf"
+    monkeypatch.setenv("LOCAL_MODELS_CACHE", str(tmp_path / "models"))
+    monkeypatch.setenv("SYNARMO_MODEL_PATH", "from-env.gguf")
+
+    assert configured_model_path(explicit_model) == explicit_model
+
+
+def test_explicit_relative_model_path_stays_relative(monkeypatch) -> None:
+    monkeypatch.setenv("LOCAL_MODELS_CACHE", "/tmp/models")
+    monkeypatch.setenv("SYNARMO_MODEL_PATH", "from-env.gguf")
+
+    assert configured_model_path("models/local.gguf") == Path("models/local.gguf")
+
+
+def test_configured_max_suggestions_defaults_to_three(monkeypatch) -> None:
+    monkeypatch.delenv("SYNARMO_MAX_SUGGESTIONS", raising=False)
+
+    assert configured_max_suggestions() == 3
+
+
+def test_configured_max_suggestions_reads_env(monkeypatch) -> None:
+    monkeypatch.setenv("SYNARMO_MAX_SUGGESTIONS", "5")
+
+    assert configured_max_suggestions() == 5

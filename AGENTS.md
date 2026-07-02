@@ -52,8 +52,14 @@ For GGUF inference:
 
 ```bash
 pip install -e ".[llama,service]"
-synarmo suggest "I want to" --backend llama-cpp --model-path ./models/Llama-3.2-1B-Instruct-Q4_K_M.gguf
+cp .env.example .env
+mkdir -p ~/models/synarmo
+synarmo suggest "I want to" --backend llama-cpp
 ```
+
+Local GGUF files should live under `LOCAL_MODELS_CACHE` from `.env`, defaulting
+to `~/models/synarmo`. Set `SYNARMO_MODEL_PATH` in `.env` to the model filename
+or pass `--model-path` for a one-off override.
 
 ## Notes For Future Agents
 

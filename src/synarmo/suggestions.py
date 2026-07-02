@@ -21,6 +21,8 @@ class SuggestionRanker:
             key = normalized.lower()
             if not normalized or key in seen:
                 continue
+            if not self._has_word_characters(normalized):
+                continue
             if self._duplicates_current_text(normalized, current_text):
                 continue
             seen.add(key)
@@ -32,7 +34,7 @@ class SuggestionRanker:
     def _parse(self, raw_text: str) -> list[str]:
         lines = []
         for line in raw_text.splitlines():
-            line = re.sub(r"^\s*[-*\d.)]+\s*", "", line).strip()
+            line = re.sub(r"^\s*(?:[-*]|\(?\d+[\].)]|\[\d+\])\s*", "", line).strip()
             line = line.strip("\"'` ")
             if line:
                 lines.append(line)
@@ -42,13 +44,20 @@ class SuggestionRanker:
 
     def _normalize(self, text: str) -> str:
         text = re.sub(r"\s+", " ", text).strip()
+        text = re.sub(r"\s*(?:\[\d+\]|\(\d+\))\s*$", "", text)
         text = re.sub(r"[.!?]+$", "", text)
         words = text.split()
         return " ".join(words[:4])
 
     def _duplicates_current_text(self, suggestion: str, current_text: str) -> bool:
-        current_tail = " ".join(current_text.lower().split()[-4:])
-        return bool(current_tail) and suggestion.lower() == current_tail
+        suggestion_words = suggestion.lower().split()
+        current_words = current_text.lower().split()
+        if not suggestion_words or len(suggestion_words) > len(current_words):
+            return False
+        return current_words[-len(suggestion_words) :] == suggestion_words
+
+    def _has_word_characters(self, suggestion: str) -> bool:
+        return bool(re.search(r"[A-Za-z0-9]", suggestion))
 
     def _score(self, text: str) -> float:
         word_count = len(text.split())

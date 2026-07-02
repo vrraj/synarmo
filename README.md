@@ -1,6 +1,6 @@
 # Synarmo
 
-Synarmo is a local AI communication companion for extremely low-latency,
+Synarmo (derived from synarmozo : to fit together, to join closely) is a local AI communication companion for extremely low-latency,
 personalized type-ahead suggestions. It is designed for people who type to
 communicate, while keeping the core broad enough for messaging, email, chat,
 and other writing workflows.
@@ -51,13 +51,39 @@ Install the optional runtime:
 pip install -e ".[llama,service]"
 ```
 
-Run with a local GGUF model:
+Configure where local models live:
+
+```bash
+cp .env.example .env
+mkdir -p ~/models/synarmo
+```
+
+Synarmo does not download models automatically yet. Download GGUF files into
+`LOCAL_MODELS_CACHE`, which defaults to `~/models/synarmo` in `.env`. You can
+set `SYNARMO_MODEL_PATH` to a specific GGUF filename; relative values are
+resolved from `LOCAL_MODELS_CACHE`.
+
+```dotenv
+LOCAL_MODELS_CACHE=~/models/synarmo
+SYNARMO_MAX_SUGGESTIONS=3
+SYNARMO_MODEL_PATH=Llama-3.2-1B-Instruct-Q4_K_M.gguf
+```
+
+Run with the configured model:
 
 ```bash
 synarmo suggest "I want to" \
   --context "At home, asking for help" \
-  --model-path ./models/Llama-3.2-1B-Instruct-Q4_K_M.gguf \
   --backend llama-cpp
+```
+
+You can still override the env config for a single run with `--model-path`.
+
+For a more realistic type-ahead loop, use compose mode. It shows the next
+suggestions, lets you choose one, appends it, and immediately predicts again:
+
+```bash
+synarmo compose "I want to" --context "At home, asking for help" --backend llama-cpp
 ```
 
 The engine loads the model once and reuses it for every prediction when used as
@@ -66,7 +92,7 @@ an object or service.
 ## Service Mode
 
 ```bash
-synarmo serve --model-path ./models/Llama-3.2-1B-Instruct-Q4_K_M.gguf --backend llama-cpp
+synarmo serve --backend llama-cpp
 ```
 
 REST:

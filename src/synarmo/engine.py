@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from synarmo.config import BackendName, SynarmoConfig
+from synarmo.config import BackendName, SynarmoConfig, configured_model_path, load_env_file
 from synarmo.context import ContextAssembler
 from synarmo.memory import UserMemory
 from synarmo.models import GenerationOptions, ModelBackend, create_backend
@@ -34,10 +34,11 @@ class SynarmoEngine:
         profiles_dir: str | Path = "profiles",
         **overrides: object,
     ) -> "SynarmoEngine":
+        load_env_file()
         config = SynarmoConfig(
             profile=profile,
             backend=backend,
-            model_path=Path(model_path) if model_path else None,
+            model_path=configured_model_path(model_path),
             profiles_dir=Path(profiles_dir),
             **overrides,
         )
@@ -55,9 +56,10 @@ class SynarmoEngine:
             context=context,
             memory=self.memory if self.config.style_adaptation else UserMemory(profile=self.config.profile),
         )
+        generation_count = min(self.config.max_suggestions * 2, 10)
         prompt = self.prompt_builder.build(
             assembled_context=assembled_context,
-            max_suggestions=self.config.max_suggestions,
+            max_suggestions=generation_count,
         )
         raw = self.backend.generate(
             prompt,
