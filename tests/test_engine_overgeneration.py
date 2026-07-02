@@ -9,9 +9,11 @@ class RecordingBackend:
 
     def __init__(self) -> None:
         self.prompt = ""
+        self.options: GenerationOptions | None = None
 
     def generate(self, prompt: str, options: GenerationOptions) -> str:
         self.prompt = prompt
+        self.options = options
         return "go outside\nhave water\ntake a walk\nrest now"
 
 
@@ -25,5 +27,7 @@ def test_engine_overgenerates_then_returns_configured_count(tmp_path) -> None:
 
     suggestions = engine.suggest("I want to", context="At home")
 
-    assert "Suggest exactly 6" in backend.prompt
+    assert "Suggest exactly 9" in backend.prompt
+    assert backend.options is not None
+    assert backend.options.max_tokens == 72
     assert len(suggestions) == 3

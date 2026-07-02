@@ -23,6 +23,8 @@ class SuggestionRanker:
                 continue
             if not self._has_word_characters(normalized):
                 continue
+            if self._looks_like_instruction_echo(normalized):
+                continue
             if self._duplicates_current_text(normalized, current_text):
                 continue
             seen.add(key)
@@ -36,14 +38,18 @@ class SuggestionRanker:
         for line in raw_text.splitlines():
             line = re.sub(r"^\s*(?:[-*]|\(?\d+[\].)]|\[\d+\])\s*", "", line).strip()
             line = line.strip("\"'` ")
-            if line:
-                lines.append(line)
+            for part in re.split(r"\s+(?:\(?\d+[\].)]|\[\d+\])\s+", line):
+                for subpart in re.split(r"[,;/]", part):
+                    subpart = subpart.strip("\"'` ")
+                    if subpart:
+                        lines.append(subpart)
         if lines:
             return lines
         return [part.strip() for part in re.split(r"[,;/]", raw_text) if part.strip()]
 
     def _normalize(self, text: str) -> str:
         text = re.sub(r"\s+", " ", text).strip()
+        text = re.sub(r"\s+(?:\(?\d+[\].)]|\[\d+\])\s*$", "", text)
         text = re.sub(r"\s*(?:\[\d+\]|\(\d+\))\s*$", "", text)
         text = re.sub(r"[.!?]+$", "", text)
         words = text.split()
@@ -54,10 +60,28 @@ class SuggestionRanker:
         current_words = current_text.lower().split()
         if not suggestion_words or len(suggestion_words) > len(current_words):
             return False
-        return current_words[-len(suggestion_words) :] == suggestion_words
+        suggestion_length = len(suggestion_words)
+        return any(
+            current_words[index : index + suggestion_length] == suggestion_words
+            for index in range(len(current_words) - suggestion_length + 1)
+        )
 
     def _has_word_characters(self, suggestion: str) -> bool:
         return bool(re.search(r"[A-Za-z0-9]", suggestion))
+
+    def _looks_like_instruction_echo(self, suggestion: str) -> bool:
+        lowered = suggestion.lower()
+        blocked_phrases = (
+            "answer",
+            "more different",
+            "plain text",
+            "short lines",
+            "suggestions",
+            "alternatives",
+        )
+        return lowered.strip(": ") in blocked_phrases or any(
+            phrase in lowered for phrase in blocked_phrases[1:]
+        )
 
     def _score(self, text: str) -> float:
         word_count = len(text.split())
