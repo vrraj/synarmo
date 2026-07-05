@@ -10,7 +10,11 @@ def create_backend(config: SynarmoConfig) -> ModelBackend:
     if config.backend == "mock":
         return MockBackend()
     if config.backend == "llama-cpp":
-        if config.model_path is None:
-            raise ValueError("model_path is required for the llama-cpp backend")
-        return LlamaCppBackend(config.model_path, n_ctx=config.context_window)
+        return LlamaCppBackend(
+            config.model_path,
+            model_repo_id=config.model_repo_id,
+            model_filename=config.model_filename,
+            models_cache_dir=config.models_cache_dir,
+            n_ctx=config.context_window,
+        )
     raise ValueError(f"Unsupported backend: {config.backend}")

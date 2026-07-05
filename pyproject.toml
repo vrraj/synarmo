@@ -13,7 +13,7 @@ authors = [{ name = "Synarmo contributors" }]
 dependencies = []
 
 [project.optional-dependencies]
-llama = ["llama-cpp-python>=0.2.90"]
+llama = ["llama-cpp-python>=0.2.90", "huggingface-hub>=0.23"]
 service = ["fastapi>=0.111", "uvicorn[standard]>=0.30"]
 dev = ["pytest>=8.2", "ruff>=0.5"]
 

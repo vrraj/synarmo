@@ -1,0 +1,807 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Synarmo</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        line-height: 1.6;
+        margin: 0;
+        padding: 0;
+        background: #ffffff;
+        color: #151515;
+      }
+
+      .shell {
+        display: flex;
+        min-height: 100vh;
+      }
+
+      .main {
+        flex: 1;
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 76px 32px 32px;
+      }
+
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 24px;
+        align-items: flex-end;
+        margin-bottom: 28px;
+      }
+
+      .page-title {
+        font-size: 24px;
+        font-weight: 700;
+        line-height: 1.1;
+        margin: 0 0 2px;
+        color: #111111;
+      }
+
+      .page-subtitle {
+        font-size: 16px;
+        color: #333333;
+        margin: 0;
+      }
+
+      .status-pill {
+        border: 1px solid #dddddd;
+        border-radius: 999px;
+        color: #333333;
+        font-size: 13px;
+        padding: 5px 12px;
+        max-width: 420px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .workspace-card {
+        background: #ffffff;
+        border: 1px solid #eeeeee;
+        border-radius: 8px;
+        padding: 24px;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 22px;
+        border-bottom: 1px solid #eeeeee;
+        margin-bottom: 28px;
+      }
+
+      .tab-button {
+        background: none;
+        border: none;
+        border-bottom: 3px solid #111111;
+        border-radius: 0;
+        color: #111111;
+        cursor: default;
+        font-size: 16px;
+        font-weight: 700;
+        padding: 6px 0 10px;
+      }
+
+      .compose-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 260px;
+        gap: 24px;
+        align-items: start;
+      }
+
+      .compose-panel,
+      .parameter-rail {
+        min-width: 0;
+      }
+
+      .compose-heading,
+      .suggestions-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 8px;
+      }
+
+      h2 {
+        font-size: 16px;
+        margin: 0 0 12px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 4px;
+        font-weight: 500;
+        color: #333333;
+      }
+
+      input[type="text"],
+      input[type="number"],
+      textarea {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid #dddddd;
+        border-radius: 8px;
+        font-size: 16px;
+        margin-bottom: 12px;
+        background: #ffffff;
+      }
+
+      textarea {
+        min-height: 116px;
+        resize: vertical;
+      }
+
+      input:focus,
+      textarea:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+      }
+
+      button {
+        background: #111111;
+        color: #ffffff;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      button:hover {
+        background: #333333;
+      }
+
+      button:disabled {
+        background: #cccccc;
+        color: #666666;
+        cursor: not-allowed;
+      }
+
+      button.secondary {
+        background: #f5f3ed;
+        color: #111111;
+        border: 1px solid #d5d5d5;
+      }
+
+      button.secondary:hover {
+        background: #e8e4dc;
+      }
+
+      .inline-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .custom-append {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+        margin-top: 4px;
+      }
+
+      .custom-append input {
+        margin-bottom: 0;
+      }
+
+      .parameter-rail {
+        border-left: 1px solid #eeeeee;
+        padding-left: 20px;
+      }
+
+      .field-row {
+        margin-bottom: 14px;
+      }
+
+      .muted {
+        color: #666666;
+        font-size: 0.9em;
+      }
+
+      .suggestions-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .suggestion-button {
+        align-items: flex-start;
+        background: #f8f8f8;
+        border: 1px solid #dddddd;
+        border-radius: 999px;
+        color: #111111;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        justify-content: center;
+        min-height: 58px;
+        padding: 9px 16px;
+        text-align: center;
+      }
+
+      .suggestion-button:hover {
+        background: #eeeeee;
+      }
+
+      .suggestion-text {
+        font-size: 16px;
+        font-weight: 600;
+        line-height: 1.1;
+      }
+
+      .suggestion-score {
+        color: #666666;
+        font-size: 12px;
+        line-height: 1;
+      }
+
+      .history-list {
+        border-top: 1px solid #eeeeee;
+        margin-top: 20px;
+        padding-top: 16px;
+      }
+
+      .history-item {
+        color: #333333;
+        font-size: 14px;
+        margin-bottom: 8px;
+      }
+
+      .eval-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(300px, 1fr);
+        gap: 24px;
+        align-items: start;
+      }
+
+      .eval-grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .eval-result {
+        border: 1px solid #eeeeee;
+        border-radius: 8px;
+        padding: 14px;
+      }
+
+      .eval-result h3 {
+        font-size: 14px;
+        margin: 0 0 8px;
+      }
+
+      .candidate-row,
+      .token-row {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+        justify-content: space-between;
+        margin-bottom: 6px;
+      }
+
+      .token-list {
+        border-top: 1px solid #eeeeee;
+        margin-top: 10px;
+        padding-top: 10px;
+      }
+
+      .mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 12px;
+      }
+
+      .error-banner {
+        background: #fff5f5;
+        border: 1px solid #f1c7c7;
+        border-radius: 8px;
+        color: #8a1f1f;
+        display: none;
+        margin-top: 12px;
+        padding: 10px 12px;
+      }
+
+      .loading {
+        opacity: 0.7;
+      }
+
+      @media (max-width: 900px) {
+        .main {
+          padding: 32px 18px;
+        }
+
+        .page-header {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .compose-layout {
+          grid-template-columns: 1fr;
+        }
+
+        .parameter-rail {
+          border-left: none;
+          border-top: 1px solid #eeeeee;
+          padding-left: 0;
+          padding-top: 20px;
+        }
+
+        .eval-layout,
+        .eval-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body data-page="synarmo-compose">
+    <div class="shell">
+      <main class="main">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Synarmo: Local Type-Ahead Communication Companion</h1>
+            <p class="page-subtitle">Choose a short suggestion, append it, and immediately predict the next phrase.</p>
+          </div>
+          <div id="service-status" class="status-pill">Checking service...</div>
+        </div>
+
+        <section class="workspace-card">
+          <div class="tabs">
+            <button class="tab-button" type="button">Compose</button>
+          </div>
+
+          <div class="compose-layout">
+            <section class="compose-panel">
+              <div class="compose-heading">
+                <label for="typed-text">Typed text</label>
+                <span id="char-count" class="muted">0 characters</span>
+              </div>
+              <textarea id="typed-text" rows="4" autocomplete="off" spellcheck="true">I want to</textarea>
+
+              <div class="suggestions-heading">
+                <h2>Suggestions</h2>
+                <span id="suggestion-status" class="muted">Ready</span>
+              </div>
+              <div id="suggestions-list" class="suggestions-list">
+                <div class="muted">Click Suggest to begin.</div>
+              </div>
+
+              <label for="context-text">Context</label>
+              <input id="context-text" type="text" value="At home, asking for help" />
+
+              <div class="inline-actions">
+                <button id="suggest-btn" type="button">Suggest</button>
+                <button id="clear-btn" class="secondary" type="button">Clear</button>
+              </div>
+              <div class="custom-append">
+                <input id="custom-suggestion" type="text" placeholder="Type your own continuation" autocomplete="off" />
+                <button id="custom-append-btn" class="secondary" type="button">Append</button>
+              </div>
+              <div id="error-banner" class="error-banner"></div>
+
+              <div class="history-list">
+                <h2>Chosen phrases</h2>
+                <div id="history-list" class="muted">No choices yet.</div>
+              </div>
+            </section>
+
+            <aside class="parameter-rail">
+              <h2>Runtime</h2>
+              <div class="field-row">
+                <label for="max-suggestions">Suggestions</label>
+                <input id="max-suggestions" type="number" min="1" max="10" step="1" value="3" disabled />
+                <div class="muted">Configured by `SYNARMO_MAX_SUGGESTIONS` on the server.</div>
+              </div>
+              <div class="field-row">
+                <label>Endpoint</label>
+                <div class="muted">POST /evaluate/autocomplete</div>
+              </div>
+              <div class="field-row">
+                <label>Flow</label>
+                <div class="muted">Uses the same logprob autocomplete evaluator as the script.</div>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="workspace-card" style="margin-top: 24px">
+          <div class="tabs">
+            <button class="tab-button" type="button">Autocomplete Evaluation</button>
+          </div>
+          <p class="muted">Uses the same logprob autocomplete evaluator as scripts/test_base_model_autocomplete.py.</p>
+
+          <div class="eval-layout">
+            <section>
+              <label for="eval-typed-text">Typed text</label>
+              <textarea id="eval-typed-text" rows="4" autocomplete="off" spellcheck="true">Do </textarea>
+
+              <label for="eval-contexts">Contexts</label>
+              <textarea id="eval-contexts" rows="10" spellcheck="true">hi ! How was your flight? was it on time ? Lets go home . I will drive. lunch??
+
+I need to check which station is handling pasta. Can someone fire the risotto? Please put the sauce on the side.
+
+I am at home. I need help getting ready. I want to go outside soon.</textarea>
+
+              <div class="inline-actions">
+                <button id="eval-btn" type="button">Evaluate Contexts</button>
+                <span id="eval-status" class="muted">Ready</span>
+              </div>
+            </section>
+
+            <aside class="parameter-rail">
+              <h2>Evaluation Params</h2>
+              <div class="eval-grid">
+                <div class="field-row">
+                  <label for="eval-choices">Choices</label>
+                  <input id="eval-choices" type="number" min="1" max="10" step="1" value="3" />
+                </div>
+                <div class="field-row">
+                  <label for="eval-tokens">Tokens</label>
+                  <input id="eval-tokens" type="number" min="1" max="64" step="1" value="10" />
+                </div>
+                <div class="field-row">
+                  <label for="eval-words">Words</label>
+                  <input id="eval-words" type="number" min="1" max="8" step="1" value="1" />
+                </div>
+                <div class="field-row">
+                  <label for="eval-temperature">Temperature</label>
+                  <input id="eval-temperature" type="number" min="0" max="2" step="0.1" value="0.5" />
+                </div>
+                <div class="field-row">
+                  <label for="eval-top-p">Top P</label>
+                  <input id="eval-top-p" type="number" min="0" max="1" step="0.05" value="0.95" />
+                </div>
+                <div class="field-row">
+                  <label for="eval-logprob-pool">Logprobs</label>
+                  <input id="eval-logprob-pool" type="number" min="1" max="50" step="1" value="12" />
+                </div>
+              </div>
+              <div class="muted">Separate contexts with blank lines. Each context is evaluated against the same typed text.</div>
+            </aside>
+          </div>
+
+          <div id="eval-results" class="suggestions-list" style="margin-top: 20px">
+            <div class="muted">Run an evaluation to compare contexts.</div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const typedText = document.getElementById("typed-text");
+      const contextText = document.getElementById("context-text");
+      const suggestBtn = document.getElementById("suggest-btn");
+      const clearBtn = document.getElementById("clear-btn");
+      const customSuggestion = document.getElementById("custom-suggestion");
+      const customAppendBtn = document.getElementById("custom-append-btn");
+      const suggestionsList = document.getElementById("suggestions-list");
+      const suggestionStatus = document.getElementById("suggestion-status");
+      const serviceStatus = document.getElementById("service-status");
+      const errorBanner = document.getElementById("error-banner");
+      const historyList = document.getElementById("history-list");
+      const charCount = document.getElementById("char-count");
+      const evalTypedText = document.getElementById("eval-typed-text");
+      const evalContexts = document.getElementById("eval-contexts");
+      const evalBtn = document.getElementById("eval-btn");
+      const evalStatus = document.getElementById("eval-status");
+      const evalResults = document.getElementById("eval-results");
+      const evalChoices = document.getElementById("eval-choices");
+      const evalTokens = document.getElementById("eval-tokens");
+      const evalWords = document.getElementById("eval-words");
+      const evalTemperature = document.getElementById("eval-temperature");
+      const evalTopP = document.getElementById("eval-top-p");
+      const evalLogprobPool = document.getElementById("eval-logprob-pool");
+      const chosen = [];
+      let requestId = 0;
+      let evalRequestId = 0;
+
+      function updateCount() {
+        const count = typedText.value.length;
+        charCount.textContent = `${count} ${count === 1 ? "character" : "characters"}`;
+      }
+
+      function setError(message) {
+        errorBanner.textContent = message || "";
+        errorBanner.style.display = message ? "block" : "none";
+      }
+
+      function setLoading(isLoading) {
+        suggestBtn.disabled = isLoading;
+        suggestionsList.classList.toggle("loading", isLoading);
+        suggestionStatus.textContent = isLoading ? "Predicting..." : "Ready";
+      }
+
+      async function checkHealth() {
+        try {
+          const response = await fetch("/health");
+          const data = await response.json();
+          serviceStatus.textContent = `${data.status} / ${data.backend}${data.model ? ` / ${data.model}` : ""}`;
+          serviceStatus.title = serviceStatus.textContent;
+        } catch {
+          serviceStatus.textContent = "service unavailable";
+        }
+      }
+
+      async function fetchSuggestions() {
+        const text = typedText.value;
+        if (!text.trim()) {
+          suggestionsList.innerHTML = '<div class="muted">Enter typed text to get suggestions.</div>';
+          return;
+        }
+
+        const currentRequest = ++requestId;
+        setError("");
+        setLoading(true);
+        try {
+          const response = await fetch("/evaluate/autocomplete", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              text,
+              contexts: [contextText.value.trim() || ""],
+              choices: 3,
+              candidate_tokens: 10,
+              candidate_words: 1,
+              temperature: 0.5,
+              top_p: 0.95,
+              logprob_pool: 12,
+            }),
+          });
+          if (!response.ok) {
+            throw new Error(`Request failed with ${response.status}`);
+          }
+          const data = await response.json();
+          if (currentRequest !== requestId) {
+            return;
+          }
+          const firstResult = (data.results || [])[0] || {};
+          const candidates = firstResult.candidates || [];
+          renderSuggestions(
+            candidates.map((candidate) => candidate.text),
+            candidates.map((candidate) => candidate.logprob)
+          );
+        } catch (error) {
+          if (currentRequest === requestId) {
+            suggestionsList.innerHTML = '<div class="muted">No suggestions available.</div>';
+            setError(error.message || "Unable to fetch suggestions.");
+          }
+        } finally {
+          if (currentRequest === requestId) {
+            setLoading(false);
+          }
+        }
+      }
+
+      function renderSuggestions(suggestions, scores) {
+        if (!suggestions.length) {
+          suggestionsList.innerHTML = '<div class="muted">No suggestions returned.</div>';
+          return;
+        }
+
+        suggestionsList.innerHTML = "";
+        suggestions.forEach((suggestion, index) => {
+          const button = document.createElement("button");
+          button.className = "suggestion-button";
+          button.type = "button";
+          button.innerHTML = `
+            <span class="suggestion-text">${escapeHtml(suggestion)}</span>
+            <span class="suggestion-score">${formatProbability(scores[index])}</span>
+          `;
+          button.addEventListener("click", () => applySuggestion(suggestion));
+          suggestionsList.appendChild(button);
+        });
+      }
+
+      function applySuggestion(suggestion) {
+        const nextText = appendCandidate(typedText.value, suggestion);
+        if (nextText === typedText.value) {
+          return;
+        }
+        typedText.value = nextText;
+        chosen.unshift(suggestion);
+        renderHistory();
+        updateCount();
+        typedText.focus();
+        fetchSuggestions();
+      }
+
+      function applyCustomSuggestion() {
+        const suggestion = customSuggestion.value.trim();
+        if (!suggestion) {
+          customSuggestion.focus();
+          return;
+        }
+        applySuggestion(suggestion);
+        customSuggestion.value = "";
+      }
+
+      function appendCandidate(typedTextValue, candidate) {
+        if (!candidate) {
+          return typedTextValue;
+        }
+        if (!typedTextValue || /[\s]$/.test(typedTextValue)) {
+          return typedTextValue + candidate;
+        }
+        if (/^['",.;:!?]/.test(candidate)) {
+          return typedTextValue + candidate;
+        }
+        return `${typedTextValue} ${candidate}`;
+      }
+
+      function renderHistory() {
+        if (!chosen.length) {
+          historyList.className = "muted";
+          historyList.textContent = "No choices yet.";
+          return;
+        }
+        historyList.className = "";
+        historyList.innerHTML = chosen
+          .slice(0, 8)
+          .map((item) => `<div class="history-item">${escapeHtml(item)}</div>`)
+          .join("");
+      }
+
+      function formatProbability(score) {
+        if (typeof score !== "number") {
+          return "";
+        }
+        const probability = Math.exp(score) * 100;
+        if (!Number.isFinite(probability)) {
+          return "";
+        }
+        return `${probability.toFixed(probability >= 10 ? 0 : 1)}%`;
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function parseContexts(value) {
+        return value
+          .split(/\n\s*\n/)
+          .map((item) => item.trim())
+          .filter(Boolean);
+      }
+
+      function numberValue(input, fallback) {
+        const value = Number(input.value);
+        return Number.isFinite(value) ? value : fallback;
+      }
+
+      async function runEvaluation() {
+        const text = evalTypedText.value;
+        const contexts = parseContexts(evalContexts.value);
+        if (!text.trim() || !contexts.length) {
+          evalResults.innerHTML = '<div class="muted">Enter typed text and at least one context.</div>';
+          return;
+        }
+
+        const currentRequest = ++evalRequestId;
+        evalBtn.disabled = true;
+        evalStatus.textContent = "Evaluating...";
+        evalResults.classList.add("loading");
+        setError("");
+
+        try {
+          const response = await fetch("/evaluate/autocomplete", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              text,
+              contexts,
+              choices: numberValue(evalChoices, 3),
+              candidate_tokens: numberValue(evalTokens, 10),
+              candidate_words: numberValue(evalWords, 1),
+              temperature: numberValue(evalTemperature, 0.5),
+              top_p: numberValue(evalTopP, 0.95),
+              logprob_pool: numberValue(evalLogprobPool, 12),
+            }),
+          });
+          if (!response.ok) {
+            throw new Error(`Evaluation failed with ${response.status}`);
+          }
+          const data = await response.json();
+          if (currentRequest !== evalRequestId) {
+            return;
+          }
+          renderEvaluation(data.results || []);
+        } catch (error) {
+          if (currentRequest === evalRequestId) {
+            evalResults.innerHTML = '<div class="muted">No evaluation results available.</div>';
+            setError(error.message || "Unable to run evaluation.");
+          }
+        } finally {
+          if (currentRequest === evalRequestId) {
+            evalBtn.disabled = false;
+            evalStatus.textContent = "Ready";
+            evalResults.classList.remove("loading");
+          }
+        }
+      }
+
+      function renderEvaluation(results) {
+        if (!results.length) {
+          evalResults.innerHTML = '<div class="muted">No evaluation results returned.</div>';
+          return;
+        }
+
+        evalResults.innerHTML = results
+          .map((result, index) => {
+            const candidates = (result.candidates || [])
+              .map(
+                (candidate, candidateIndex) => `
+                  <div class="candidate-row">
+                    <strong>${candidateIndex + 1}. ${escapeHtml(candidate.text)}</strong>
+                    <span class="muted mono">${Number(candidate.logprob).toFixed(3)}</span>
+                  </div>
+                  <div class="muted mono">starter=${escapeHtml(JSON.stringify(candidate.starter))} rest=${escapeHtml(JSON.stringify(candidate.rest))}</div>
+                `
+              )
+              .join("");
+            const tokens = (result.top_tokens || [])
+              .slice(0, 12)
+              .map(
+                (token, tokenIndex) => `
+                  <div class="token-row mono">
+                    <span>${tokenIndex + 1}. ${escapeHtml(JSON.stringify(token.text))}</span>
+                    <span>${Number(token.logprob).toFixed(3)}</span>
+                  </div>
+                `
+              )
+              .join("");
+            return `
+              <article class="eval-result">
+                <h3>Context ${index + 1}</h3>
+                <div class="muted">${escapeHtml(result.context)}</div>
+                <div style="margin-top: 12px">${candidates || '<div class="muted">No candidates.</div>'}</div>
+                <details class="token-list">
+                  <summary class="muted">Top next-token logprobs</summary>
+                  ${tokens}
+                </details>
+              </article>
+            `;
+          })
+          .join("");
+      }
+
+      suggestBtn.addEventListener("click", fetchSuggestions);
+      customAppendBtn.addEventListener("click", applyCustomSuggestion);
+      customSuggestion.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          applyCustomSuggestion();
+        }
+      });
+      evalBtn.addEventListener("click", runEvaluation);
+      clearBtn.addEventListener("click", () => {
+        typedText.value = "";
+        suggestionsList.innerHTML = '<div class="muted">Click Suggest to begin.</div>';
+        chosen.splice(0, chosen.length);
+        renderHistory();
+        updateCount();
+        setError("");
+        typedText.focus();
+      });
+      typedText.addEventListener("input", updateCount);
+
+      updateCount();
+      checkHealth();
+    </script>
+  </body>
+</html>

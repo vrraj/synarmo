@@ -3,7 +3,20 @@ from __future__ import annotations
 from pathlib import Path
 from threading import Lock
 
-from synarmo.config import BackendName, SynarmoConfig, configured_model_path, load_env_file
+from synarmo.autocomplete_eval import (
+    AutocompleteCandidate,
+    AutocompleteEvaluation,
+    LogprobToken,
+    build_autocomplete_prompt,
+)
+from synarmo.config import (
+    BackendName,
+    SynarmoConfig,
+    configured_model_filename,
+    configured_model_path,
+    configured_model_repo_id,
+    load_env_file,
+)
 from synarmo.context import ContextAssembler
 from synarmo.memory import UserMemory
 from synarmo.models import GenerationOptions, ModelBackend, create_backend
@@ -37,10 +50,13 @@ class SynarmoEngine:
         **overrides: object,
     ) -> "SynarmoEngine":
         load_env_file()
+        explicit_model_path = model_path is not None
         config = SynarmoConfig(
             profile=profile,
             backend=backend,
             model_path=configured_model_path(model_path),
+            model_repo_id=None if explicit_model_path else configured_model_repo_id(),
+            model_filename=configured_model_filename(model_path),
             profiles_dir=Path(profiles_dir),
             **overrides,
         )
@@ -104,6 +120,56 @@ class SynarmoEngine:
             current_text=text,
             max_suggestions=self.config.max_suggestions,
         )
+
+    def evaluate_autocomplete(
+        self,
+        *,
+        text: str,
+        contexts: list[str],
+        choices: int = 3,
+        max_tokens: int = 10,
+        max_words: int = 1,
+        temperature: float = 0.5,
+        top_p: float = 0.95,
+        logprob_pool: int = 12,
+    ) -> list[AutocompleteEvaluation]:
+        evaluator = getattr(self.backend, "evaluate_autocomplete", None)
+        if evaluator is None:
+            return [
+                AutocompleteEvaluation(
+                    context=context,
+                    prompt=build_autocomplete_prompt(context, text),
+                    candidates=[
+                        AutocompleteCandidate(
+                            text=f"suggestion {index}",
+                            starter=f"suggestion {index}",
+                            rest="",
+                            logprob=0.0,
+                        )
+                        for index in range(1, choices + 1)
+                    ],
+                    top_tokens=[
+                        LogprobToken(text=f"suggestion {index}", logprob=0.0)
+                        for index in range(1, choices + 1)
+                    ],
+                )
+                for context in contexts
+            ]
+
+        with self._generation_lock:
+            return [
+                evaluator(
+                    context=context,
+                    typed_text=text,
+                    choices=choices,
+                    max_tokens=max_tokens,
+                    max_words=max_words,
+                    temperature=temperature,
+                    top_p=top_p,
+                    logprob_pool=logprob_pool,
+                )
+                for context in contexts
+            ]
 
     def remember_phrase(self, phrase: str) -> None:
         normalized = " ".join(phrase.split())

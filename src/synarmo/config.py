@@ -10,7 +10,9 @@ BackendName = Literal["mock", "llama-cpp"]
 DEFAULT_MODELS_CACHE = Path("~/models/synarmo")
 ENV_FILE = ".env"
 LOCAL_MODELS_CACHE_ENV = "LOCAL_MODELS_CACHE"
+MODEL_ENV = "SYNARMO_MODEL"
 MODEL_PATH_ENV = "SYNARMO_MODEL_PATH"
+MODEL_REPO_ID_ENV = "SYNARMO_MODEL_REPO_ID"
 MAX_SUGGESTIONS_ENV = "SYNARMO_MAX_SUGGESTIONS"
 
 
@@ -40,7 +42,7 @@ def configured_model_path(model_path: str | Path | None = None) -> Path | None:
     if model_path:
         return Path(model_path).expanduser()
 
-    value = _env_model_path()
+    value = _env_model()
     if value is None:
         return None
 
@@ -50,8 +52,21 @@ def configured_model_path(model_path: str | Path | None = None) -> Path | None:
     return configured_models_cache() / value
 
 
-def _env_model_path() -> Path | None:
-    value = os.getenv(MODEL_PATH_ENV)
+def configured_model_filename(model_path: str | Path | None = None) -> str | None:
+    if model_path:
+        return Path(model_path).name
+
+    value = _env_model()
+    return value.name if value else None
+
+
+def configured_model_repo_id() -> str | None:
+    value = os.getenv(MODEL_REPO_ID_ENV)
+    return value.strip() if value and value.strip() else None
+
+
+def _env_model() -> Path | None:
+    value = os.getenv(MODEL_ENV) or os.getenv(MODEL_PATH_ENV)
     return Path(value) if value else None
 
 
@@ -64,6 +79,8 @@ def configured_max_suggestions() -> int:
 class SynarmoConfig:
     backend: BackendName = "mock"
     model_path: Path | None = None
+    model_repo_id: str | None = None
+    model_filename: str | None = None
     models_cache_dir: Path = field(default_factory=configured_models_cache)
     profile: str = "default"
     max_suggestions: int = field(default_factory=configured_max_suggestions)

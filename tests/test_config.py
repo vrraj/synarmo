@@ -2,7 +2,9 @@ from pathlib import Path
 
 from synarmo.config import (
     configured_max_suggestions,
+    configured_model_filename,
     configured_model_path,
+    configured_model_repo_id,
     configured_models_cache,
     load_env_file,
 )
@@ -20,14 +22,46 @@ def test_load_env_file_sets_model_cache(tmp_path, monkeypatch) -> None:
 
 def test_configured_model_path_resolves_relative_env_path_from_cache(tmp_path, monkeypatch) -> None:
     monkeypatch.setenv("LOCAL_MODELS_CACHE", str(tmp_path / "models"))
-    monkeypatch.setenv("SYNARMO_MODEL_PATH", "tiny.gguf")
+    monkeypatch.setenv("SYNARMO_MODEL", "tiny.gguf")
 
     assert configured_model_path() == tmp_path / "models" / "tiny.gguf"
+
+
+def test_configured_model_path_supports_legacy_env_path(tmp_path, monkeypatch) -> None:
+    monkeypatch.delenv("SYNARMO_MODEL", raising=False)
+    monkeypatch.setenv("LOCAL_MODELS_CACHE", str(tmp_path / "models"))
+    monkeypatch.setenv("SYNARMO_MODEL_PATH", "legacy.gguf")
+
+    assert configured_model_path() == tmp_path / "models" / "legacy.gguf"
+
+
+def test_configured_model_prefers_model_selector_over_legacy_path(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("LOCAL_MODELS_CACHE", str(tmp_path / "models"))
+    monkeypatch.setenv("SYNARMO_MODEL", "selected.gguf")
+    monkeypatch.setenv("SYNARMO_MODEL_PATH", "legacy.gguf")
+
+    assert configured_model_path() == tmp_path / "models" / "selected.gguf"
+
+
+def test_configured_model_filename_reads_selected_model(monkeypatch) -> None:
+    monkeypatch.setenv("SYNARMO_MODEL", "llama-3.2-1b-instruct-q4_k_m.gguf")
+
+    assert configured_model_filename() == "llama-3.2-1b-instruct-q4_k_m.gguf"
+
+
+def test_configured_model_repo_id_reads_env(monkeypatch) -> None:
+    monkeypatch.setenv(
+        "SYNARMO_MODEL_REPO_ID",
+        "hugging-quants/Llama-3.2-1B-Instruct-Q4_K_M-GGUF",
+    )
+
+    assert configured_model_repo_id() == "hugging-quants/Llama-3.2-1B-Instruct-Q4_K_M-GGUF"
 
 
 def test_explicit_model_path_overrides_env_model_path(tmp_path, monkeypatch) -> None:
     explicit_model = tmp_path / "override.gguf"
     monkeypatch.setenv("LOCAL_MODELS_CACHE", str(tmp_path / "models"))
+    monkeypatch.setenv("SYNARMO_MODEL", "selected.gguf")
     monkeypatch.setenv("SYNARMO_MODEL_PATH", "from-env.gguf")
 
     assert configured_model_path(explicit_model) == explicit_model
