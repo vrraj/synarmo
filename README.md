@@ -223,18 +223,21 @@ http://127.0.0.1:8765/ui
 ```
 
 The browser UI provides a text box, context field, and clickable suggestion
-buttons. Clicking a suggestion appends it to the typed text and immediately
-requests the next suggestions from the local service. The main UI compose panel
-uses the logprob autocomplete evaluator and preserves trailing spaces in the
-typed text because `"What"` and `"What "` are different model inputs.
+buttons shown as pills below the typed text. Clicking a pill appends it to the
+typed text and immediately requests the next suggestions from the local service.
+You can also type directly in the typed text box and click **Suggest** again.
 
-### Autocomplete Evaluation UI
+Each suggestion cycle sends the full current typed text, the current context
+field value, and the current compose parameters. If you edit the context or
+change choices, tokens, words, temperature, top-p, or logprob pool, the next
+request uses those updated values. The compose panel uses the logprob
+autocomplete evaluator and preserves trailing spaces in the typed text because
+`"What"` and `"What "` are different model inputs.
 
-The browser UI also includes an **Autocomplete Evaluation** section for comparing
-the logprob-based autocomplete evaluator across multiple contexts. This is the
-same evaluator used by `scripts/test_base_model_autocomplete.py`; use this panel
-when you want to inspect top next-token logprobs, starter tokens, and the greedy
-completion for each candidate.
+The suggestion pills display an approximate probability derived from each
+candidate starter token logprob.
+
+### Browser Compose UI With GGUF
 
 Install Synarmo once in editable mode so commands work without `PYTHONPATH`:
 
@@ -256,21 +259,24 @@ Then open:
 http://127.0.0.1:8765/ui
 ```
 
-Use the **Autocomplete Evaluation** panel when you want to compare several
-contexts against the same typed prefix. Enter one typed prefix, then enter
-multiple contexts separated by blank lines. The UI sends all contexts to:
+Use the **Compose Parameters** panel to tune the live suggestions:
+
+- `Choices`: number of candidate pills to request.
+- `Tokens`: maximum generated tokens for each candidate.
+- `Words`: maximum words kept for each candidate.
+- `Temperature`: sampling temperature for the next-token probe.
+- `Top P`: nucleus sampling cutoff for the next-token probe.
+- `Logprobs`: size of the next-token logprob pool used to find distinct starters.
+
+The compose UI sends one context at a time to:
 
 ```text
 POST /evaluate/autocomplete
 ```
 
-The response shows candidate text, starter token, greedy rest text, starter
-logprob, and the top next-token logprob list for each context. The status pill at
-the top of the UI shows the backend and resolved model path/filename so you can
-confirm whether the service is using the base or instruct model.
-
-The **Compose** panel also uses `POST /evaluate/autocomplete`, but only for one
-context at a time.
+The status pill at the top of the UI shows the backend and resolved model
+path/filename so you can confirm whether the service is using the base or
+instruct model.
 
 ### Current UI status
 
