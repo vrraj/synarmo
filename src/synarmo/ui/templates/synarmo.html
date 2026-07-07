@@ -145,19 +145,6 @@
         width: 17px;
       }
 
-      .toggle-row {
-        align-items: center;
-        display: flex;
-        gap: 8px;
-        margin-top: 2px;
-      }
-
-      .toggle-row input {
-        height: 16px;
-        margin: 0;
-        width: 16px;
-      }
-
       input[type="text"],
       input[type="number"],
       textarea {
@@ -227,6 +214,12 @@
 
       .field-row {
         margin-bottom: 14px;
+      }
+
+      .context-label {
+        display: block;
+        font-weight: 700;
+        margin-top: 20px;
       }
 
       .muted {
@@ -340,18 +333,18 @@
                 <label for="typed-text">Typed text</label>
                 <span id="char-count" class="muted">0 characters</span>
               </div>
-              <textarea id="typed-text" rows="4" autocomplete="off" spellcheck="true">I want to</textarea>
+              <textarea id="typed-text" rows="4" autocomplete="off" spellcheck="true" placeholder="Start typing here..."></textarea>
 
               <div class="suggestions-heading">
                 <h2>Suggestions</h2>
                 <span id="suggestion-status" class="muted">Ready</span>
               </div>
               <div id="suggestions-list" class="suggestions-list">
-                <div class="muted">Click Suggest to begin.</div>
+                <div class="muted">Type something to begin</div>
               </div>
 
-              <label for="context-text">Context</label>
-              <input id="context-text" type="text" value="At home, asking for help" />
+              <label class="context-label" for="context-text">Context</label>
+              <textarea id="context-text" rows="5">At home, watching FIFA world cup soccer match between portugal and spain. This is the Round of 16 and the winning team gets to go to the quarter finals. So far the teams seems even with spain having a slight edge</textarea>
 
               <div class="inline-actions">
                 <button id="suggest-btn" type="button">Suggest</button>
@@ -437,7 +430,8 @@
                 </div>
                 <div class="field-row">
                   <label class="parameter-label" for="suggest-on-spacebar">
-                    Suggest on Spacebar
+                    Auto - Suggest on Spacebar
+                    <input id="suggest-on-spacebar" type="checkbox" checked />
                     <span
                       class="parameter-help"
                       title="When enabled, pressing Space after a newly typed word automatically requests the next suggestions."
@@ -445,10 +439,6 @@
                       tabindex="0"
                     >?</span>
                   </label>
-                  <div class="toggle-row">
-                    <input id="suggest-on-spacebar" type="checkbox" />
-                    <span class="muted">After word</span>
-                  </div>
                 </div>
               </div>
               <div class="field-row">
@@ -653,7 +643,7 @@
       suggestBtn.addEventListener("click", () => fetchSuggestions());
       clearBtn.addEventListener("click", () => {
         typedText.value = "";
-        suggestionsList.innerHTML = '<div class="muted">Click Suggest to begin.</div>';
+        suggestionsList.innerHTML = '<div class="muted">Type something to begin</div>';
         lastSuggestionRequestText = "";
         updateCount();
         setError("");
