@@ -64,7 +64,6 @@ or pass `--model-path` for a one-off override.
 ## Notes For Future Agents
 
 - The repo is intended to remain private.
-- Avoid adding references to AAC; keep product language broader.
 - Do not commit model files, generated profiles, or personal conversation data.
 - If editing outside the active workspace root, respect sandbox approvals.
 - Before finishing code changes, run at least a syntax or smoke check if full tests are unavailable.

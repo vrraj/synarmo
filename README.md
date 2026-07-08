@@ -1,16 +1,67 @@
 # Synarmo
 
-Synarmo (derived from synarmozo : to fit together, to join closely) is a local AI communication companion for extremely low-latency,
-personalized type-ahead suggestions. It is designed for people who type to
-communicate, while keeping the core broad enough for messaging, email, chat,
-and other writing workflows.
+[![CI](https://github.com/vrraj/synarmo/actions/workflows/ci.yml/badge.svg)](https://github.com/vrraj/synarmo/actions)
+[![PyPI - Version](https://img.shields.io/pypi/v/synarmo?color=3776ab&logo=pypi&logoColor=white)](https://pypi.org/project/synarmo/)
+[![GitHub Release](https://img.shields.io/github/v/release/vrraj/synarmo?label=github%20release&color=0f172a&logo=github)](https://github.com/vrraj/synarmo/releases)
 
-This repository starts with the reusable engine first:
+Synarmo (derived from *synarmozo* — "to fit together, to join closely") is a local AI communication companion for extremely low-latency, personalized type-ahead suggestions across messaging, chat, and assistive typing workflows.
+
+> Local-first, privacy-preserving next-phrase suggestions tuned for 1–4 word completions.
+
+This repository packages the reusable engine:
 
 - `synarmo` Python package for inference, memory, context, ranking, and config
-- pluggable model backends, including a `llama.cpp` GGUF backend
-- local service mode for desktop, web, keyboard, and communication front ends
-- tests that run without downloading a model
+- Pluggable model backends, including a `llama.cpp` GGUF backend for on-device inference
+- Local service mode for desktop, web, keyboard, and communication front ends
+- Deterministic mock backend and tests that run without downloading a model
+
+## Fast Install
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev,service]"
+```
+
+## Model Prerequisites (llama-cpp backend)
+
+Synarmo includes both a deterministic **mock** backend (for tests and CI) and a full browser-based Compose test harness for tuning suggestions, but low-latency deployments typically rely on a local GGUF model via `llama.cpp`. Before calling the engine or service with `backend="llama-cpp"`, make sure you:
+
+1. **Install the extras:** `pip install -e ".[llama,service]"` (adds `llama-cpp-python` + FastAPI bits).
+2. **Configure model locations:** copy `.env.example` to `.env`, set `LOCAL_MODELS_CACHE` (defaults to `~/models/synarmo`), and specify `SYNARMO_MODEL`/`SYNARMO_MODEL_REPO_ID` for the GGUF file you want.
+3. **Pre-download the weights:** run `make models && make model-ensure` or call `synarmo serve --backend llama-cpp` once; both commands ensure the configured model exists in the cache before suggestions are served.
+
+These steps keep UI code untouched: switching between the mock and llama.cpp backends is just a config/env change, but the model artifacts must be present locally for the GGUF path to succeed.
+
+## Interactive Compose Test UI
+
+Need to tune context, temperature, or token caps without building a full client? The repository ships with a standalone browser UI at `src/synarmo/ui/templates/synarmo.html`. It renders the compose workflow, exposes parameter sliders, and hits the same `/health` plus `/evaluate/autocomplete` endpoints as production clients (@src/synarmo/ui/templates/synarmo.html#315-657).
+
+1. **Start the service** (mock or llama-cpp): `make serve BACKEND=mock` for quick iterations or `make serve BACKEND=llama-cpp` for real GGUF inference.
+2. **Host the HTML alongside the service origin.** Copy the template into whatever static route your FastAPI deployment already serves, or mount it behind a simple reverse proxy that forwards `/suggest` and `/evaluate/autocomplete` to the running Synarmo service. (The UI issues relative `fetch("/health")` and `fetch("/evaluate/autocomplete")` calls, so it must share an origin or you need to enable CORS.)
+3. **Open the page** (default expectation: `http://127.0.0.1:8765/ui`) and iterate on context, parameter rail values, and the type-ahead loop without touching your host application.
+
+Because the UI is pure static HTML/JS, it is excluded from the PyPI wheel but remains available in the repo for local development and QA. When packaging your own UI, you can reuse this template or embed its logic where appropriate.
+
+## Highlights
+
+- **Local-first inference** – load the model once, keep it warm, and avoid round-trips to remote APIs.
+- **Personalized context + memory** – assemble multi-turn context, user traits, and preferences before each suggestion.
+- **Pluggable backends** – swap between the deterministic mock backend, llama.cpp GGUF models, or future engines without touching UI code.
+- **Service mode + CLI** – expose REST/WebSocket endpoints or use the compose CLI loop for hands-on testing.
+- **Lightweight deps** – pure Python core with optional extras for heavier runtimes or service hosting.
+
+## Use Cases
+
+- Assistive communication devices where every keystroke counts
+- Messaging, email, or chat clients that need 1–4 word completions inline
+- Local/air-gapped deployments that cannot send user text to the cloud
+- Agentic workflows that need controllable, low-latency phrase continuations
+- Desktop or mobile keyboards that benefit from consistent suggestion quality across modalities
+
+## System Overview
+
+Synarmo separates UI concerns from the reusable engine. The core package covers context assembly, personalization memory, prompt construction, inference, and ranking. Applications (desktop, browser, mobile, or service mode) call the core API or the FastAPI service without embedding model code themselves. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the modular roadmap and mobile direction notes.
 
 ## Quick Start
 
@@ -27,7 +78,7 @@ Try the package API with the deterministic mock backend:
 from synarmo import SynarmoEngine
 
 engine = SynarmoEngine.load(profile="demo")
-suggestions = engine.suggest(text="I want to", context="At home after lunch")
+suggestions = engine.suggest(text="I am", context="At home, watching FIFA world cup soccer match between portugal and spain. This is the Round of 16 and the winning team gets to go to the quarter finals. So far the teams seems even with spain having a slight edge")
 print([item.text for item in suggestions])
 ```
 
@@ -37,10 +88,29 @@ Or use the convenience API:
 import synarmo
 
 suggestions = synarmo.predict(
-    text="I want to",
-    context="Talking with a caregiver about lunch",
+    text="I am",
+    context="At home, watching FIFA world cup soccer match between portugal and spain. This is the Round of 16 and the winning team gets to go to the quarter finals. So far the teams seems even with spain having a slight edge",
     user_profile="demo",
+    max_suggestions=3,
+    max_suggestion_words=4,
+    temperature=0.25,
+    top_p=0.95,
+    max_tokens=32,
 )
+```
+
+From this repository, you can run the package smoke-test script with the same
+public API:
+
+```bash
+python scripts/test_package_predict.py \
+  --text "I am" \
+  --context "At home, watching FIFA world cup soccer match between portugal and spain. This is the Round of 16 and the winning team gets to go to the quarter finals. So far the teams seems even with spain having a slight edge" \
+  --choices 3 \
+  --max-words 4 \
+  --temperature 0.25 \
+  --top-p 0.95 \
+  --max-tokens 32
 ```
 
 ## GGUF / llama.cpp
@@ -101,8 +171,8 @@ GGUF file inside `LOCAL_MODELS_CACHE`; absolute paths are used as-is. The legacy
 Run with the configured model:
 
 ```bash
-synarmo suggest "I want to" \
-  --context "At home, asking for help" \
+synarmo suggest "I am" \
+  --context "At home, watching FIFA world cup soccer match between portugal and spain. This is the Round of 16 and the winning team gets to go to the quarter finals. So far the teams seems even with spain having a slight edge" \
   --backend llama-cpp
 ```
 
@@ -112,7 +182,7 @@ For a more realistic type-ahead loop, use compose mode. It shows the next
 suggestions, lets you choose one, appends it, and immediately predicts again:
 
 ```bash
-synarmo compose "I want to" --context "At home, asking for help" --backend llama-cpp
+synarmo compose "I am" --context "At home, watching FIFA world cup soccer match between portugal and spain. This is the Round of 16 and the winning team gets to go to the quarter finals. So far the teams seems even with spain having a slight edge" --backend llama-cpp
 ```
 
 The engine loads the model once and reuses it for every prediction when used as
@@ -129,13 +199,13 @@ REST:
 ```bash
 curl -X POST http://127.0.0.1:8765/suggest \
   -H 'content-type: application/json' \
-  -d '{"text":"I want to","context":"At home after lunch"}'
+  -d '{"text":"I am","context":"At home, watching FIFA world cup soccer match between portugal and spain. This is the Round of 16 and the winning team gets to go to the quarter finals. So far the teams seems even with spain having a slight edge"}'
 ```
 
 WebSocket clients can connect to `ws://127.0.0.1:8765/ws/suggest` and send:
 
 ```json
-{"text": "I want to", "context": "At home after lunch"}
+{"text": "I am", "context": "At home, watching FIFA world cup soccer match between portugal and spain. This is the Round of 16 and the winning team gets to go to the quarter finals. So far the teams seems even with spain having a slight edge"}
 ```
 
 ## Testing the Suggestion Loop
@@ -151,15 +221,15 @@ text, and immediately predicts the next suggestions.
 
 ```bash
 source .venv/bin/activate
-synarmo compose "I want to" \
-  --context "At home, asking for help" \
+synarmo compose "I am" \
+  --context "At home, watching FIFA world cup soccer match between portugal and spain. This is the Round of 16 and the winning team gets to go to the quarter finals. So far the teams seems even with spain having a slight edge" \
   --backend llama-cpp
 ```
 
 Expected shape:
 
 ```text
-I want to
+I am
 1. have water
 2. go outside
 3. I need help
@@ -180,7 +250,7 @@ In another terminal, request suggestions:
 ```bash
 curl -X POST http://127.0.0.1:8765/suggest \
   -H 'content-type: application/json' \
-  -d '{"text":"I want to","context":"At home, asking for help"}'
+  -d '{"text":"I am","context":"At home, watching FIFA world cup soccer match between portugal and spain. This is the Round of 16 and the winning team gets to go to the quarter finals. So far the teams seems even with spain having a slight edge"}'
 ```
 
 Simulate choosing a suggestion by appending it to `text` and asking again:
@@ -188,7 +258,7 @@ Simulate choosing a suggestion by appending it to `text` and asking again:
 ```bash
 curl -X POST http://127.0.0.1:8765/suggest \
   -H 'content-type: application/json' \
-  -d '{"text":"I want to have water","context":"At home, asking for help"}'
+  -d '{"text":"I am","context":"At home, watching FIFA world cup soccer match between portugal and spain. This is the Round of 16 and the winning team gets to go to the quarter finals. So far the teams seems even with spain having a slight edge"}'
 ```
 
 The service should return JSON with up to `SYNARMO_MAX_SUGGESTIONS` suggestions:
@@ -209,79 +279,22 @@ Use `POST /suggest`, click `Try it out`, and send:
 
 ```json
 {
-  "text": "I want to",
-  "context": "At home, asking for help"
+  "text": "I am",
+  "context": "At home, watching FIFA world cup soccer match between portugal and spain. This is the Round of 16 and the winning team gets to go to the quarter finals. So far the teams seems even with spain having a slight edge"
 }
 ```
 
-### Browser UI
+### Autocomplete Evaluation Endpoint
 
-With the service running, open:
-
-```text
-http://127.0.0.1:8765/ui
-```
-
-The browser UI provides a text box, context field, and clickable suggestion
-buttons shown as pills below the typed text. Clicking a pill appends it to the
-typed text and immediately requests the next suggestions from the local service.
-You can also type directly in the typed text box and click **Suggest** again.
-
-Each suggestion cycle sends the full current typed text, the current context
-field value, and the current compose parameters. If you edit the context or
-change choices, tokens, words, temperature, top-p, or logprob pool, the next
-request uses those updated values. The compose panel uses the logprob
-autocomplete evaluator and preserves trailing spaces in the typed text because
-`"What"` and `"What "` are different model inputs.
-
-The suggestion pills display an approximate probability derived from each
-candidate starter token logprob.
-
-### Browser Compose UI With GGUF
-
-Install Synarmo once in editable mode so commands work without `PYTHONPATH`:
-
-```bash
-pyenv exec python -m pip install -e ".[dev,service,llama]"
-```
-
-Start the service with the exact GGUF you want to test:
-
-```bash
-pyenv exec synarmo serve \
-  --backend llama-cpp \
-  --model-path ~/models/synarmo/Llama-3.2-1B.Q4_K_M.gguf
-```
-
-Then open:
-
-```text
-http://127.0.0.1:8765/ui
-```
-
-Use the **Compose Parameters** panel to tune the live suggestions:
-
-- `Choices`: number of candidate pills to request.
-- `Tokens`: maximum generated tokens for each candidate.
-- `Words`: maximum words kept for each candidate.
-- `Temperature`: sampling temperature for the next-token probe.
-- `Top P`: nucleus sampling cutoff for the next-token probe.
-- `Logprobs`: size of the next-token logprob pool used to find distinct starters.
-
-The compose UI sends one context at a time to:
+The service also exposes the lower-level autocomplete evaluator used by
+interactive clients:
 
 ```text
 POST /evaluate/autocomplete
 ```
 
-The status pill at the top of the UI shows the backend and resolved model
-path/filename so you can confirm whether the service is using the base or
-instruct model.
-
-### Current UI status
-
-Synarmo has a minimal browser test UI for local service testing. A production
-desktop, mobile, or keyboard UI is still future work.
+Interactive UI code lives in the repository and is not included in the Python
+package artifacts.
 
 ## Repository Layout
 

@@ -28,11 +28,11 @@ def test_autocomplete_evaluation_endpoint_accepts_json_body() -> None:
     assert "request" not in parameter_names
 
 
-def test_ui_endpoint_is_registered() -> None:
+def test_ui_endpoint_is_not_packaged() -> None:
     pytest.importorskip("fastapi")
 
     app = create_app(SynarmoEngine.load(profile="service-ui-test"))
     paths = {route.path for route in app.routes}
 
-    assert "/" in paths
-    assert "/ui" in paths
+    assert "/" not in paths
+    assert "/ui" not in paths

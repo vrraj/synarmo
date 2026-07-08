@@ -86,6 +86,7 @@ class SynarmoEngine:
                 GenerationOptions(
                     max_tokens=generation_max_tokens,
                     temperature=self.config.temperature,
+                    top_p=self.config.top_p,
                     stop=self.config.stop,
                 ),
             )
@@ -93,6 +94,7 @@ class SynarmoEngine:
                 raw,
                 current_text=text,
                 max_suggestions=self.config.max_suggestions,
+                max_words=self.config.max_suggestion_words,
             )
             if len(ranked) < self.config.max_suggestions:
                 fill_count = min((self.config.max_suggestions - len(ranked)) * 3, 10)
@@ -110,6 +112,7 @@ class SynarmoEngine:
                             GenerationOptions(
                                 max_tokens=max(self.config.max_tokens, fill_count * 8),
                                 temperature=min(self.config.temperature + 0.1, 2.0),
+                                top_p=self.config.top_p,
                                 stop=self.config.stop,
                             ),
                         ),
@@ -119,6 +122,7 @@ class SynarmoEngine:
             raw,
             current_text=text,
             max_suggestions=self.config.max_suggestions,
+            max_words=self.config.max_suggestion_words,
         )
 
     def evaluate_autocomplete(
@@ -197,6 +201,6 @@ def suggest(
     **load_options: object,
 ) -> list[Suggestion]:
     global _default_engine
-    if _default_engine is None or _default_engine.config.profile != user_profile:
+    if _default_engine is None or _default_engine.config.profile != user_profile or load_options:
         _default_engine = SynarmoEngine.load(profile=user_profile, **load_options)
     return _default_engine.suggest(text=text, context=context)

@@ -1,6 +1,7 @@
 import sys
 import types
 
+from synarmo.models.base import GenerationOptions
 from synarmo.models.llama_cpp_backend import LlamaCppBackend
 
 
@@ -34,4 +35,34 @@ def test_llama_cpp_backend_uses_from_pretrained_for_repo_model(tmp_path, monkeyp
         "n_ctx": 1024,
         "logits_all": True,
         "verbose": False,
+    }
+
+
+def test_llama_cpp_backend_generate_passes_sampling_options(tmp_path, monkeypatch) -> None:
+    calls = {}
+
+    class FakeLlama:
+        def __init__(self, **kwargs):
+            pass
+
+        def __call__(self, *args, **kwargs):
+            calls.update(kwargs)
+            return {"choices": [{"text": "hello"}]}
+
+    model_path = tmp_path / "model.gguf"
+    model_path.write_text("", encoding="utf-8")
+    fake_module = types.SimpleNamespace(Llama=FakeLlama)
+    monkeypatch.setitem(sys.modules, "llama_cpp", fake_module)
+
+    backend = LlamaCppBackend(model_path)
+    backend.generate(
+        "prompt",
+        GenerationOptions(max_tokens=7, temperature=0.4, top_p=0.8, stop=["\n"]),
+    )
+
+    assert calls == {
+        "max_tokens": 7,
+        "temperature": 0.4,
+        "top_p": 0.8,
+        "stop": ["\n"],
     }

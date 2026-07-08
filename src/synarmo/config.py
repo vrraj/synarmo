@@ -88,7 +88,9 @@ class SynarmoConfig:
     context_window: int = 2048
     style_adaptation: bool = True
     temperature: float = 0.25
+    top_p: float = 0.95
     max_tokens: int = 32
+    max_suggestion_words: int = 4
     stop: list[str] = field(default_factory=lambda: ["\n\n"])
     profiles_dir: Path = Path("profiles")
 
@@ -104,8 +106,12 @@ class SynarmoConfig:
             raise ValueError("context_window must be at least 128")
         if not 0.0 <= self.temperature <= 2.0:
             raise ValueError("temperature must be between 0.0 and 2.0")
+        if not 0.0 < self.top_p <= 1.0:
+            raise ValueError("top_p must be greater than 0.0 and at most 1.0")
         if not 1 <= self.max_tokens <= 128:
             raise ValueError("max_tokens must be between 1 and 128")
+        if not 1 <= self.max_suggestion_words <= 20:
+            raise ValueError("max_suggestion_words must be between 1 and 20")
 
     def resolved_profile_dir(self) -> Path:
         return self.profiles_dir.expanduser().resolve() / self.profile

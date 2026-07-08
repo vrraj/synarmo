@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from synarmo.config import (
+    SynarmoConfig,
     configured_max_suggestions,
     configured_model_filename,
     configured_model_path,
@@ -84,3 +85,25 @@ def test_configured_max_suggestions_reads_env(monkeypatch) -> None:
     monkeypatch.setenv("SYNARMO_MAX_SUGGESTIONS", "5")
 
     assert configured_max_suggestions() == 5
+
+
+def test_config_validates_sampling_and_word_limit() -> None:
+    assert SynarmoConfig(top_p=0.5, max_suggestion_words=2).top_p == 0.5
+
+
+def test_config_rejects_invalid_top_p() -> None:
+    try:
+        SynarmoConfig(top_p=0.0)
+    except ValueError as exc:
+        assert "top_p" in str(exc)
+    else:
+        raise AssertionError("Expected invalid top_p to raise ValueError")
+
+
+def test_config_rejects_invalid_suggestion_word_limit() -> None:
+    try:
+        SynarmoConfig(max_suggestion_words=0)
+    except ValueError as exc:
+        assert "max_suggestion_words" in str(exc)
+    else:
+        raise AssertionError("Expected invalid max_suggestion_words to raise ValueError")

@@ -3,7 +3,6 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from synarmo.config import BackendName
 from synarmo.engine import SynarmoEngine
 
 

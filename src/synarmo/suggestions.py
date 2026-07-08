@@ -12,12 +12,19 @@ class Suggestion:
 
 
 class SuggestionRanker:
-    def rank(self, raw_text: str, *, current_text: str, max_suggestions: int) -> list[Suggestion]:
+    def rank(
+        self,
+        raw_text: str,
+        *,
+        current_text: str,
+        max_suggestions: int,
+        max_words: int = 4,
+    ) -> list[Suggestion]:
         candidates = self._parse(raw_text)
         seen: set[str] = set()
         ranked: list[Suggestion] = []
         for candidate in candidates:
-            normalized = self._normalize(candidate)
+            normalized = self._normalize(candidate, max_words=max_words)
             key = normalized.lower()
             if not normalized or key in seen:
                 continue
@@ -47,13 +54,13 @@ class SuggestionRanker:
             return lines
         return [part.strip() for part in re.split(r"[,;/]", raw_text) if part.strip()]
 
-    def _normalize(self, text: str) -> str:
+    def _normalize(self, text: str, *, max_words: int) -> str:
         text = re.sub(r"\s+", " ", text).strip()
         text = re.sub(r"\s+(?:\(?\d+[\].)]|\[\d+\])\s*$", "", text)
         text = re.sub(r"\s*(?:\[\d+\]|\(\d+\))\s*$", "", text)
         text = re.sub(r"[.!?]+$", "", text)
         words = text.split()
-        return " ".join(words[:4])
+        return " ".join(words[:max_words])
 
     def _duplicates_current_text(self, suggestion: str, current_text: str) -> bool:
         suggestion_words = suggestion.lower().split()

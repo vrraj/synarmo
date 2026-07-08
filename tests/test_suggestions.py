@@ -13,6 +13,19 @@ def test_ranker_deduplicates_and_limits_to_four_words() -> None:
     assert [item.text for item in suggestions] == ["thank you", "go outside now please"]
 
 
+def test_ranker_respects_configured_word_limit() -> None:
+    ranker = SuggestionRanker()
+
+    suggestions = ranker.rank(
+        "go outside now please today",
+        current_text="I want to",
+        max_suggestions=1,
+        max_words=2,
+    )
+
+    assert [item.text for item in suggestions] == ["go outside"]
+
+
 def test_ranker_strips_numbered_list_markers() -> None:
     ranker = SuggestionRanker()
 

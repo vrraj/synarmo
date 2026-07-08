@@ -55,6 +55,7 @@ class LlamaCppBackend:
             prompt,
             max_tokens=options.max_tokens,
             temperature=options.temperature,
+            top_p=options.top_p,
             stop=options.stop or None,
         )
         return str(result["choices"][0]["text"])

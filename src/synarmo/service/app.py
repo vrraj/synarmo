@@ -1,12 +1,9 @@
-from importlib.resources import files
-
 from synarmo.engine import SynarmoEngine
 
 
 def create_app(engine: SynarmoEngine):
     try:
         from fastapi import FastAPI, WebSocket
-        from fastapi.responses import HTMLResponse
         from pydantic import BaseModel
     except ImportError as exc:
         raise RuntimeError("Install service extras first: pip install synarmo[service]") from exc
@@ -49,12 +46,6 @@ def create_app(engine: SynarmoEngine):
         results: list[AutocompleteEvalItemResponse]
 
     app = FastAPI(title="Synarmo", version="0.1.0")
-
-    @app.get("/", response_class=HTMLResponse)
-    @app.get("/ui", response_class=HTMLResponse)
-    def ui() -> HTMLResponse:
-        html = files("synarmo.ui.templates").joinpath("synarmo.html").read_text(encoding="utf-8")
-        return HTMLResponse(html)
 
     @app.get("/health")
     def health() -> dict[str, str]:

@@ -8,6 +8,7 @@ from typing import Protocol
 class GenerationOptions:
     max_tokens: int = 32
     temperature: float = 0.25
+    top_p: float = 0.95
     stop: list[str] = field(default_factory=list)
 
 
