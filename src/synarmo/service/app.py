@@ -1,9 +1,19 @@
+from pathlib import Path
+
 from synarmo.engine import SynarmoEngine
+
+
+_UI_ROOT = Path(__file__).resolve().parent.parent / "ui"
+_UI_TEMPLATES_DIR = _UI_ROOT / "templates"
+_UI_STATIC_DIR = _UI_ROOT / "static"
 
 
 def create_app(engine: SynarmoEngine):
     try:
-        from fastapi import FastAPI, WebSocket
+        from fastapi import FastAPI, Request, WebSocket
+        from fastapi.responses import HTMLResponse, RedirectResponse
+        from fastapi.staticfiles import StaticFiles
+        from fastapi.templating import Jinja2Templates
         from pydantic import BaseModel
     except ImportError as exc:
         raise RuntimeError("Install service extras first: pip install synarmo[service]") from exc
@@ -46,6 +56,15 @@ def create_app(engine: SynarmoEngine):
         results: list[AutocompleteEvalItemResponse]
 
     app = FastAPI(title="Synarmo", version="0.1.0")
+
+    _mount_ui(
+        app,
+        Request=Request,
+        HTMLResponse=HTMLResponse,
+        RedirectResponse=RedirectResponse,
+        StaticFiles=StaticFiles,
+        Jinja2Templates=Jinja2Templates,
+    )
 
     @app.get("/health")
     def health() -> dict[str, str]:
@@ -116,3 +135,29 @@ def create_app(engine: SynarmoEngine):
             )
 
     return app
+
+
+def _mount_ui(
+    app,
+    *,
+    Request,
+    HTMLResponse,
+    RedirectResponse,
+    StaticFiles,
+    Jinja2Templates,
+) -> None:
+    if not _UI_TEMPLATES_DIR.exists():
+        return
+    if not _UI_STATIC_DIR.exists():
+        return
+
+    templates = Jinja2Templates(directory=str(_UI_TEMPLATES_DIR))
+    app.mount("/static", StaticFiles(directory=str(_UI_STATIC_DIR)), name="synarmo-ui-static")
+
+    @app.get("/ui", response_class=HTMLResponse)
+    def synarmo_ui(request: Request):  # type: ignore[misc]
+        return templates.TemplateResponse(request, "synarmo.html")
+
+    @app.get("/")
+    def synarmo_ui_root():  # type: ignore[misc]
+        return RedirectResponse(url="/ui")
