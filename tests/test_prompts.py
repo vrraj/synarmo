@@ -2,9 +2,14 @@ from synarmo.prompts import PromptBuilder
 
 
 def test_prompt_requests_exact_unnumbered_suggestions() -> None:
-    prompt = PromptBuilder().build(assembled_context="Current typed text: Which", max_suggestions=3)
+    prompt = PromptBuilder().build(
+        assembled_context="Current typed text: Which",
+        max_suggestions=3,
+        max_words=6,
+    )
 
     assert "Suggest exactly 3" in prompt
+    assert "Each suggestion should be 1 to 6 words." in prompt
     assert "immediately after the current typed text" in prompt
     assert "Suggestions are not answers from the assistant." in prompt
     assert "Only return suggestions that pass that append check." in prompt
@@ -20,3 +25,19 @@ def test_prompt_requests_exact_unnumbered_suggestions() -> None:
     assert "is the restroom" in prompt
     assert "Where is the restroom" in prompt
     assert "Return only the good continuation text" in prompt
+
+
+def test_prompt_word_limit_is_at_least_one() -> None:
+    zero_prompt = PromptBuilder().build(
+        assembled_context="Current typed text: Which",
+        max_suggestions=3,
+        max_words=0,
+    )
+    none_prompt = PromptBuilder().build(
+        assembled_context="Current typed text: Which",
+        max_suggestions=3,
+        max_words=None,
+    )
+
+    assert "Each suggestion should be 1 to 1 words." in zero_prompt
+    assert "Each suggestion should be 1 to 1 words." in none_prompt

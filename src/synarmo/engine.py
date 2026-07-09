@@ -79,6 +79,7 @@ class SynarmoEngine:
         prompt = self.prompt_builder.build(
             assembled_context=assembled_context,
             max_suggestions=generation_count,
+            max_words=self.config.max_suggestion_words,
         )
         with self._generation_lock:
             raw = self.backend.generate(

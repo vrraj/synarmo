@@ -2,7 +2,14 @@ from __future__ import annotations
 
 
 class PromptBuilder:
-    def build(self, *, assembled_context: str, max_suggestions: int) -> str:
+    def build(
+        self,
+        *,
+        assembled_context: str,
+        max_suggestions: int,
+        max_words: int | None = 4,
+    ) -> str:
+        max_words = _positive_word_limit(max_words)
         return f"""You are Synarmo, a private on-device communication assistant.
 Suggest exactly {max_suggestions} short continuations for the user's current typed text.
 
@@ -13,7 +20,7 @@ Before returning a suggestion, silently check: current typed text + space + sugg
 Only return suggestions that pass that append check.
 
 Rules:
-- Each suggestion should be 1 to 4 words.
+- Each suggestion should be 1 to {max_words} words.
 - Continue the exact typed text; do not replace it.
 - Do not ignore partial words, question starters, or unfinished phrases.
 - Do not answer the user or produce conversational replies.
@@ -42,3 +49,9 @@ Return only the good continuation text, not the full appended text.
 {assembled_context}
 
 Suggestions:"""
+
+
+def _positive_word_limit(value: int | None) -> int:
+    if value is None:
+        return 1
+    return max(1, value)
