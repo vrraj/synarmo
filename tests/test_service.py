@@ -28,11 +28,25 @@ def test_autocomplete_evaluation_endpoint_accepts_json_body() -> None:
     assert "request" not in parameter_names
 
 
-def test_ui_endpoint_is_not_packaged() -> None:
+def test_ui_endpoints_render_static_assets() -> None:
     pytest.importorskip("fastapi")
+    from fastapi.testclient import TestClient
 
     app = create_app(SynarmoEngine.load(profile="service-ui-test"))
     paths = {route.path for route in app.routes}
 
-    assert "/" not in paths
-    assert "/ui" not in paths
+    assert "/" in paths
+    assert "/ui" in paths
+    assert "/static" in paths
+
+    client = TestClient(app)
+    response = client.get("/ui")
+
+    assert response.status_code == 200
+    assert "/static/css/synarmo.css" in response.text
+    assert "/static/js/synarmo.js" in response.text
+    assert "<style>" not in response.text
+    assert "<script>" not in response.text
+
+    assert client.get("/static/css/synarmo.css").status_code == 200
+    assert client.get("/static/js/synarmo.js").status_code == 200
