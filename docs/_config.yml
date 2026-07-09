@@ -1,0 +1,56 @@
+# --- Site Metadata ---
+# --- Site Metadata & SEO Defaults ---
+title: "Synarmo"
+tagline: "Local-first auto-suggest engine for personalized predictions"
+description: "A local-first, low-latency auto-suggest engine for personalized next-word and short-phrase predictions across messaging, chat, and assistive typing workflows."
+url: "https://vrraj.github.io"
+baseurl: "/synarmo"
+
+defaults:
+  - scope:
+      path: "" # Applies to all files
+    values:
+      layout: "default"
+
+  - scope:
+      path: "index.md"
+    values:
+      title: "Synarmo: Local-First Auto-Suggest Engine"
+
+  - scope:
+      path: "api-reference.md"
+    values:
+      title: "API Reference | Synarmo"
+      description: "Complete API documentation for SynarmoEngine, context assembly, and prediction APIs."
+
+  - scope:
+      path: "deployment.md"
+    values:
+      title: "Deployment Guide | Synarmo"
+      description: "Installation and deployment instructions for synarmo package."
+
+  - scope:
+      path: "usage-guide.md"
+    values:
+      title: "Usage Guide | Synarmo"
+      description: "Usage examples and patterns for synarmo package."
+
+# --- Theme Configuration ---
+theme: jekyll-theme-cayman
+show_downloads: true
+
+# --- Google Analytics (GA4) ---
+google_analytics: G-KBYFPBJ1MG
+
+# --- Plugins ---
+plugins:
+  - jekyll-seo-tag
+  - jekyll-gist
+
+# --- Build Settings ---
+markdown: kramdown
+highlighter: rouge
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - vendor

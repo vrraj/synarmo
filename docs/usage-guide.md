@@ -1,0 +1,603 @@
+---
+layout: default
+title: "Usage Guide | Synarmo"
+description: "Usage examples and patterns for synarmo package."
+---
+
+# Usage Guide
+
+This guide provides practical usage examples and patterns for the Synarmo auto-suggest engine.
+
+## Quick Start
+
+### Basic Prediction with Mock Backend
+
+The mock backend doesn't require a model and is useful for testing and development:
+
+```python
+from synarmo import SynarmoEngine
+
+engine = SynarmoEngine.load(backend="mock")
+suggestions = engine.suggest("I want to")
+print([s.text for s in suggestions])
+```
+
+### Prediction with Local GGUF Model
+
+For real predictions, use the llama-cpp backend with a local GGUF model:
+
+```python
+from synarmo import SynarmoEngine
+
+engine = SynarmoEngine.load(
+    backend="llama-cpp",
+    model_path="~/models/synarmo/Llama-3.2-1B.Q4_K_M.gguf",
+)
+suggestions = engine.suggest(
+    text="I want to",
+    context="At home, asking for help"
+)
+print([s.text for s in suggestions])
+```
+
+## Context Usage
+
+### Simple Context
+
+Provide a simple context string to guide suggestions:
+
+```python
+from synarmo import SynarmoEngine
+
+engine = SynarmoEngine.load(backend="llama-cpp")
+
+# Greeting context
+suggestions = engine.suggest(
+    text="hello",
+    context="greeting a friend"
+)
+
+# Work context
+suggestions = engine.suggest(
+    text="I need to",
+    context="at work, sending an email"
+)
+```
+
+### Multiple Contexts for Evaluation
+
+Evaluate suggestions across different contexts:
+
+```python
+from synarmo import SynarmoEngine
+
+engine = SynarmoEngine.load(backend="llama-cpp")
+
+evaluations = engine.evaluate_autocomplete(
+    text="I want to",
+    contexts=["At home", "At work", "With friends"],
+    choices=3,
+    temperature=0.5,
+)
+
+for eval in evaluations:
+    print(f"\nContext: {eval.context}")
+    for candidate in eval.candidates:
+        print(f"  {candidate.text} (logprob: {candidate.logprob})")
+```
+
+## Configuration Patterns
+
+### Custom Temperature and Top-P
+
+Adjust randomness and focus of suggestions:
+
+```python
+from synarmo import SynarmoEngine
+
+# More predictable suggestions
+engine = SynarmoEngine.load(
+    backend="llama-cpp",
+    temperature=0.1,  # Lower = more predictable
+    top_p=0.90,
+)
+
+# More varied suggestions
+engine = SynarmoEngine.load(
+    backend="llama-cpp",
+    temperature=0.7,  # Higher = more varied
+    top_p=0.95,
+)
+```
+
+### Adjust Suggestion Length
+
+Control the length of suggestions:
+
+```python
+from synarmo import SynarmoEngine
+
+# Short suggestions (1-2 words)
+engine = SynarmoEngine.load(
+    backend="llama-cpp",
+    max_suggestion_words=2,
+)
+
+# Longer suggestions (up to 4 words)
+engine = SynarmoEngine.load(
+    backend="llama-cpp",
+    max_suggestion_words=4,
+)
+```
+
+### Number of Suggestions
+
+Control how many suggestions are returned:
+
+```python
+from synarmo import SynarmoEngine
+
+# Fewer suggestions
+engine = SynarmoEngine.load(
+    backend="llama-cpp",
+    max_suggestions=3,
+)
+
+# More suggestions
+engine = SynarmoEngine.load(
+    backend="llama-cpp",
+    max_suggestions=5,
+)
+```
+
+## User Profiles and Memory
+
+### Using User Profiles
+
+Create and use different user profiles for personalized suggestions:
+
+```python
+from synarmo import SynarmoEngine
+
+# Load with a specific profile
+engine = SynarmoEngine.load(
+    backend="llama-cpp",
+    profile="myuser",
+)
+
+suggestions = engine.suggest("I want to")
+```
+
+### Remembering Phrases
+
+Add phrases to user memory for style adaptation:
+
+```python
+from synarmo import SynarmoEngine
+
+engine = SynarmoEngine.load(
+    backend="llama-cpp",
+    profile="myuser",
+)
+
+# Remember common phrases
+engine.remember_phrase("let's grab coffee")
+engine.remember_phrase("see you later")
+engine.remember_phrase("how's it going")
+
+# Future suggestions will adapt to this style
+suggestions = engine.suggest("I want to")
+```
+
+### Style Adaptation Toggle
+
+Enable or disable style adaptation:
+
+```python
+from synarmo import SynarmoEngine
+
+# Style adaptation enabled (default)
+engine = SynarmoEngine.load(
+    backend="llama-cpp",
+    style_adaptation=True,
+)
+
+# Style adaptation disabled
+engine = SynarmoEngine.load(
+    backend="llama-cpp",
+    style_adaptation=False,
+)
+```
+
+## Runtime Configuration
+
+### Update Configuration at Runtime
+
+Change configuration without reloading the engine:
+
+```python
+from synarmo import SynarmoEngine
+
+engine = SynarmoEngine.load(backend="llama-cpp")
+
+# Update configuration
+engine.configure(
+    max_suggestions=5,
+    temperature=0.3,
+    max_suggestion_words=3,
+)
+
+# Suggestions now use new configuration
+suggestions = engine.suggest("I want to")
+```
+
+## One-Shot Prediction
+
+### Using Convenience Functions
+
+Use `predict()` or `suggest()` for one-off predictions:
+
+```python
+import synarmo
+
+# One-shot prediction
+suggestions = synarmo.predict(
+    text="hello",
+    context="greeting",
+    backend="llama-cpp",
+    max_suggestions=3,
+)
+
+# Alternative alias
+suggestions = synarmo.suggest(
+    text="hello",
+    context="greeting",
+    backend="llama-cpp",
+)
+```
+
+## Model Configuration
+
+### Using Environment Variables
+
+Configure models via `.env` file:
+
+```dotenv
+# .env
+LOCAL_MODELS_CACHE=~/models/synarmo
+SYNARMO_MAX_SUGGESTIONS=3
+SYNARMO_MODEL_REPO_ID=hugging-quants/Llama-3.2-1B-Instruct-Q4_K_M-GGUF
+SYNARMO_MODEL=llama-3.2-1b-instruct-q4_k_m.gguf
+```
+
+Then load without specifying model path:
+
+```python
+from synarmo import SynarmoEngine
+
+engine = SynarmoEngine.load(backend="llama-cpp")
+```
+
+### Using Local Model Path
+
+Specify a local model path directly:
+
+```python
+from synarmo import SynarmoEngine
+
+engine = SynarmoEngine.load(
+    backend="llama-cpp",
+    model_path="~/models/synarmo/Llama-3.2-1B.Q4_K_M.gguf",
+)
+```
+
+### Using Absolute Path
+
+Use an absolute path to the model:
+
+```python
+from synarmo import SynarmoEngine
+
+engine = SynarmoEngine.load(
+    backend="llama-cpp",
+    model_path="/Users/raj/models/qwen2.5-1.5b-instruct-q4_k_m.gguf",
+)
+```
+
+## CLI Usage
+
+### Single Suggestion Request
+
+Use the CLI for quick testing:
+
+```bash
+synarmo suggest "I want to" \
+  --context "At home, asking for help" \
+  --backend llama-cpp
+```
+
+### Compose Loop
+
+Use the interactive compose loop:
+
+```bash
+synarmo compose "I want to" \
+  --context "At home, asking for help" \
+  --backend llama-cpp
+```
+
+This shows suggestions, lets you choose one, appends it to the text, and immediately predicts the next suggestions.
+
+## Service Mode
+
+### Start the Service
+
+Start the local FastAPI service:
+
+```bash
+synarmo serve --backend llama-cpp
+```
+
+The service defaults to `http://127.0.0.1:8765`
+
+### Check Health
+
+```bash
+curl http://127.0.0.1:8765/health
+```
+
+### REST API - Basic Suggestions
+
+```bash
+curl -X POST http://127.0.0.1:8765/suggest \
+  -H 'content-type: application/json' \
+  -d '{"text":"I want to","context":"At home, asking for help"}'
+```
+
+### REST API - Autocomplete Evaluation
+
+```bash
+curl -X POST http://127.0.0.1:8765/evaluate/autocomplete \
+  -H 'content-type: application/json' \
+  -d '{
+    "text": "I want to",
+    "contexts": ["At home, asking for help"],
+    "choices": 3,
+    "candidate_tokens": 10,
+    "candidate_words": 2,
+    "temperature": 0.5,
+    "top_p": 0.95,
+    "logprob_pool": 24
+  }'
+```
+
+### WebSocket API
+
+Connect to the WebSocket endpoint:
+
+```text
+ws://127.0.0.1:8765/ws/suggest
+```
+
+Send JSON messages:
+
+```json
+{"text": "I want to", "context": "At home, asking for help"}
+```
+
+## Web UI
+
+### Access the Interactive UI
+
+With the service running, open:
+
+```text
+http://127.0.0.1:8765/ui
+```
+
+The UI lets you:
+- Type the current message
+- Provide conversation or scene context
+- Change autocomplete parameters (choices, tokens, words, temperature, top-p, logprob pool)
+- Inspect how the service responds
+
+### UI Parameters
+
+| Parameter | Default | What it does |
+| --- | ---: | --- |
+| Choices | 3 | Number of suggestions to show |
+| Tokens | 10 | Maximum generated tokens per suggestion |
+| Words | 1 | Maximum words displayed per suggestion |
+| Temperature | 0.5 | Controls randomness (lower = more predictable) |
+| Top P | 0.95 | Nucleus sampling threshold (lower = more focused) |
+| Logprobs | 24 | Number of scored next-token options to inspect |
+| Auto - Suggest on Spacebar | On | Automatically request suggestions after typing a space |
+
+## Integration Examples
+
+### FastAPI Integration
+
+```python
+from fastapi import FastAPI
+from synarmo import SynarmoEngine
+
+app = FastAPI()
+engine = SynarmoEngine.load(backend="llama-cpp")
+
+@app.post("/suggest")
+async def get_suggestions(text: str, context: str = None):
+    suggestions = engine.suggest(text=text, context=context)
+    return {"suggestions": [s.text for s in suggestions]}
+```
+
+### Flask Integration
+
+```python
+from flask import Flask, request, jsonify
+from synarmo import SynarmoEngine
+
+app = Flask(__name__)
+engine = SynarmoEngine.load(backend="llama-cpp")
+
+@app.route("/suggest", methods=["POST"])
+def suggest():
+    data = request.json
+    suggestions = engine.suggest(
+        text=data.get("text"),
+        context=data.get("context")
+    )
+    return jsonify({"suggestions": [s.text for s in suggestions]})
+```
+
+### Async Integration
+
+```python
+import asyncio
+from synarmo import SynarmoEngine
+
+async def async_suggest(text: str, context: str = None):
+    engine = SynarmoEngine.load(backend="llama-cpp")
+    suggestions = engine.suggest(text=text, context=context)
+    return [s.text for s in suggestions]
+
+# Usage
+suggestions = await async_suggest("I want to", "At home")
+```
+
+## Testing Without a Model
+
+### Compile Check
+
+Verify the package compiles without a model:
+
+```bash
+python3 -m compileall src tests
+```
+
+### Run Tests
+
+Run the test suite (uses mock backend):
+
+```bash
+pip install -e ".[dev]"
+PYTHONPATH=src pytest
+```
+
+### Mock Backend Testing
+
+Use the mock backend for development and testing:
+
+```python
+from synarmo import SynarmoEngine
+
+engine = SynarmoEngine.load(backend="mock")
+suggestions = engine.suggest("I want to")
+print([s.text for s in suggestions])
+```
+
+## Common Use Cases
+
+### Messaging Application
+
+```python
+from synarmo import SynarmoEngine
+
+engine = SynarmoEngine.load(backend="llama-cpp")
+
+def get_suggestions_for_message(current_text: str, conversation_context: str):
+    suggestions = engine.suggest(
+        text=current_text,
+        context=conversation_context
+    )
+    return [s.text for s in suggestions]
+```
+
+### Email Client
+
+```python
+from synarmo import SynarmoEngine
+
+engine = SynarmoEngine.load(
+    backend="llama-cpp",
+    profile="email_user",
+    max_suggestion_words=4,
+)
+
+def complete_email_subject(subject: str):
+    suggestions = engine.suggest(
+        text=subject,
+        context="writing an email subject line"
+    )
+    return [s.text for s in suggestions]
+```
+
+### Assistive Typing
+
+```python
+from synarmo import SynarmoEngine
+
+engine = SynarmoEngine.load(
+    backend="llama-cpp",
+    max_suggestion_words=2,
+    temperature=0.1,  # More predictable
+)
+
+def get_typing_suggestions(current_text: str):
+    suggestions = engine.suggest(text=current_text)
+    return [s.text for s in suggestions]
+```
+
+## Performance Tips
+
+### Keep Engine Warm
+
+Load the engine once and reuse it:
+
+```python
+# Good: Load once
+engine = SynarmoEngine.load(backend="llama-cpp")
+
+for text in texts:
+    suggestions = engine.suggest(text)
+
+# Bad: Load for each request
+for text in texts:
+    engine = SynarmoEngine.load(backend="llama-cpp")  # Slow!
+    suggestions = engine.suggest(text)
+```
+
+### Use Appropriate Context Window
+
+Adjust context window based on your needs:
+
+```python
+# Short context for faster predictions
+engine = SynarmoEngine.load(
+    backend="llama-cpp",
+    context_window=512,
+)
+
+# Longer context for more context-aware predictions
+engine = SynarmoEngine.load(
+    backend="llama-cpp",
+    context_window=2048,
+)
+```
+
+### Batch Similar Requests
+
+Process similar requests together to benefit from caching:
+
+```python
+from synarmo import SynarmoEngine
+
+engine = SynarmoEngine.load(backend="llama-cpp")
+
+# Batch similar contexts
+contexts = ["At home", "At work", "With friends"]
+evaluations = engine.evaluate_autocomplete(
+    text="I want to",
+    contexts=contexts,
+    choices=3,
+)
+```

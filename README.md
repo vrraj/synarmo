@@ -5,8 +5,10 @@
 [![GitHub Release](https://img.shields.io/github/v/release/vrraj/synarmo?label=github%20release&color=0f172a&logo=github)](https://github.com/vrraj/synarmo/releases)
 
 Synarmo (derived from *synarmozo* — "to fit together, to join closely") is a
-local AI tool for extremely low-latency, personalized type-ahead suggestions
-across messaging, chat, and assistive typing workflows.
+local-first, low-latency auto-suggest engine and Python package for
+personalized next-word and short-phrase predictions across messaging, chat, and
+assistive typing workflows. It combines context-aware local inference, service
+APIs, and llama.cpp/GGUF support for swappable local models.
 
 > Local-first next-word and next-phrase suggestions tuned for short completions.
 
@@ -15,11 +17,32 @@ Synarmo is intended to be used as:
 - a PyPI package for predicting suggestions from Python
 - a local FastAPI service for REST and WebSocket clients
 - an interactive browser `/ui` for testing and tuning API calls with context and parameters
-- a swappable model-backed engine that can test different local GGUF models through `.env`
+- a llama.cpp/GGUF-backed engine that can test different local models through `.env`
 
 > The application needs a local GGUF model to make useful predictions. The current
 runtime backend uses `llama-cpp-python`, loads the model once, and keeps
 inference local.
+
+## Interfaces At A Glance
+
+Synarmo can be used through the Python package, CLI, local HTTP service,
+WebSocket endpoint, and browser tuning UI:
+
+| Interface | Use it for | Example |
+| --- | --- | --- |
+| Python API | Embed suggestions in another Python app | `SynarmoEngine.load(backend="llama-cpp").suggest("I want to")` |
+| CLI | Run quick local prediction commands | `synarmo suggest "I want to" --backend llama-cpp` |
+| REST API | Call Synarmo from desktop, web, keyboard, or mobile clients | `POST http://127.0.0.1:8765/suggest` |
+| WebSocket | Keep a live local suggestion channel open while a user types | `ws://127.0.0.1:8765/ws/suggest` |
+| Browser UI | Test and tune contexts and autocomplete parameters | `http://127.0.0.1:8765/ui` |
+
+Minimal REST request:
+
+```bash
+curl -X POST http://127.0.0.1:8765/suggest \
+  -H 'content-type: application/json' \
+  -d '{"text":"I want to","context":"At home, asking for help"}'
+```
 
 ## Current Shape
 
@@ -34,6 +57,11 @@ The reusable package contains the prediction engine:
 
 The next product step is a mobile app that uses the same prediction flow with an
 on-device model.
+
+Synarmo is also intended to serve as a portable reference implementation for
+smartphone apps. The Python package defines the prediction flow, API shape,
+prompting, context handling, and ranking behavior that can be reimplemented in a
+native mobile client with an on-device model runtime.
 
 ## Install
 
@@ -181,7 +209,9 @@ checks whether the selected model is already available and downloads it if
 needed. `synarmo serve --backend llama-cpp` performs the same model load when
 the service starts.
 
-## Python API
+## Integration Details
+
+### Python API
 
 Use `SynarmoEngine` when embedding prediction into another Python app:
 
@@ -229,7 +259,7 @@ After changing code or prompt text, restart any running `synarmo serve` process
 so the service reloads the updated Python modules. The service keeps the model
 warm and does not hot-reload prompt construction while it is running.
 
-## Service Mode
+### Service Mode
 
 Start the local service with the configured `.env` model:
 
@@ -257,7 +287,7 @@ Check health:
 curl http://127.0.0.1:8765/health
 ```
 
-## Test And Tune With `/ui`
+### Test And Tune With `/ui`
 
 The browser UI is for tuning the API calls before building a production client.
 It lets you:
@@ -277,7 +307,7 @@ http://127.0.0.1:8765/ui
 The UI calls the same `/health` and `/evaluate/autocomplete` endpoints that a
 client application can call directly.
 
-### Compose Parameters
+#### Compose Parameters
 
 | Parameter | Default | What it does |
 | --- | ---: | --- |
@@ -297,7 +327,7 @@ will not create 24 useful starters. It can only inspect what the pool makes
 available. With `Choices = 3`, Synarmo then picks up to 3 useful unique starters
 from the inspected options.
 
-## REST And WebSocket API
+### REST And WebSocket API
 
 Basic suggestions:
 
@@ -336,7 +366,7 @@ and send:
 {"text": "I want to", "context": "At home, asking for help"}
 ```
 
-## CLI Suggestion Loop
+### CLI Suggestion Loop
 
 Run a single suggestion request:
 
@@ -387,6 +417,26 @@ The model layer is intentionally swappable at the GGUF level. If another model
 works with llama.cpp, Synarmo can test it by changing model configuration rather
 than changing application code.
 
+## Extending Inference
+
+Synarmo currently ships with a `llama-cpp` runtime backend for local GGUF model
+inference. The core engine is designed around a small backend boundary:
+
+```python
+class ModelBackend(Protocol):
+    name: str
+
+    def generate(self, prompt: str, options: GenerationOptions) -> str:
+        ...
+```
+
+That means the prompt builder, context assembly, ranking, CLI, and service APIs
+can stay stable while a new runtime adapter implements `generate(...)`.
+Additional runtimes such as ONNX, MLX, Core ML, or a mobile-specific llama.cpp
+adapter would need their own backend implementation, tokenizer/model loading,
+decoding loop, sampling behavior, and tests. They are extension points rather
+than built-in runtime support today.
+
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for design notes and mobile
 direction.
 
@@ -410,7 +460,9 @@ docs/
 ## Mobile Direction
 
 The current package and service are the reference implementation. The next step
-is a mobile app with the same core behavior:
+is a smartphone app with the same core behavior. The Python package is not meant
+to be embedded directly into the phone app; instead, its architecture can be
+ported into native mobile code:
 
 - on-device GGUF/Core ML/MLX-style model runtime where appropriate
 - shared prompt, memory, and ranking concepts

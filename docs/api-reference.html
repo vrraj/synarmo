@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>API Reference</title>
+            <style>
+/* From extension vscode.github */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.vscode-dark img[src$=\#gh-light-mode-only],
+.vscode-light img[src$=\#gh-dark-mode-only],
+.vscode-high-contrast:not(.vscode-high-contrast-light) img[src$=\#gh-light-mode-only],
+.vscode-high-contrast-light img[src$=\#gh-dark-mode-only] {
+	display: none;
+}
+
+</style>
+            
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item {
+    list-style-type: none;
+}
+
+.task-list-item-checkbox {
+    margin-left: -20px;
+    vertical-align: middle;
+    pointer-events: none;
+}
+</style>
+<style>
+:root {
+  --color-note: #0969da;
+  --color-tip: #1a7f37;
+  --color-warning: #9a6700;
+  --color-severe: #bc4c00;
+  --color-caution: #d1242f;
+  --color-important: #8250df;
+}
+
+</style>
+<style>
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-note: #2f81f7;
+    --color-tip: #3fb950;
+    --color-warning: #d29922;
+    --color-severe: #db6d28;
+    --color-caution: #f85149;
+    --color-important: #a371f7;
+  }
+}
+
+</style>
+<style>
+.markdown-alert {
+  padding: 0.5rem 1rem;
+  margin-bottom: 16px;
+  color: inherit;
+  border-left: .25em solid #888;
+}
+
+.markdown-alert>:first-child {
+  margin-top: 0
+}
+
+.markdown-alert>:last-child {
+  margin-bottom: 0
+}
+
+.markdown-alert .markdown-alert-title {
+  display: flex;
+  font-weight: 500;
+  align-items: center;
+  line-height: 1
+}
+
+.markdown-alert .markdown-alert-title .octicon {
+  margin-right: 0.5rem;
+  display: inline-block;
+  overflow: visible !important;
+  vertical-align: text-bottom;
+  fill: currentColor;
+}
+
+.markdown-alert.markdown-alert-note {
+  border-left-color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-note .markdown-alert-title {
+  color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-important {
+  border-left-color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-important .markdown-alert-title {
+  color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-warning {
+  border-left-color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-warning .markdown-alert-title {
+  color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-tip {
+  border-left-color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-tip .markdown-alert-title {
+  color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-caution {
+  border-left-color: var(--color-caution);
+}
+
+.markdown-alert.markdown-alert-caution .markdown-alert-title {
+  color: var(--color-caution);
+}
+
+</style>
+        
+        </head>
+        <body class="vscode-body vscode-light">
+            <hr>
+<h2 id="layout-defaulttitle-api-reference--synarmodescription-complete-api-documentation-for-synarmoengine-synarmoconfig-and-prediction-apis">layout: default
+title: &quot;API Reference | Synarmo&quot;
+description: &quot;Complete API documentation for SynarmoEngine, SynarmoConfig, and prediction APIs.&quot;</h2>
+<h1 id="api-reference">API Reference</h1>
+<p>This document provides the complete API reference for the Synarmo library, including class constructors, method signatures, parameter details, and common usage patterns.</p>
+<blockquote>
+<p><strong>New here?</strong> Start with the project overview on the home page: <strong><a href="https://vrraj.github.io/synarmo/">Synarmo docs home</a></strong>.</p>
+<p><strong>Source + releases:</strong> GitHub repo and PyPI package are linked from the home page.</p>
+</blockquote>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#core-classes">Core Classes</a></li>
+<li><a href="#synarmoengine-api">SynarmoEngine API</a></li>
+<li><a href="#configuration-api">Configuration API</a></li>
+<li><a href="#suggestion-api">Suggestion API</a></li>
+<li><a href="#convenience-functions">Convenience Functions</a></li>
+<li><a href="#common-usage-patterns">Common Usage Patterns</a></li>
+</ul>
+<hr>
+<h2 id="core-classes">Core Classes</h2>
+<h3 id="synarmoengine"><code>SynarmoEngine</code></h3>
+<p>Main prediction engine for generating text suggestions.</p>
+<pre><code class="language-python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">SynarmoEngine</span>:
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">
+        self,
+        config: SynarmoConfig,
+        backend: ModelBackend,
+        memory: UserMemory,
+    </span>) -&gt; <span class="hljs-literal">None</span>
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>config</code></td>
+<td><code>SynarmoConfig</code></td>
+<td>Runtime configuration object</td>
+</tr>
+<tr>
+<td><code>backend</code></td>
+<td><code>ModelBackend</code></td>
+<td>Model backend instance (mock or llama-cpp)</td>
+</tr>
+<tr>
+<td><code>memory</code></td>
+<td><code>UserMemory</code></td>
+<td>User profile and memory data</td>
+</tr>
+</tbody>
+</table>
+<h3 id="synarmoconfig"><code>SynarmoConfig</code></h3>
+<p>Runtime configuration for the Synarmo engine.</p>
+<pre><code class="language-python"><span class="hljs-meta">@dataclass(<span class="hljs-params">slots=<span class="hljs-literal">True</span></span>)</span>
+<span class="hljs-keyword">class</span> <span class="hljs-title class_">SynarmoConfig</span>:
+    backend: BackendName = <span class="hljs-string">&quot;mock&quot;</span>
+    model_path: Path | <span class="hljs-literal">None</span> = <span class="hljs-literal">None</span>
+    model_repo_id: <span class="hljs-built_in">str</span> | <span class="hljs-literal">None</span> = <span class="hljs-literal">None</span>
+    model_filename: <span class="hljs-built_in">str</span> | <span class="hljs-literal">None</span> = <span class="hljs-literal">None</span>
+    models_cache_dir: Path = field(default_factory=configured_models_cache)
+    profile: <span class="hljs-built_in">str</span> = <span class="hljs-string">&quot;default&quot;</span>
+    max_suggestions: <span class="hljs-built_in">int</span> = field(default_factory=configured_max_suggestions)
+    max_latency_ms: <span class="hljs-built_in">int</span> = <span class="hljs-number">100</span>
+    context_window: <span class="hljs-built_in">int</span> = <span class="hljs-number">2048</span>
+    style_adaptation: <span class="hljs-built_in">bool</span> = <span class="hljs-literal">True</span>
+    temperature: <span class="hljs-built_in">float</span> = <span class="hljs-number">0.25</span>
+    top_p: <span class="hljs-built_in">float</span> = <span class="hljs-number">0.95</span>
+    max_tokens: <span class="hljs-built_in">int</span> = <span class="hljs-number">32</span>
+    max_suggestion_words: <span class="hljs-built_in">int</span> = <span class="hljs-number">4</span>
+    stop: <span class="hljs-built_in">list</span>[<span class="hljs-built_in">str</span>] = field(default_factory=<span class="hljs-keyword">lambda</span>: [<span class="hljs-string">&quot;\n\n&quot;</span>])
+    profiles_dir: Path = Path(<span class="hljs-string">&quot;profiles&quot;</span>)
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>backend</code></td>
+<td><code>BackendName</code></td>
+<td>&quot;mock&quot;</td>
+<td>Model backend to use (&quot;mock&quot; or &quot;llama-cpp&quot;)</td>
+</tr>
+<tr>
+<td><code>model_path</code></td>
+<td>`Path</td>
+<td>None`</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>model_repo_id</code></td>
+<td>`str</td>
+<td>None`</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>model_filename</code></td>
+<td>`str</td>
+<td>None`</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>models_cache_dir</code></td>
+<td><code>Path</code></td>
+<td>~/models/synarmo</td>
+<td>Directory for cached models</td>
+</tr>
+<tr>
+<td><code>profile</code></td>
+<td><code>str</code></td>
+<td>&quot;default&quot;</td>
+<td>User profile name</td>
+</tr>
+<tr>
+<td><code>max_suggestions</code></td>
+<td><code>int</code></td>
+<td>3</td>
+<td>Maximum number of suggestions to return (1-10)</td>
+</tr>
+<tr>
+<td><code>max_latency_ms</code></td>
+<td><code>int</code></td>
+<td>100</td>
+<td>Target maximum latency in milliseconds</td>
+</tr>
+<tr>
+<td><code>context_window</code></td>
+<td><code>int</code></td>
+<td>2048</td>
+<td>Context window size in tokens (min 128)</td>
+</tr>
+<tr>
+<td><code>style_adaptation</code></td>
+<td><code>bool</code></td>
+<td>True</td>
+<td>Whether to adapt to user style from memory</td>
+</tr>
+<tr>
+<td><code>temperature</code></td>
+<td><code>float</code></td>
+<td>0.25</td>
+<td>Sampling temperature (0.0-2.0)</td>
+</tr>
+<tr>
+<td><code>top_p</code></td>
+<td><code>float</code></td>
+<td>0.95</td>
+<td>Nucleus sampling threshold (0.0-1.0)</td>
+</tr>
+<tr>
+<td><code>max_tokens</code></td>
+<td><code>int</code></td>
+<td>32</td>
+<td>Maximum tokens to generate (1-128)</td>
+</tr>
+<tr>
+<td><code>max_suggestion_words</code></td>
+<td><code>int</code></td>
+<td>4</td>
+<td>Maximum words per suggestion (1-20)</td>
+</tr>
+<tr>
+<td><code>stop</code></td>
+<td><code>list[str]</code></td>
+<td>[&quot;\n\n&quot;]</td>
+<td>Stop sequences for generation</td>
+</tr>
+<tr>
+<td><code>profiles_dir</code></td>
+<td><code>Path</code></td>
+<td>&quot;profiles&quot;</td>
+<td>Directory for user profiles</td>
+</tr>
+</tbody>
+</table>
+<h3 id="suggestion"><code>Suggestion</code></h3>
+<p>A single text suggestion with scoring.</p>
+<pre><code class="language-python"><span class="hljs-meta">@dataclass(<span class="hljs-params">frozen=<span class="hljs-literal">True</span>, slots=<span class="hljs-literal">True</span></span>)</span>
+<span class="hljs-keyword">class</span> <span class="hljs-title class_">Suggestion</span>:
+    text: <span class="hljs-built_in">str</span>
+    score: <span class="hljs-built_in">float</span>
+    source: <span class="hljs-built_in">str</span> = <span class="hljs-string">&quot;model&quot;</span>
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>text</code></td>
+<td><code>str</code></td>
+<td>-</td>
+<td>Suggested text completion</td>
+</tr>
+<tr>
+<td><code>score</code></td>
+<td><code>float</code></td>
+<td>-</td>
+<td>Confidence score (0.0-1.0)</td>
+</tr>
+<tr>
+<td><code>source</code></td>
+<td><code>str</code></td>
+<td>&quot;model&quot;</td>
+<td>Source of the suggestion</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="synarmoengine-api">SynarmoEngine API</h2>
+<h3 id="load"><code>load()</code></h3>
+<p>Load and initialize a SynarmoEngine instance.</p>
+<pre><code class="language-python"><span class="hljs-meta">@classmethod</span>
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">load</span>(<span class="hljs-params">
+    cls,
+    *,
+    profile: <span class="hljs-built_in">str</span> = <span class="hljs-string">&quot;default&quot;</span>,
+    backend: BackendName = <span class="hljs-string">&quot;mock&quot;</span>,
+    model_path: <span class="hljs-built_in">str</span> | Path | <span class="hljs-literal">None</span> = <span class="hljs-literal">None</span>,
+    profiles_dir: <span class="hljs-built_in">str</span> | Path = <span class="hljs-string">&quot;profiles&quot;</span>,
+    **overrides: <span class="hljs-built_in">object</span>,
+</span>) -&gt; <span class="hljs-string">&quot;SynarmoEngine&quot;</span>
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>profile</code></td>
+<td><code>str</code></td>
+<td>&quot;default&quot;</td>
+<td>User profile name</td>
+</tr>
+<tr>
+<td><code>backend</code></td>
+<td><code>BackendName</code></td>
+<td>&quot;mock&quot;</td>
+<td>Model backend (&quot;mock&quot; or &quot;llama-cpp&quot;)</td>
+</tr>
+<tr>
+<td><code>model_path</code></td>
+<td>`str</td>
+<td>Path</td>
+<td>None`</td>
+</tr>
+<tr>
+<td><code>profiles_dir</code></td>
+<td>`str</td>
+<td>Path`</td>
+<td>&quot;profiles&quot;</td>
+</tr>
+<tr>
+<td><code>**overrides</code></td>
+<td><code>object</code></td>
+<td>-</td>
+<td>Additional config overrides</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Returns:</strong> <code>SynarmoEngine</code> - Initialized engine instance</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
+
+<span class="hljs-comment"># Load with mock backend (no model required)</span>
+engine = SynarmoEngine.load(backend=<span class="hljs-string">&quot;mock&quot;</span>)
+
+<span class="hljs-comment"># Load with llama-cpp backend</span>
+engine = SynarmoEngine.load(
+    backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>,
+    profile=<span class="hljs-string">&quot;default&quot;</span>,
+    max_suggestions=<span class="hljs-number">3</span>,
+    temperature=<span class="hljs-number">0.25</span>,
+)
+</code></pre>
+<h3 id="suggest"><code>suggest()</code></h3>
+<p>Generate suggestions for the given text.</p>
+<pre><code class="language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">suggest</span>(<span class="hljs-params">self, text: <span class="hljs-built_in">str</span>, context: <span class="hljs-built_in">str</span> | <span class="hljs-literal">None</span> = <span class="hljs-literal">None</span></span>) -&gt; <span class="hljs-built_in">list</span>[Suggestion]
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>text</code></td>
+<td><code>str</code></td>
+<td>✅</td>
+<td>Current text to complete</td>
+</tr>
+<tr>
+<td><code>context</code></td>
+<td>`str</td>
+<td>None`</td>
+<td>❌</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Returns:</strong> <code>list[Suggestion]</code> - List of ranked suggestions</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
+
+engine = SynarmoEngine.load(backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>)
+suggestions = engine.suggest(
+    text=<span class="hljs-string">&quot;I want to&quot;</span>,
+    context=<span class="hljs-string">&quot;At home, asking for help&quot;</span>
+)
+
+<span class="hljs-keyword">for</span> suggestion <span class="hljs-keyword">in</span> suggestions:
+    <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;<span class="hljs-subst">{suggestion.text}</span> (score: <span class="hljs-subst">{suggestion.score}</span>)&quot;</span>)
+</code></pre>
+<h3 id="evaluate_autocomplete"><code>evaluate_autocomplete()</code></h3>
+<p>Evaluate autocomplete with detailed token-level information (requires llama-cpp backend).</p>
+<pre><code class="language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">evaluate_autocomplete</span>(<span class="hljs-params">
+    self,
+    *,
+    text: <span class="hljs-built_in">str</span>,
+    contexts: <span class="hljs-built_in">list</span>[<span class="hljs-built_in">str</span>],
+    choices: <span class="hljs-built_in">int</span> = <span class="hljs-number">3</span>,
+    max_tokens: <span class="hljs-built_in">int</span> = <span class="hljs-number">10</span>,
+    max_words: <span class="hljs-built_in">int</span> = <span class="hljs-number">1</span>,
+    temperature: <span class="hljs-built_in">float</span> = <span class="hljs-number">0.5</span>,
+    top_p: <span class="hljs-built_in">float</span> = <span class="hljs-number">0.95</span>,
+    logprob_pool: <span class="hljs-built_in">int</span> = <span class="hljs-number">24</span>,
+</span>) -&gt; <span class="hljs-built_in">list</span>[AutocompleteEvaluation]
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>text</code></td>
+<td><code>str</code></td>
+<td>-</td>
+<td>Current text to complete</td>
+</tr>
+<tr>
+<td><code>contexts</code></td>
+<td><code>list[str]</code></td>
+<td>-</td>
+<td>List of context strings to evaluate</td>
+</tr>
+<tr>
+<td><code>choices</code></td>
+<td><code>int</code></td>
+<td>3</td>
+<td>Number of suggestions to return</td>
+</tr>
+<tr>
+<td><code>max_tokens</code></td>
+<td><code>int</code></td>
+<td>10</td>
+<td>Maximum tokens per suggestion</td>
+</tr>
+<tr>
+<td><code>max_words</code></td>
+<td><code>int</code></td>
+<td>1</td>
+<td>Maximum words per suggestion</td>
+</tr>
+<tr>
+<td><code>temperature</code></td>
+<td><code>float</code></td>
+<td>0.5</td>
+<td>Sampling temperature</td>
+</tr>
+<tr>
+<td><code>top_p</code></td>
+<td><code>float</code></td>
+<td>0.95</td>
+<td>Nucleus sampling threshold</td>
+</tr>
+<tr>
+<td><code>logprob_pool</code></td>
+<td><code>int</code></td>
+<td>24</td>
+<td>Number of logprob tokens to inspect</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Returns:</strong> <code>list[AutocompleteEvaluation]</code> - Detailed evaluation results</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
+
+engine = SynarmoEngine.load(backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>)
+evaluations = engine.evaluate_autocomplete(
+    text=<span class="hljs-string">&quot;I want to&quot;</span>,
+    contexts=[<span class="hljs-string">&quot;At home&quot;</span>, <span class="hljs-string">&quot;At work&quot;</span>, <span class="hljs-string">&quot;With friends&quot;</span>],
+    choices=<span class="hljs-number">3</span>,
+    temperature=<span class="hljs-number">0.5</span>,
+)
+
+<span class="hljs-keyword">for</span> <span class="hljs-built_in">eval</span> <span class="hljs-keyword">in</span> evaluations:
+    <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;Context: <span class="hljs-subst">{<span class="hljs-built_in">eval</span>.context}</span>&quot;</span>)
+    <span class="hljs-keyword">for</span> candidate <span class="hljs-keyword">in</span> <span class="hljs-built_in">eval</span>.candidates:
+        <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;  <span class="hljs-subst">{candidate.text}</span> (logprob: <span class="hljs-subst">{candidate.logprob}</span>)&quot;</span>)
+</code></pre>
+<h3 id="configure"><code>configure()</code></h3>
+<p>Update engine configuration at runtime.</p>
+<pre><code class="language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">configure</span>(<span class="hljs-params">self, **updates: <span class="hljs-built_in">object</span></span>) -&gt; <span class="hljs-literal">None</span>
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>**updates</code></td>
+<td><code>object</code></td>
+<td>Configuration key-value pairs to update</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example:</strong></p>
+<pre><code class="language-python">engine.configure(
+    max_suggestions=<span class="hljs-number">5</span>,
+    temperature=<span class="hljs-number">0.3</span>,
+    max_suggestion_words=<span class="hljs-number">3</span>,
+)
+</code></pre>
+<h3 id="remember_phrase"><code>remember_phrase()</code></h3>
+<p>Add a phrase to user memory for style adaptation.</p>
+<pre><code class="language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">remember_phrase</span>(<span class="hljs-params">self, phrase: <span class="hljs-built_in">str</span></span>) -&gt; <span class="hljs-literal">None</span>
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>phrase</code></td>
+<td><code>str</code></td>
+<td>Phrase to remember</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example:</strong></p>
+<pre><code class="language-python">engine.remember_phrase(<span class="hljs-string">&quot;let&#x27;s grab coffee&quot;</span>)
+engine.remember_phrase(<span class="hljs-string">&quot;see you later&quot;</span>)
+</code></pre>
+<hr>
+<h2 id="configuration-api">Configuration API</h2>
+<h3 id="synarmoconfigcopy_with"><code>SynarmoConfig.copy_with()</code></h3>
+<p>Create a copy of the configuration with updated values.</p>
+<pre><code class="language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">copy_with</span>(<span class="hljs-params">self, **updates: <span class="hljs-built_in">object</span></span>) -&gt; <span class="hljs-string">&quot;SynarmoConfig&quot;</span>
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>**updates</code></td>
+<td><code>object</code></td>
+<td>Configuration key-value pairs to update</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Returns:</strong> <code>SynarmoConfig</code> - New configuration instance</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoConfig
+
+config = SynarmoConfig()
+new_config = config.copy_with(
+    max_suggestions=<span class="hljs-number">5</span>,
+    temperature=<span class="hljs-number">0.3</span>,
+    backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>
+)
+</code></pre>
+<h3 id="synarmoconfigresolved_profile_dir"><code>SynarmoConfig.resolved_profile_dir()</code></h3>
+<p>Get the resolved absolute path for the profile directory.</p>
+<pre><code class="language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">resolved_profile_dir</span>(<span class="hljs-params">self</span>) -&gt; Path
+</code></pre>
+<p><strong>Returns:</strong> <code>Path</code> - Absolute path to profile directory</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-python">config = SynarmoConfig(profile=<span class="hljs-string">&quot;myuser&quot;</span>)
+profile_dir = config.resolved_profile_dir()
+<span class="hljs-built_in">print</span>(profile_dir)  <span class="hljs-comment"># /path/to/profiles/myuser</span>
+</code></pre>
+<hr>
+<h2 id="suggestion-api">Suggestion API</h2>
+<h3 id="suggestionranker"><code>SuggestionRanker</code></h3>
+<p>Internal class for ranking and filtering suggestions.</p>
+<pre><code class="language-python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">SuggestionRanker</span>:
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">rank</span>(<span class="hljs-params">
+        self,
+        raw_text: <span class="hljs-built_in">str</span>,
+        *,
+        current_text: <span class="hljs-built_in">str</span>,
+        max_suggestions: <span class="hljs-built_in">int</span>,
+        max_words: <span class="hljs-built_in">int</span> = <span class="hljs-number">4</span>,
+    </span>) -&gt; <span class="hljs-built_in">list</span>[Suggestion]
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>raw_text</code></td>
+<td><code>str</code></td>
+<td>-</td>
+<td>Raw model output text</td>
+</tr>
+<tr>
+<td><code>current_text</code></td>
+<td><code>str</code></td>
+<td>-</td>
+<td>Current user text</td>
+</tr>
+<tr>
+<td><code>max_suggestions</code></td>
+<td><code>int</code></td>
+<td>-</td>
+<td>Maximum suggestions to return</td>
+</tr>
+<tr>
+<td><code>max_words</code></td>
+<td><code>int</code></td>
+<td>4</td>
+<td>Maximum words per suggestion</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Returns:</strong> <code>list[Suggestion]</code> - Ranked and filtered suggestions</p>
+<hr>
+<h2 id="convenience-functions">Convenience Functions</h2>
+<h3 id="predict"><code>predict()</code></h3>
+<p>One-shot prediction function (loads engine on first call).</p>
+<pre><code class="language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">predict</span>(<span class="hljs-params">
+    text: <span class="hljs-built_in">str</span>,
+    context: <span class="hljs-built_in">str</span> | <span class="hljs-literal">None</span> = <span class="hljs-literal">None</span>,
+    user_profile: <span class="hljs-built_in">str</span> = <span class="hljs-string">&quot;default&quot;</span>,
+    **load_options: <span class="hljs-built_in">object</span>,
+</span>) -&gt; <span class="hljs-built_in">list</span>[Suggestion]
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>text</code></td>
+<td><code>str</code></td>
+<td>-</td>
+<td>Current text to complete</td>
+</tr>
+<tr>
+<td><code>context</code></td>
+<td>`str</td>
+<td>None`</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>user_profile</code></td>
+<td><code>str</code></td>
+<td>&quot;default&quot;</td>
+<td>User profile name</td>
+</tr>
+<tr>
+<td><code>**load_options</code></td>
+<td><code>object</code></td>
+<td>-</td>
+<td>Engine load options</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Returns:</strong> <code>list[Suggestion]</code> - List of suggestions</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-python"><span class="hljs-keyword">import</span> synarmo
+
+suggestions = synarmo.predict(
+    text=<span class="hljs-string">&quot;I want to&quot;</span>,
+    context=<span class="hljs-string">&quot;At home&quot;</span>,
+    backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>,
+    max_suggestions=<span class="hljs-number">3</span>,
+)
+</code></pre>
+<h3 id="suggest-1"><code>suggest()</code></h3>
+<p>Alias for <code>predict()</code> function.</p>
+<pre><code class="language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">suggest</span>(<span class="hljs-params">
+    text: <span class="hljs-built_in">str</span>,
+    context: <span class="hljs-built_in">str</span> | <span class="hljs-literal">None</span> = <span class="hljs-literal">None</span>,
+    user_profile: <span class="hljs-built_in">str</span> = <span class="hljs-string">&quot;default&quot;</span>,
+    **load_options: <span class="hljs-built_in">object</span>,
+</span>) -&gt; <span class="hljs-built_in">list</span>[Suggestion]
+</code></pre>
+<p><strong>Example:</strong></p>
+<pre><code class="language-python"><span class="hljs-keyword">import</span> synarmo
+
+suggestions = synarmo.suggest(
+    text=<span class="hljs-string">&quot;hello&quot;</span>,
+    context=<span class="hljs-string">&quot;greeting&quot;</span>,
+    backend=<span class="hljs-string">&quot;mock&quot;</span>,
+)
+</code></pre>
+<hr>
+<h2 id="common-usage-patterns">Common Usage Patterns</h2>
+<h3 id="1-basic-prediction-with-mock-backend">1. Basic Prediction with Mock Backend</h3>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
+
+engine = SynarmoEngine.load(backend=<span class="hljs-string">&quot;mock&quot;</span>)
+suggestions = engine.suggest(<span class="hljs-string">&quot;I want to&quot;</span>)
+<span class="hljs-built_in">print</span>([s.text <span class="hljs-keyword">for</span> s <span class="hljs-keyword">in</span> suggestions])
+</code></pre>
+<h3 id="2-prediction-with-local-gguf-model">2. Prediction with Local GGUF Model</h3>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
+
+engine = SynarmoEngine.load(
+    backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>,
+    model_path=<span class="hljs-string">&quot;~/models/synarmo/Llama-3.2-1B.Q4_K_M.gguf&quot;</span>,
+)
+suggestions = engine.suggest(
+    text=<span class="hljs-string">&quot;I want to&quot;</span>,
+    context=<span class="hljs-string">&quot;At home, asking for help&quot;</span>
+)
+</code></pre>
+<h3 id="3-one-shot-prediction">3. One-Shot Prediction</h3>
+<pre><code class="language-python"><span class="hljs-keyword">import</span> synarmo
+
+suggestions = synarmo.predict(
+    text=<span class="hljs-string">&quot;hello&quot;</span>,
+    context=<span class="hljs-string">&quot;greeting&quot;</span>,
+    backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>,
+    max_suggestions=<span class="hljs-number">3</span>,
+    temperature=<span class="hljs-number">0.25</span>,
+)
+</code></pre>
+<h3 id="4-custom-configuration">4. Custom Configuration</h3>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
+
+engine = SynarmoEngine.load(
+    backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>,
+    max_suggestions=<span class="hljs-number">5</span>,
+    max_suggestion_words=<span class="hljs-number">3</span>,
+    temperature=<span class="hljs-number">0.3</span>,
+    top_p=<span class="hljs-number">0.90</span>,
+    style_adaptation=<span class="hljs-literal">True</span>,
+)
+</code></pre>
+<h3 id="5-runtime-configuration-update">5. Runtime Configuration Update</h3>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
+
+engine = SynarmoEngine.load(backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>)
+engine.configure(max_suggestions=<span class="hljs-number">5</span>, temperature=<span class="hljs-number">0.3</span>)
+</code></pre>
+<h3 id="6-user-profile-and-memory">6. User Profile and Memory</h3>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
+
+engine = SynarmoEngine.load(
+    backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>,
+    profile=<span class="hljs-string">&quot;myuser&quot;</span>,
+)
+
+<span class="hljs-comment"># Remember phrases for style adaptation</span>
+engine.remember_phrase(<span class="hljs-string">&quot;let&#x27;s grab coffee&quot;</span>)
+engine.remember_phrase(<span class="hljs-string">&quot;see you later&quot;</span>)
+
+<span class="hljs-comment"># Suggestions will now adapt to this style</span>
+suggestions = engine.suggest(<span class="hljs-string">&quot;I want to&quot;</span>)
+</code></pre>
+<h3 id="7-multiple-contexts-evaluation">7. Multiple Contexts Evaluation</h3>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
+
+engine = SynarmoEngine.load(backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>)
+evaluations = engine.evaluate_autocomplete(
+    text=<span class="hljs-string">&quot;I want to&quot;</span>,
+    contexts=[<span class="hljs-string">&quot;At home&quot;</span>, <span class="hljs-string">&quot;At work&quot;</span>, <span class="hljs-string">&quot;With friends&quot;</span>],
+    choices=<span class="hljs-number">3</span>,
+    temperature=<span class="hljs-number">0.5</span>,
+)
+
+<span class="hljs-keyword">for</span> <span class="hljs-built_in">eval</span> <span class="hljs-keyword">in</span> evaluations:
+    <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;\nContext: <span class="hljs-subst">{<span class="hljs-built_in">eval</span>.context}</span>&quot;</span>)
+    <span class="hljs-keyword">for</span> candidate <span class="hljs-keyword">in</span> <span class="hljs-built_in">eval</span>.candidates:
+        <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;  <span class="hljs-subst">{candidate.text}</span> (logprob: <span class="hljs-subst">{candidate.logprob}</span>)&quot;</span>)
+</code></pre>
+<h3 id="8-integration-with-fastapi">8. Integration with FastAPI</h3>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> fastapi <span class="hljs-keyword">import</span> FastAPI
+<span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
+
+app = FastAPI()
+engine = SynarmoEngine.load(backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>)
+
+<span class="hljs-meta">@app.post(<span class="hljs-params"><span class="hljs-string">&quot;/suggest&quot;</span></span>)</span>
+<span class="hljs-keyword">async</span> <span class="hljs-keyword">def</span> <span class="hljs-title function_">get_suggestions</span>(<span class="hljs-params">text: <span class="hljs-built_in">str</span>, context: <span class="hljs-built_in">str</span> = <span class="hljs-literal">None</span></span>):
+    suggestions = engine.suggest(text=text, context=context)
+    <span class="hljs-keyword">return</span> {<span class="hljs-string">&quot;suggestions&quot;</span>: [s.text <span class="hljs-keyword">for</span> s <span class="hljs-keyword">in</span> suggestions]}
+</code></pre>
+<h3 id="9-integration-with-flask">9. Integration with Flask</h3>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> flask <span class="hljs-keyword">import</span> Flask, request, jsonify
+<span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
+
+app = Flask(__name__)
+engine = SynarmoEngine.load(backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>)
+
+<span class="hljs-meta">@app.route(<span class="hljs-params"><span class="hljs-string">&quot;/suggest&quot;</span>, methods=[<span class="hljs-string">&quot;POST&quot;</span>]</span>)</span>
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">suggest</span>():
+    data = request.json
+    suggestions = engine.suggest(
+        text=data.get(<span class="hljs-string">&quot;text&quot;</span>),
+        context=data.get(<span class="hljs-string">&quot;context&quot;</span>)
+    )
+    <span class="hljs-keyword">return</span> jsonify({<span class="hljs-string">&quot;suggestions&quot;</span>: [s.text <span class="hljs-keyword">for</span> s <span class="hljs-keyword">in</span> suggestions]})
+</code></pre>
+<hr>
+<h2 id="parameter-stability">Parameter Stability</h2>
+<h3 id="stable-parameters">Stable Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Stability</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>backend</code></td>
+<td>✅ Stable</td>
+<td>Model backend selection</td>
+</tr>
+<tr>
+<td><code>profile</code></td>
+<td>✅ Stable</td>
+<td>User profile name</td>
+</tr>
+<tr>
+<td><code>max_suggestions</code></td>
+<td>✅ Stable</td>
+<td>Maximum suggestions (1-10)</td>
+</tr>
+<tr>
+<td><code>max_suggestion_words</code></td>
+<td>✅ Stable</td>
+<td>Maximum words per suggestion (1-20)</td>
+</tr>
+<tr>
+<td><code>temperature</code></td>
+<td>✅ Stable</td>
+<td>Sampling temperature (0.0-2.0)</td>
+</tr>
+<tr>
+<td><code>top_p</code></td>
+<td>✅ Stable</td>
+<td>Nucleus sampling (0.0-1.0)</td>
+</tr>
+<tr>
+<td><code>max_tokens</code></td>
+<td>✅ Stable</td>
+<td>Maximum tokens (1-128)</td>
+</tr>
+<tr>
+<td><code>context_window</code></td>
+<td>✅ Stable</td>
+<td>Context window size</td>
+</tr>
+<tr>
+<td><code>style_adaptation</code></td>
+<td>✅ Stable</td>
+<td>Style adaptation toggle</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Legend:</strong></p>
+<ul>
+<li>✅ <strong>Stable</strong>: Guaranteed interface, won't change</li>
+</ul>
+
+            
+            
+        </body>
+        </html>
