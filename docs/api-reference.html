@@ -298,7 +298,7 @@ description: &quot;Complete API documentation for SynarmoEngine, SynarmoConfig, 
 <td><code>top_p</code></td>
 <td><code>float</code></td>
 <td>0.95</td>
-<td>Nucleus sampling threshold (0.0-1.0)</td>
+<td>Nucleus sampling threshold (greater than 0.0 and up to 1.0)</td>
 </tr>
 <tr>
 <td><code>max_tokens</code></td>
@@ -481,7 +481,7 @@ suggestions = engine.suggest(
     <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;<span class="hljs-subst">{suggestion.text}</span> (score: <span class="hljs-subst">{suggestion.score}</span>)&quot;</span>)
 </code></pre>
 <h3 id="evaluate_autocomplete"><code>evaluate_autocomplete()</code></h3>
-<p>Evaluate autocomplete with detailed token-level information (requires llama-cpp backend).</p>
+<p>Evaluate autocomplete with detailed token-level information. The llama-cpp backend returns model logprobs; the mock backend returns deterministic fallback candidates for tests and wiring checks.</p>
 <pre><code class="language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">evaluate_autocomplete</span>(<span class="hljs-params">
     self,
     *,
@@ -948,7 +948,7 @@ engine = SynarmoEngine.load(backend=<span class="hljs-string">&quot;llama-cpp&qu
 <tr>
 <td><code>top_p</code></td>
 <td>✅ Stable</td>
-<td>Nucleus sampling (0.0-1.0)</td>
+<td>Nucleus sampling (greater than 0.0 and up to 1.0)</td>
 </tr>
 <tr>
 <td><code>max_tokens</code></td>

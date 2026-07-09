@@ -5,6 +5,7 @@
 #   make dev          Install Synarmo with dev, service, and llama extras.
 #   make test         Run the Python test suite.
 #   make serve        Run the local service in the foreground.
+#   make serve-lan    Run the local service on all network interfaces.
 #   make start        Start the local service in the background.
 #   make stop         Stop the background service started by make start.
 #   make ui           Print the browser UI URL.
@@ -20,10 +21,11 @@
 #
 # Examples:
 #   make serve BACKEND=mock
+#   make serve HOST=0.0.0.0
 #   make start PORT=8766
 #   make suggest TEXT="I want to" CONTEXT="At home, asking for help"
 
-.PHONY: help install dev llama test compile serve serve-mock start start-mock stop restart status health ui docs suggest compose models model-current model-ensure clean
+.PHONY: help install dev llama test compile serve serve-lan serve-mock start start-mock stop restart status health ui docs suggest compose models model-current model-ensure clean
 
 PYTHON ?= .venv/bin/python
 SYNARMO ?= .venv/bin/synarmo
@@ -53,6 +55,7 @@ help:
 	@echo ""
 	@echo "Service:"
 	@echo "  make serve        Run service in foreground with BACKEND=$(BACKEND)"
+	@echo "  make serve-lan    Run service in foreground on all interfaces"
 	@echo "  make serve-mock   Run service in foreground with mock backend"
 	@echo "  make start        Start service in background; logs go to $(LOG_FILE)"
 	@echo "  make start-mock   Start mock service in background"
@@ -71,7 +74,7 @@ help:
 	@echo "  make model-ensure Check/download the configured llama.cpp model"
 	@echo ""
 	@echo "Overrides:"
-	@echo "  BACKEND=mock PORT=8766 TEXT='Can you' CONTEXT='Asking for help'"
+	@echo "  HOST=0.0.0.0 BACKEND=mock PORT=8766 TEXT='Can you' CONTEXT='Asking for help'"
 
 # Install package in editable mode.
 install:
@@ -98,6 +101,10 @@ compile:
 # when the selected GGUF file is missing.
 serve:
 	$(SYNARMO) serve --host $(HOST) --port $(PORT) --profile $(PROFILE) --backend $(BACKEND)
+
+# Run the service on all interfaces for access from another trusted LAN device.
+serve-lan:
+	$(MAKE) serve HOST=0.0.0.0
 
 # Run the deterministic mock backend in the foreground.
 serve-mock:

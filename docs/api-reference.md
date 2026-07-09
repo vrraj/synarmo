@@ -87,7 +87,7 @@ class SynarmoConfig:
 | `context_window` | `int` | 2048 | Context window size in tokens (min 128) |
 | `style_adaptation` | `bool` | True | Whether to adapt to user style from memory |
 | `temperature` | `float` | 0.25 | Sampling temperature (0.0-2.0) |
-| `top_p` | `float` | 0.95 | Nucleus sampling threshold (0.0-1.0) |
+| `top_p` | `float` | 0.95 | Nucleus sampling threshold (greater than 0.0 and up to 1.0) |
 | `max_tokens` | `int` | 32 | Maximum tokens to generate (1-128) |
 | `max_suggestion_words` | `int` | 4 | Maximum words per suggestion (1-20) |
 | `stop` | `list[str]` | ["\n\n"] | Stop sequences for generation |
@@ -197,7 +197,7 @@ for suggestion in suggestions:
 
 ### `evaluate_autocomplete()`
 
-Evaluate autocomplete with detailed token-level information (requires llama-cpp backend).
+Evaluate autocomplete with detailed token-level information. The llama-cpp backend returns model logprobs; the mock backend returns deterministic fallback candidates for tests and wiring checks.
 
 ```python
 def evaluate_autocomplete(
@@ -592,7 +592,7 @@ def suggest():
 | `max_suggestions` | ✅ Stable | Maximum suggestions (1-10) |
 | `max_suggestion_words` | ✅ Stable | Maximum words per suggestion (1-20) |
 | `temperature` | ✅ Stable | Sampling temperature (0.0-2.0) |
-| `top_p` | ✅ Stable | Nucleus sampling (0.0-1.0) |
+| `top_p` | ✅ Stable | Nucleus sampling (greater than 0.0 and up to 1.0) |
 | `max_tokens` | ✅ Stable | Maximum tokens (1-128) |
 | `context_window` | ✅ Stable | Context window size |
 | `style_adaptation` | ✅ Stable | Style adaptation toggle |

@@ -6,13 +6,15 @@ description: "Usage examples and patterns for synarmo package."
 
 # Usage Guide
 
-This guide provides practical usage examples and patterns for the Synarmo auto-suggest engine.
+This guide provides practical usage examples and patterns for the Synarmo
+auto-suggest engine.
 
 ## Quick Start
 
 ### Basic Prediction with Mock Backend
 
-The mock backend doesn't require a model and is useful for testing and development:
+The mock backend does not require a model and is useful for testing and
+development:
 
 ```python
 from synarmo import SynarmoEngine
@@ -24,7 +26,7 @@ print([s.text for s in suggestions])
 
 ### Prediction with Local GGUF Model
 
-For real predictions, use the llama-cpp backend with a local GGUF model:
+For real predictions, use the llama-cpp backend with a configured GGUF model:
 
 ```python
 from synarmo import SynarmoEngine
@@ -35,7 +37,7 @@ engine = SynarmoEngine.load(
 )
 suggestions = engine.suggest(
     text="I want to",
-    context="At home, asking for help"
+    context="At home, asking for help",
 )
 print([s.text for s in suggestions])
 ```

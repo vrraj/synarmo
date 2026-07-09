@@ -138,6 +138,24 @@ synarmo serve \
 
 The service starts on `http://127.0.0.1:8765`
 
+To access the service from another machine on the same trusted network, bind it
+to all interfaces:
+
+```bash
+synarmo serve --backend llama-cpp --host 0.0.0.0 --port 8765
+```
+
+or, from the repository Makefile:
+
+```bash
+make serve-lan
+```
+
+Then connect from the other machine using this host's LAN address or a name that
+resolves to it, for example `http://synarmo.local:8765/ui`. An `/etc/hosts`
+entry only maps the name to the server's real LAN IP; it should not point at
+`127.0.0.1`, because loopback always means "this same machine."
+
 ### Service Endpoints
 
 - `GET /health` - Health check endpoint
@@ -187,7 +205,7 @@ async def get_suggestions(request: dict):
 
 ## System Requirements
 
-- Python 3.9 or higher
+- Python 3.10 or higher
 - pip package manager
 
 ### For llama.cpp Backend:

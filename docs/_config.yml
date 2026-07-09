@@ -24,7 +24,7 @@ defaults:
       description: "Complete API documentation for SynarmoEngine, context assembly, and prediction APIs."
 
   - scope:
-      path: "deployment.md"
+      path: "DEPLOYMENT.md"
     values:
       title: "Deployment Guide | Synarmo"
       description: "Installation and deployment instructions for synarmo package."

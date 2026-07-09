@@ -30,7 +30,11 @@ def build_parser() -> argparse.ArgumentParser:
     compose_parser.add_argument("--max-suggestions", type=int)
 
     serve_parser = subcommands.add_parser("serve", help="Run the local REST/WebSocket service.")
-    serve_parser.add_argument("--host", default="127.0.0.1")
+    serve_parser.add_argument(
+        "--host",
+        default="127.0.0.1",
+        help="Bind address for the service. Use 0.0.0.0 to listen on all interfaces.",
+    )
     serve_parser.add_argument("--port", type=int, default=8765)
     serve_parser.add_argument("--profile", default="default")
     serve_parser.add_argument("--backend", choices=["mock", "llama-cpp"], default="mock")
