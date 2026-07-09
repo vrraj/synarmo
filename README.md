@@ -57,6 +57,27 @@ The default `.env.example` points at a small Hugging Face GGUF model and
 `llama-cpp-python` downloads it on first load if it is not already in
 `LOCAL_MODELS_CACHE`.
 
+## Test The Package Without A Model
+
+You can verify the package, prompt logic, ranking, service wiring, and
+llama.cpp adapter integration without downloading a GGUF model:
+
+```bash
+python3 -m compileall src tests
+```
+
+After installing development dependencies:
+
+```bash
+pip install -e ".[dev]"
+PYTHONPATH=src pytest
+```
+
+The default test suite does not require a model download. Tests use
+deterministic local test doubles and monkeypatched llama.cpp adapter checks, so
+they can validate package behavior quickly while keeping real GGUF inference as
+a separate runtime smoke test.
+
 ### Interactive UI From The Repository
 
 Step 1: clone the repository:
@@ -121,6 +142,10 @@ synarmo suggest "I want to" \
   --backend llama-cpp
 ```
 
+This smoke test is useful after installing `synarmo[llama]` or changing model
+configuration because it verifies the real runtime path: the package imports,
+`llama-cpp-python` loads, the configured GGUF file is found or downloaded, and
+Synarmo returns suggestions through the same engine used by the CLI and service.
 If the model has not been downloaded yet, this first run can take a while
 because it has to fetch and load the GGUF file. Later predictions reuse the
 already downloaded model.

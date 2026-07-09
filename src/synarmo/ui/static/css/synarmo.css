@@ -39,6 +39,10 @@ body {
   color: #111111;
 }
 
+.page-title-sub {
+  font-weight: 400;
+}
+
 .page-subtitle {
   font-size: 16px;
   color: #333333;

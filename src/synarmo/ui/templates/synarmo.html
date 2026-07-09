@@ -11,8 +11,8 @@
       <main class="main">
         <div class="page-header">
           <div>
-            <h1 class="page-title">Synarmo: Local Context-Aware Type-Ahead suggestions</h1>
-            <p class="page-subtitle">Specify context and get personalized word or phrase suggestions.</p>
+            <h1 class="page-title">Synarmo: <span class="page-title-sub">Context-Aware Edge Auto-Suggest Engine</span></h1>
+            <p class="page-subtitle">A local-first inference package with service APIs for generating personalized next-word and short-phrase suggestions.</p>
           </div>
         </div>
 
@@ -34,13 +34,13 @@
           <div class="compose-layout">
             <section class="compose-panel">
               <div class="compose-heading">
-                <label for="typed-text">Typed text</label>
+                <label for="typed-text">Typed Text <span class="muted">(spacebar sets off prediction engine)</span></label>
                 <span id="char-count" class="muted">0 characters</span>
               </div>
               <textarea id="typed-text" rows="4" autocomplete="off" spellcheck="true" placeholder="Start typing here..."></textarea>
 
               <div class="suggestions-heading">
-                <h2>Suggestions</h2>
+                <h2>Suggestions <span class="muted">(click a pill to choose)</span></h2>
                 <span id="suggestion-status" class="muted">Ready</span>
               </div>
               <div id="suggestions-list" class="suggestions-list">
@@ -144,10 +144,6 @@
                     >?</span>
                   </label>
                 </div>
-              </div>
-              <div class="field-row">
-                <label>Flow</label>
-                <div class="muted">Click a pill, or edit Typed text directly and click Suggest.</div>
               </div>
             </aside>
           </div>
