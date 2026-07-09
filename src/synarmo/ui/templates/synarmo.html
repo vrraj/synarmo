@@ -11,15 +11,24 @@
       <main class="main">
         <div class="page-header">
           <div>
-            <h1 class="page-title">Synarmo: Local Type-Ahead Communication Companion</h1>
-            <p class="page-subtitle">Choose a short suggestion, append it, and immediately predict the next phrase.</p>
+            <h1 class="page-title">Synarmo: Local Context-Aware Type-Ahead suggestions</h1>
+            <p class="page-subtitle">Specify context and get personalized word or phrase suggestions.</p>
           </div>
-          <div id="service-status" class="status-pill">Checking service...</div>
         </div>
 
         <section class="workspace-card">
           <div class="tabs">
             <button class="tab-button" type="button">Compose</button>
+            <div id="service-status" class="service-status" aria-live="polite">
+              <span class="status-field">
+                <span class="status-label">Service status:</span>
+                <span id="service-status-value" class="status-value">Checking...</span>
+              </span>
+              <span id="model-name-field" class="status-field">
+                <span class="status-label">Model name:</span>
+                <span id="model-name-value" class="model-name">Unknown</span>
+              </span>
+            </div>
           </div>
 
           <div class="compose-layout">
@@ -104,8 +113,8 @@
                     Top P
                     <span
                       class="parameter-help"
-                      title="Limits sampling to the smallest set of next tokens whose combined probability reaches this value."
-                      aria-label="Limits sampling to the smallest set of next tokens whose combined probability reaches this value."
+                      title="Limits the useful candidate pool first. Lower values can leave fewer tokens for Logprobs to inspect."
+                      aria-label="Limits the useful candidate pool first. Lower values can leave fewer tokens for Logprobs to inspect."
                       tabindex="0"
                     >?</span>
                   </label>
@@ -116,14 +125,14 @@
                     Logprobs
                     <span
                       class="parameter-help"
-                      title="How many top next-token probabilities to inspect before picking unique suggestion starters. Higher values can find more alternatives but may add overhead."
-                      aria-label="How many top next-token probabilities to inspect before picking unique suggestion starters. Higher values can find more alternatives but may add overhead."
+                      title="How many scored next-token options to inspect after Top P has shaped the pool. Higher values give Synarmo more candidates to choose from, while Choices still controls how many suggestions appear."
+                      aria-label="How many scored next-token options to inspect after Top P has shaped the pool. Higher values give Synarmo more candidates to choose from, while Choices still controls how many suggestions appear."
                       tabindex="0"
                     >?</span>
                   </label>
-                  <input id="logprob-pool" type="number" min="1" max="50" step="1" value="12" />
+                  <input id="logprob-pool" type="number" min="1" max="50" step="1" value="24" />
                 </div>
-                <div class="field-row">
+                <div class="field-row field-row-wide">
                   <label class="parameter-label" for="suggest-on-spacebar">
                     Auto - Suggest on Spacebar
                     <input id="suggest-on-spacebar" type="checkbox" checked />
@@ -135,10 +144,6 @@
                     >?</span>
                   </label>
                 </div>
-              </div>
-              <div class="field-row">
-                <label>Applies to</label>
-                <div class="muted">The Compose suggestions above.</div>
               </div>
               <div class="field-row">
                 <label>Flow</label>

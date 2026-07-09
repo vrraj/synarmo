@@ -135,7 +135,7 @@ class SynarmoEngine:
         max_words: int = 1,
         temperature: float = 0.5,
         top_p: float = 0.95,
-        logprob_pool: int = 12,
+        logprob_pool: int = 24,
     ) -> list[AutocompleteEvaluation]:
         evaluator = getattr(self.backend, "evaluate_autocomplete", None)
         if evaluator is None:

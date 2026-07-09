@@ -45,18 +45,6 @@ body {
   margin: 0;
 }
 
-.status-pill {
-  border: 1px solid #dddddd;
-  border-radius: 999px;
-  color: #333333;
-  font-size: 13px;
-  padding: 5px 12px;
-  max-width: 420px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .workspace-card {
   background: #ffffff;
   border: 1px solid #eeeeee;
@@ -65,8 +53,10 @@ body {
 }
 
 .tabs {
+  align-items: flex-start;
   display: flex;
   gap: 22px;
+  justify-content: space-between;
   border-bottom: 1px solid #eeeeee;
   margin-bottom: 28px;
 }
@@ -81,6 +71,52 @@ body {
   font-size: 16px;
   font-weight: 700;
   padding: 6px 0 10px;
+}
+
+.service-status {
+  color: #333333;
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  font-size: 13px;
+  gap: 8px 14px;
+  justify-content: flex-end;
+  line-height: 1.3;
+  min-width: 0;
+  padding-bottom: 10px;
+  text-align: right;
+}
+
+.status-field {
+  min-width: 0;
+}
+
+.status-label {
+  color: #555555;
+  font-weight: 600;
+}
+
+.status-value {
+  color: #333333;
+  font-weight: 700;
+}
+
+.status-value.is-ok {
+  color: #16823a;
+}
+
+.status-value.is-error {
+  color: #a11d1d;
+}
+
+.model-name {
+  display: inline-block;
+  font-weight: 600;
+  max-width: min(430px, 100%);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+  white-space: nowrap;
 }
 
 .compose-layout {
@@ -209,6 +245,10 @@ button.secondary:hover {
   margin-bottom: 14px;
 }
 
+.field-row-wide {
+  grid-column: 1 / -1;
+}
+
 .context-label {
   display: block;
   font-weight: 700;
@@ -285,6 +325,18 @@ button.secondary:hover {
   .page-header {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .tabs {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .service-status {
+    justify-content: flex-start;
+    padding-bottom: 12px;
+    text-align: left;
   }
 
   .compose-layout {

@@ -43,6 +43,26 @@ def normalize_candidate(text: str, *, max_words: int) -> str:
     return " ".join(words).strip(" ,;:")
 
 
+def extract_top_logprobs(probe: dict[str, Any]) -> dict[str, float]:
+    choices = probe.get("choices")
+    if not choices:
+        return {}
+
+    logprobs = choices[0].get("logprobs")
+    if not logprobs:
+        return {}
+
+    top_logprobs = logprobs.get("top_logprobs")
+    if not top_logprobs:
+        return {}
+
+    raw_top_logprobs = top_logprobs[0]
+    if not isinstance(raw_top_logprobs, dict):
+        return {}
+
+    return raw_top_logprobs
+
+
 def evaluate_with_llama(
     llm: Any,
     *,
@@ -53,7 +73,7 @@ def evaluate_with_llama(
     max_words: int = 1,
     temperature: float = 0.5,
     top_p: float = 0.95,
-    logprob_pool: int = 12,
+    logprob_pool: int = 24,
 ) -> AutocompleteEvaluation:
     prompt = build_autocomplete_prompt(context, typed_text)
     probe = llm(
@@ -64,7 +84,7 @@ def evaluate_with_llama(
         logprobs=logprob_pool,
         echo=False,
     )
-    raw_top_logprobs = probe["choices"][0]["logprobs"]["top_logprobs"][0]
+    raw_top_logprobs = extract_top_logprobs(probe)
     ranked = sorted(raw_top_logprobs.items(), key=lambda item: item[1], reverse=True)
     top_tokens = [LogprobToken(text=text, logprob=float(logprob)) for text, logprob in ranked]
 

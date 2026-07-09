@@ -14,10 +14,10 @@ Synarmo is intended to be used as:
 
 - a PyPI package for predicting suggestions from Python
 - a local FastAPI service for REST and WebSocket clients
-- a browser `/ui` for testing and tuning API calls with context and parameters
-- a model-backed engine that can test different local GGUF models through `.env`
+- an interactive browser `/ui` for testing and tuning API calls with context and parameters
+- a swappable model-backed engine that can test different local GGUF models through `.env`
 
-The application needs a local GGUF model to make useful predictions. The current
+> The application needs a local GGUF model to make useful predictions. The current
 runtime backend uses `llama-cpp-python`, loads the model once, and keeps
 inference local.
 
@@ -37,18 +37,59 @@ on-device model.
 
 ## Install
 
-From PyPI:
+### PyPI Package
+
+Step 1: install the base Python package:
+
+```bash
+pip install synarmo
+```
+
+Step 2: install the llama.cpp model runtime and service modules:
 
 ```bash
 pip install "synarmo[llama,service]"
 ```
 
-For local development from this repository:
+Then configure a GGUF model before running prediction commands such as
+`synarmo suggest`, `synarmo compose`, or `synarmo serve --backend llama-cpp`.
+The default `.env.example` points at a small Hugging Face GGUF model and
+`llama-cpp-python` downloads it on first load if it is not already in
+`LOCAL_MODELS_CACHE`.
+
+### Interactive UI From The Repository
+
+Step 1: clone the repository:
+
+```bash
+git clone https://github.com/vrraj/synarmo.git
+cd synarmo
+```
+
+Step 2: create a virtual environment and install the repo with development,
+llama.cpp, and service modules:
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev,llama,service]"
+```
+
+Step 3: configure a local GGUF model:
+
+```bash
+cp .env.example .env
+mkdir -p ~/models/synarmo
+```
+
+Step 4: start the service and open the interactive UI:
+
+```bash
+synarmo serve --backend llama-cpp
+```
+
+```text
+http://127.0.0.1:8765/ui
 ```
 
 ## Configure A Local Model
@@ -71,6 +112,18 @@ SYNARMO_MODEL=llama-3.2-1b-instruct-q4_k_m.gguf
 
 When `SYNARMO_MODEL_REPO_ID` is set, `llama-cpp-python` checks
 `LOCAL_MODELS_CACHE` and downloads `SYNARMO_MODEL` if it is missing.
+
+Smoke test the full package-plus-model setup with:
+
+```bash
+synarmo suggest "I want to" \
+  --context "At home, asking for help" \
+  --backend llama-cpp
+```
+
+If the model has not been downloaded yet, this first run can take a while
+because it has to fetch and load the GGUF file. Later predictions reuse the
+already downloaded model.
 
 You can also use a manually downloaded model:
 
@@ -147,6 +200,10 @@ suggestions = synarmo.predict(
 The engine loads the model once and reuses it for later predictions when used as
 an object or service.
 
+After changing code or prompt text, restart any running `synarmo serve` process
+so the service reloads the updated Python modules. The service keeps the model
+warm and does not hot-reload prompt construction while it is running.
+
 ## Service Mode
 
 Start the local service with the configured `.env` model:
@@ -195,6 +252,26 @@ http://127.0.0.1:8765/ui
 The UI calls the same `/health` and `/evaluate/autocomplete` endpoints that a
 client application can call directly.
 
+### Compose Parameters
+
+| Parameter | Default | What it does |
+| --- | ---: | --- |
+| Choices | 3 | Number of suggestions to show. |
+| Tokens | 10 | Maximum generated tokens behind each suggestion. Higher values allow longer completions but can take longer. |
+| Words | 1 | Maximum words displayed for each suggestion. |
+| Temperature | 0.5 | Controls randomness. Lower is more predictable; higher is more varied. |
+| Top P | 0.95 | Shapes the useful candidate pool first by keeping likely tokens whose combined probability reaches this value. Lower values are more focused. |
+| Logprobs | 24 | Number of scored next-token options to inspect after Top P has shaped the pool. Higher values give Synarmo more candidates to choose from, while Choices still controls how many suggestions appear. |
+| Auto - Suggest on Spacebar | On | Automatically asks for new suggestions after typing a space. |
+
+`Logprobs` does not directly mean "show this many suggestions." `Top P` shapes
+the candidate pool first, then `Logprobs` controls how many scored options
+Synarmo can inspect from that pool. For example, if `Top P = 0.70` leaves only
+`go`, `watch`, and `eat` as useful next-token candidates, then `Logprobs = 24`
+will not create 24 useful starters. It can only inspect what the pool makes
+available. With `Choices = 3`, Synarmo then picks up to 3 useful unique starters
+from the inspected options.
+
 ## REST And WebSocket API
 
 Basic suggestions:
@@ -218,7 +295,7 @@ curl -X POST http://127.0.0.1:8765/evaluate/autocomplete \
     "candidate_words": 2,
     "temperature": 0.5,
     "top_p": 0.95,
-    "logprob_pool": 12
+    "logprob_pool": 24
   }'
 ```
 

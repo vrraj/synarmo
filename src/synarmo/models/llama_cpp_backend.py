@@ -70,7 +70,7 @@ class LlamaCppBackend:
         max_words: int = 1,
         temperature: float = 0.5,
         top_p: float = 0.95,
-        logprob_pool: int = 12,
+        logprob_pool: int = 24,
     ) -> AutocompleteEvaluation:
         return evaluate_with_llama(
             self._llm,

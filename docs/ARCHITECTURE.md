@@ -68,9 +68,8 @@ class ModelBackend(Protocol):
     def generate(self, prompt: str, options: GenerationOptions) -> str: ...
 ```
 
-Initial backends:
+Runtime backend:
 
-- `mock`: deterministic backend for tests and API development
 - `llama-cpp`: GGUF backend through `llama_cpp.Llama`
 
 Future backends:

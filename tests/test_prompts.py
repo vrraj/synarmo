@@ -11,6 +11,7 @@ def test_prompt_requests_exact_unnumbered_suggestions() -> None:
     assert "Continue the exact typed text; do not replace it." in prompt
     assert "Do not ignore partial words, question starters, or unfinished phrases." in prompt
     assert "Do not answer the user or produce conversational replies." in prompt
+    assert "keep numeric values as digits" in prompt
     assert "Do not number or label suggestions." in prompt
     assert "Do not use brackets, placeholders, or empty choices." in prompt
     assert "Current typed text: Which" in prompt

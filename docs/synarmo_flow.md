@@ -172,8 +172,7 @@ raw = self.backend.generate(
 )
 ```
 
-Available backends:
-- `mock`: Deterministic backend for testing
+Runtime backend:
 - `llama-cpp`: GGUF model backend
 
 ### 5. Ranking and Filtering

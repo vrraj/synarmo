@@ -18,6 +18,7 @@ Rules:
 - Do not ignore partial words, question starters, or unfinished phrases.
 - Do not answer the user or produce conversational replies.
 - Match the user's style and current context.
+- If the context uses digits, keep numeric values as digits instead of spelling them out.
 - Return only suggestions, one per line.
 - Do not number or label suggestions.
 - Do not use brackets, placeholders, or empty choices.

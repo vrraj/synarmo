@@ -34,7 +34,7 @@ def create_app(engine: SynarmoEngine):
         candidate_words: int = 1
         temperature: float = 0.5
         top_p: float = 0.95
-        logprob_pool: int = 12
+        logprob_pool: int = 24
 
     class AutocompleteCandidateResponse(BaseModel):
         text: str

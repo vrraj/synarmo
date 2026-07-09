@@ -5,6 +5,8 @@ const clearBtn = document.getElementById("clear-btn");
 const suggestionsList = document.getElementById("suggestions-list");
 const suggestionStatus = document.getElementById("suggestion-status");
 const serviceStatus = document.getElementById("service-status");
+const serviceStatusValue = document.getElementById("service-status-value");
+const modelNameValue = document.getElementById("model-name-value");
 const errorBanner = document.getElementById("error-banner");
 const charCount = document.getElementById("char-count");
 const choicesInput = document.getElementById("choices");
@@ -37,10 +39,25 @@ async function checkHealth() {
   try {
     const response = await fetch("/health");
     const data = await response.json();
-    serviceStatus.textContent = `${data.status} / ${data.backend}${data.model ? ` / ${data.model}` : ""}`;
-    serviceStatus.title = serviceStatus.textContent;
+    const statusText = titleCase(data.status || "unknown");
+    const modelName = data.model ? basename(data.model) : data.backend || "Unknown";
+    serviceStatusValue.textContent = statusText;
+    serviceStatusValue.classList.toggle("is-ok", data.status === "ok");
+    serviceStatusValue.classList.toggle("is-error", data.status !== "ok");
+    modelNameValue.textContent = modelName;
+    serviceStatus.title = [
+      `Service status: ${statusText}`,
+      data.backend ? `Backend: ${data.backend}` : "",
+      data.model ? `Model: ${data.model}` : "",
+    ]
+      .filter(Boolean)
+      .join(" / ");
   } catch {
-    serviceStatus.textContent = "service unavailable";
+    serviceStatusValue.textContent = "Unavailable";
+    serviceStatusValue.classList.remove("is-ok");
+    serviceStatusValue.classList.add("is-error");
+    modelNameValue.textContent = "Unknown";
+    serviceStatus.title = "Service status: Unavailable";
   }
 }
 
@@ -68,7 +85,7 @@ async function fetchSuggestions(textOverride) {
         candidate_words: numberValue(candidateWordsInput, 1),
         temperature: numberValue(temperatureInput, 0.5),
         top_p: numberValue(topPInput, 0.95),
-        logprob_pool: numberValue(logprobPoolInput, 12),
+        logprob_pool: numberValue(logprobPoolInput, 24),
       }),
     });
     if (!response.ok) {
@@ -180,6 +197,15 @@ function escapeHtml(value) {
 function numberValue(input, fallback) {
   const value = Number(input.value);
   return Number.isFinite(value) ? value : fallback;
+}
+
+function basename(path) {
+  return String(path).split(/[\\/]/).filter(Boolean).pop() || String(path);
+}
+
+function titleCase(value) {
+  const text = String(value);
+  return text ? text.charAt(0).toUpperCase() + text.slice(1) : text;
 }
 
 suggestBtn.addEventListener("click", () => fetchSuggestions());
