@@ -15,6 +15,14 @@ def test_serve_host_can_bind_all_interfaces() -> None:
     assert args.host == "0.0.0.0"
 
 
+def test_model_ensure_defaults_to_llama_cpp_backend() -> None:
+    args = build_parser().parse_args(["model-ensure"])
+
+    assert args.command == "model-ensure"
+    assert args.backend == "llama-cpp"
+    assert args.profile == "default"
+
+
 def test_compose_appends_selected_suggestion_and_predicts_again(monkeypatch, capsys) -> None:
     engine = SynarmoEngine.load(profile="compose-test", max_suggestions=3)
     choices = iter(["1", "q"])

@@ -18,6 +18,14 @@ def build_parser() -> argparse.ArgumentParser:
     suggest_parser.add_argument("--model-path", type=Path)
     suggest_parser.add_argument("--max-suggestions", type=int)
 
+    model_ensure_parser = subcommands.add_parser(
+        "model-ensure",
+        help="Download or verify the configured local inference model.",
+    )
+    model_ensure_parser.add_argument("--profile", default="default")
+    model_ensure_parser.add_argument("--backend", choices=["mock", "llama-cpp"], default="llama-cpp")
+    model_ensure_parser.add_argument("--model-path", type=Path)
+
     compose_parser = subcommands.add_parser(
         "compose",
         help="Interactively choose suggestions and continue predicting.",
@@ -53,6 +61,12 @@ def app() -> None:
             print(item.text)
         return
 
+    if args.command == "model-ensure":
+        engine = _load_engine(args)
+        print(_format_runtime_diagnostics(engine))
+        print(f"Model ready for {args.backend}")
+        return
+
     if args.command == "compose":
         engine = _load_engine(args)
         _compose(engine, text=args.text, context=args.context)
@@ -73,8 +87,9 @@ def app() -> None:
 
 def _load_engine(args: argparse.Namespace) -> SynarmoEngine:
     options: dict[str, object] = {}
-    if args.max_suggestions is not None:
-        options["max_suggestions"] = args.max_suggestions
+    max_suggestions = getattr(args, "max_suggestions", None)
+    if max_suggestions is not None:
+        options["max_suggestions"] = max_suggestions
 
     return SynarmoEngine.load(
         profile=args.profile,

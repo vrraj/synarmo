@@ -15,9 +15,12 @@ APIs, and llama.cpp/GGUF support for swappable local models.
 pip install "synarmo[llama,service]"
 ```
 
-Prefer a browser workflow? The source checkout includes an
-[Interactive UI](#install---interactive-ui-git-clone) for testing and tuning
-API calls with context and parameters.
+The repository includes an
+[Interactive UI](#install---interactive-ui-git-clone) for evaluations and tuning
+API calls with context and parameters. When `SYNARMO_LLAMA_VERBOSE=1` is enabled
+in `.env`, native llama.cpp logs include prefill/prompt evaluation and
+generation throughput in tokens/sec, plus KV cache details, Metal/CUDA buffer
+sizes, and other load diagnostics.
 
 > Local-first next-word and next-phrase suggestions tuned for short completions.
 
@@ -27,14 +30,12 @@ API calls with context and parameters.
 
 Synarmo is intended to be used as:
 
-- a PyPI package for predicting suggestions from Python
+- a PyPI package for predicting suggestions
 - integration surfaces for other applications through REST and WebSocket
 - an interactive browser `/ui` for testing and tuning API calls with context and parameters
-- a llama.cpp/GGUF-backed engine that can run on CPU or supported GPUs such as
-  Apple Metal, with model and GPU-layer settings controlled through `.env`
+- a llama.cpp/GGUF-backed engine that can run on CPU or supported GPUs such as Apple Metal, with model and GPU-layer settings controlled through `.env`
 
-The primary path uses a local GGUF model for inference through llama.cpp. For
-no-model verification checks of package install, CLI, service, or UI wiring, see
+The primary path uses a local GGUF model for inference through llama.cpp. For no-model verification checks of package install, CLI, service, or UI wiring, see
 [Mock Mode](#mock-mode).
 
 ---
@@ -43,10 +44,14 @@ no-model verification checks of package install, CLI, service, or UI wiring, see
 
 Install Synarmo with llama.cpp and service support:
 
+**Step 1: Install the package**
+
 ```bash
 pip install "synarmo[llama,service]"
 mkdir -p ~/models/synarmo
 ```
+
+**Step 2: Set up a `.env` file**
 
 Create a `.env` file in the directory where you will run `synarmo` or your
 Python app. This example assumes an Apple Silicon Mac with one integrated Metal
@@ -61,16 +66,26 @@ SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF
 SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
 ```
 
-The first `--backend llama-cpp` command checks `LOCAL_MODELS_CACHE` and
-downloads `SYNARMO_MODEL` from `SYNARMO_MODEL_REPO_ID` if the GGUF model file is
-missing. The first model download can take some time, so the first real request
-is slower than later runs. In a source checkout, you can do that check before
-the first request with `make model-ensure`. See
+**Step 3: Download or verify the local inference model**
+
+```bash
+synarmo model-ensure --backend llama-cpp
+```
+
+This checks `LOCAL_MODELS_CACHE` and downloads `SYNARMO_MODEL` from
+`SYNARMO_MODEL_REPO_ID` if the GGUF model file is missing. With this `.env`
+configuration, the model is stored at:
+
+```text
+~/models/synarmo/Llama-3.2-1B.Q4_K_M.gguf
+```
+
+See
 [Configure A Local Model](#configure-a-local-model) for model paths and
 [Infrastructure - llama.cpp Configuration](#infrastructure---llamacpp-configuration)
 for CPU/GPU settings.
 
-Then run Synarmo with the llama.cpp backend:
+**Step 4: Test Synarmo with the llama.cpp backend**
 
 ```bash
 synarmo suggest "My goals" \
@@ -78,21 +93,12 @@ synarmo suggest "My goals" \
   --backend llama-cpp
 ```
 
-With that `.env`, the model is stored at:
-
-```text
-~/models/synarmo/Llama-3.2-1B.Q4_K_M.gguf
-```
-
-Later runs reuse the already downloaded file.
 
 ---
 
-## Install - Interactive `/ui` (Git Clone)
+## Install - Interactive `/ui` (Git Repo Clone)
 
-Use the browser `/ui` to test local suggestions with context and autocomplete
-parameters. It runs from a source checkout because it needs the FastAPI
-service, static UI assets, and a virtual environment.
+The Interactive `/ui` allows you to test local suggestions with context and auto-suggest parameters. It needs FastAPI service, static UI assets, and a virtual environment.
 
 ![Synarmo context-aware auto-suggest UI](./assets/synarmo-context-aware-auto-suggest.jpeg)
 
@@ -103,8 +109,7 @@ git clone https://github.com/vrraj/synarmo.git
 cd synarmo
 ```
 
-**Step 2 — Create a virtual environment and install with llama.cpp and service
-extras:**
+**Step 2 — Create a virtual environment and install with llama.cpp and service extras:**
 
 ```bash
 python3 -m venv .venv
@@ -124,8 +129,9 @@ cp .env.example .env
 mkdir -p ~/models/synarmo
 ```
 
-The included `.env.example` is configured for automatic download from Hugging
-Face and assumes an Apple Silicon Mac with one integrated Metal GPU. See
+The included `.env.example` sets the Hugging Face repo and GGUF filename that
+the next step can download, and assumes an Apple Silicon Mac with one
+integrated Metal GPU. See
 [Configure A Local Model](#configure-a-local-model) for manual model paths and
 other model options, and
 [Infrastructure - llama.cpp Configuration](#infrastructure---llamacpp-configuration)
