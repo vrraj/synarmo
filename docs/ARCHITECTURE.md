@@ -135,8 +135,7 @@ Future backends:
 | Interface | Role |
 | --- | --- |
 | Python API | Embed suggestions in Python applications |
-| Local REST service | Call Synarmo from desktop, web, keyboard, or mobile clients |
-| WebSocket service | Keep a live local suggestion channel open while a user types |
+| Service mode | Run Synarmo as a local server for REST, WebSocket, and browser UI clients |
 | CLI | Run one-off suggestions, compose loop, or local service |
 | Configuration | `.env`, profile settings, and runtime configuration updates |
 

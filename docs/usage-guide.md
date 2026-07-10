@@ -371,7 +371,13 @@ This shows suggestions, lets you choose one, appends it to the text, and immedia
 
 ### Start the Service
 
-Start the local FastAPI service:
+Service mode means running Synarmo as a local server instead of calling it
+directly from Python. Use it when another process needs suggestions, such as a
+desktop app, web app, keyboard, browser UI, or a client that wants REST or
+WebSocket access. The service loads the selected backend once, keeps the model
+warm, and exposes local endpoints from the same engine instance.
+
+Start the local service:
 
 ```bash
 synarmo serve --backend llama-cpp
@@ -387,7 +393,19 @@ configured and the GGUF file is missing, service startup downloads it before
 curl http://127.0.0.1:8765/health
 ```
 
-### REST API - Basic Suggestions
+### Use Service Endpoints
+
+Once service mode is running, clients can call these local endpoints:
+
+| Endpoint | What it does |
+| --- | --- |
+| `GET /health` | Confirms the service is ready and reports the active backend/model. |
+| `POST /suggest` | Returns ranked suggestions for text and optional context. |
+| `POST /evaluate/autocomplete` | Returns autocomplete candidates and token scores for tuning. |
+| `WebSocket /ws/suggest` | Accepts repeated suggestion requests over one live connection. |
+| `GET /ui` | Opens the browser UI backed by the same service. |
+
+Basic REST suggestion request:
 
 ```bash
 curl -X POST http://127.0.0.1:8765/suggest \
@@ -395,7 +413,7 @@ curl -X POST http://127.0.0.1:8765/suggest \
   -d '{"text":"I want to","context":"At home, asking for help"}'
 ```
 
-### REST API - Autocomplete Evaluation
+Autocomplete evaluation request:
 
 ```bash
 curl -X POST http://127.0.0.1:8765/evaluate/autocomplete \
@@ -411,8 +429,6 @@ curl -X POST http://127.0.0.1:8765/evaluate/autocomplete \
     "logprob_pool": 24
   }'
 ```
-
-### WebSocket API
 
 Connect to the WebSocket endpoint:
 

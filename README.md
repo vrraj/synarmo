@@ -11,10 +11,13 @@ assistive typing workflows. It combines context-aware local inference, service
 APIs, and llama.cpp/GGUF support for swappable local models.
 
 ```bash
-# Install with llama.cpp and service support (See section Install - PyPI Package)
+# Install with llama.cpp and service support
 pip install "synarmo[llama,service]"
 ```
-This repo includes an [Interactive UI](#install---interactive-ui-git-clone) for testing and tuning API calls with context and parameters.
+
+Prefer a browser workflow? The source checkout includes an
+[Interactive UI](#install---interactive-ui-git-clone) for testing and tuning
+API calls with context and parameters.
 
 > Local-first next-word and next-phrase suggestions tuned for short completions.
 
@@ -25,7 +28,7 @@ This repo includes an [Interactive UI](#install---interactive-ui-git-clone) for 
 Synarmo is intended to be used as:
 
 - a PyPI package for predicting suggestions from Python
-- a local FastAPI service for REST and WebSocket clients
+- a local service mode that exposes REST, WebSocket, and browser UI endpoints
 - an interactive browser `/ui` for testing and tuning API calls with context and parameters
 - a llama.cpp/GGUF-backed engine that can test different local models through `.env`
 
@@ -56,9 +59,9 @@ SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
 
 The first `--backend llama-cpp` command checks `LOCAL_MODELS_CACHE` and
 downloads `SYNARMO_MODEL` from `SYNARMO_MODEL_REPO_ID` if the GGUF model file is
-missing. That **model download can take some time,** so the first real request is slower
-than later runs. In a source checkout, you can do that check before the first
-request with `make model-ensure`.
+missing. The first model download can take some time, so the first real request
+is slower than later runs. In a source checkout, you can do that check before
+the first request with `make model-ensure`.
 
 Then run Synarmo with the llama.cpp backend:
 
@@ -74,16 +77,15 @@ With that `.env`, the model is stored at:
 ~/models/synarmo/Llama-3.2-1B.Q4_K_M.gguf
 ```
 
-***Later runs reuse the already downloaded file.***
+Later runs reuse the already downloaded file.
 
 ---
 
 ## Install - Interactive `/ui` (Git Clone)
 
-The browser `/ui` is for trying real local inference with context and
-autocomplete parameters. It requires the repository itself (not just the PyPI
-package), since it needs the FastAPI service, static UI assets, and a venv to
-run in.
+Use the browser `/ui` to test local suggestions with context and autocomplete
+parameters. It runs from a source checkout because it needs the FastAPI
+service, static UI assets, and a virtual environment.
 
 ![Synarmo context-aware auto-suggest UI](./assets/synarmo-context-aware-auto-suggest.jpeg)
 
@@ -98,7 +100,7 @@ cd synarmo
 service extras:**
 
 ```bash
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev,llama,service]"
 ```
@@ -122,8 +124,8 @@ make model-ensure
 
 This checks `LOCAL_MODELS_CACHE` and downloads `SYNARMO_MODEL` from
 `SYNARMO_MODEL_REPO_ID` if the GGUF file is missing. `make ux` performs the
-same model load when the service starts, but doing it here makes the download
-step explicit. The first download can take some time.
+same model load when the service starts; running this first lets the download
+finish before you open the UI. The first download can take some time.
 
 **Step 5 — Start the service with real local inference:**
 
@@ -132,12 +134,7 @@ make ux
 ```
 
 `make ux` starts the configured llama.cpp backend in the background, waits for
-`/health`, and prints the browser UI URL. For a no-model wiring check, see
-[Mock Mode](#mock-mode) or run:
-
-```bash
-make ux-mock
-```
+`/health`, and prints the browser UI URL.
 
 **Step 6 — Open the UI shown by `make ux`:**
 
@@ -152,13 +149,13 @@ client application can call directly.
 
 ### Configure A Local Model
 
-Real local inference needs two things:
+To run real local inference, set up:
 
 - the `llama-cpp` backend dependencies, installed with `[llama]`
-- a `.env` file that tells Synarmo where the model is and what it is called
+- a `.env` file that tells Synarmo where to find the model
 
-Synarmo does not create `.env` automatically. It reads a file literally named
-`.env` from the current working directory when `SynarmoEngine.load()` runs.
+Place `.env` in the directory where you run `synarmo` or start your Python app.
+Synarmo loads it when `SynarmoEngine.load()` runs.
 
 For a source checkout, start from the included example:
 
@@ -167,9 +164,8 @@ cp .env.example .env
 mkdir -p ~/models/synarmo
 ```
 
-For an installed PyPI package, there may be no `.env.example` next to your app.
-Create `.env` yourself in your app directory or the terminal directory where
-you run `synarmo`:
+For PyPI installs, create `.env` in your app directory or the terminal
+directory where you run `synarmo`:
 
 ```bash
 mkdir -p ~/models/synarmo
@@ -212,7 +208,7 @@ Use this `.env` for a model stored somewhere else:
 SYNARMO_MODEL=/Users/raj/models/qwen2.5-1.5b-instruct-q4_k_m.gguf
 ```
 
-You can also skip `.env` for one command by passing a model path directly:
+For a one-off command, pass a model path directly:
 
 ```bash
 synarmo suggest "My goals" \
@@ -224,7 +220,7 @@ Any llama.cpp-compatible GGUF model works this way. To try another family such
 as Qwen, change `SYNARMO_MODEL_REPO_ID` and `SYNARMO_MODEL`, point
 `SYNARMO_MODEL` at a different local `.gguf` file, or pass `--model-path`.
 
-In a source checkout, useful model commands are:
+In a source checkout, these model commands are available:
 
 ```bash
 make ux
@@ -235,10 +231,9 @@ make model-current
 make model-ensure
 ```
 
-`make model-ensure` loads the configured backend once. For `llama-cpp`, that
-checks whether the selected model is already available and downloads it if
-needed. `synarmo serve --backend llama-cpp` performs the same model load when
-the service starts.
+`make model-ensure` checks model readiness once. For `llama-cpp`, it verifies
+that the selected model is available and downloads it if needed. `synarmo serve
+--backend llama-cpp` performs the same model load when the service starts.
 
 ---
 
@@ -248,9 +243,18 @@ the service starts.
 | --- | --- | --- |
 | Python API | Embed suggestions in another Python app | `SynarmoEngine.load(backend="llama-cpp").suggest("My goals")` |
 | CLI | Run quick local prediction commands | `synarmo suggest "My goals" --backend llama-cpp` |
-| REST API | Call Synarmo from desktop, web, keyboard, or mobile clients | `POST http://127.0.0.1:8765/suggest` |
-| WebSocket | Keep a live local suggestion channel open while a user types | `ws://127.0.0.1:8765/ws/suggest` |
-| Browser UI | Test and tune contexts and autocomplete parameters | `http://127.0.0.1:8765/ui` |
+| Service Mode | Run Synarmo as a local server for app, UI, REST, or WebSocket clients | `synarmo serve --backend llama-cpp` |
+
+Service mode starts one local Synarmo process, keeps the model warm, and makes
+that model available over local endpoints:
+
+| Endpoint | Use it for |
+| --- | --- |
+| `GET /health` | Check that the service is ready and see the active backend/model. |
+| `POST /suggest` | Request suggestions from an app, script, keyboard, or other client. |
+| `POST /evaluate/autocomplete` | Test autocomplete parameters; this is the endpoint used by `/ui`. |
+| `WebSocket /ws/suggest` | Keep a live suggestion channel open while a user types. |
+| `GET /ui` | Open the browser interface for testing and tuning suggestions. |
 
 Minimal REST request:
 
@@ -317,6 +321,12 @@ running.
 
 ### Service Mode
 
+Service mode means running Synarmo as a local server instead of calling it
+directly from Python. Use it when another process needs suggestions, such as a
+desktop app, web app, keyboard, browser UI, or a client that wants REST or
+WebSocket access. The service loads the selected backend once, keeps the model
+warm, and exposes local endpoints from the same engine instance.
+
 Start the local service with the configured `.env` model:
 
 ```bash
@@ -341,7 +351,17 @@ The service defaults to:
 http://127.0.0.1:8765
 ```
 
-Check health:
+Once it is running, use these local endpoints:
+
+| Endpoint | What it does |
+| --- | --- |
+| `GET /health` | Confirms the service is ready and reports the active backend/model. |
+| `POST /suggest` | Returns ranked suggestions for text and optional context. |
+| `POST /evaluate/autocomplete` | Returns autocomplete candidates and token scores for tuning. |
+| `WebSocket /ws/suggest` | Accepts repeated suggestion requests over one live connection. |
+| `GET /ui` | Opens the browser UI backed by the same service. |
+
+Check health from another terminal:
 
 ```bash
 curl http://127.0.0.1:8765/health
@@ -378,7 +398,7 @@ will not create 24 useful starters. It can only inspect what the pool makes
 available. With `Choices = 3`, Synarmo then picks up to 3 useful unique
 starters from the inspected options.
 
-### REST And WebSocket API
+### Use Service Endpoints
 
 Basic suggestions:
 
@@ -453,10 +473,9 @@ Choose 1-3, enter custom text, or q to quit:
 ## Mock Mode
 
 Mock mode is a deterministic development backend for testing Synarmo without a
-GGUF model, llama.cpp setup, or model download. It does not produce intelligent
-predictions. It returns canned short suggestions and then sends them through
-the same context, prompt, service, and ranking pipeline used by the real
-backend.
+GGUF model, llama.cpp setup, or model download. It returns canned short
+suggestions and sends them through the same context, prompt, service, and
+ranking pipeline used by the real backend.
 
 Use it to check:
 
@@ -520,7 +539,7 @@ The reusable package contains the prediction engine:
 - local service mode for desktop, web, keyboard, mobile, or other clients
 - interactive `/ui` to test and evaluate autocomplete requests with different
   contexts and compose token-prediction parameters, before building a client
-  with REST APIs
+  against service endpoints
 
 The model layer is intentionally swappable at the GGUF level. If another
 model works with llama.cpp, Synarmo can test it by changing model

@@ -183,9 +183,17 @@ make model-ensure
 | --- | --- | --- |
 | Python API | Embed suggestions in another Python app | `SynarmoEngine.load(backend="llama-cpp").suggest("My goals")` |
 | CLI | Run quick local prediction commands | `synarmo suggest "My goals" --backend llama-cpp` |
-| REST API | Call Synarmo from desktop, web, keyboard, or mobile clients | `POST http://127.0.0.1:8765/suggest` |
-| WebSocket | Keep a live local suggestion channel open while a user types | `ws://127.0.0.1:8765/ws/suggest` |
-| Browser UI | Test and tune contexts and autocomplete parameters | `http://127.0.0.1:8765/ui` |
+| Service Mode | Run Synarmo as a local server for app, UI, REST, or WebSocket clients | `synarmo serve --backend llama-cpp` |
+
+Service mode starts one local Synarmo process, keeps the model warm, and makes that model available over local endpoints:
+
+| Endpoint | Use it for |
+| --- | --- |
+| `GET /health` | Check that the service is ready and see the active backend/model. |
+| `POST /suggest` | Request suggestions from an app, script, keyboard, or other client. |
+| `POST /evaluate/autocomplete` | Test autocomplete parameters; this is the endpoint used by `/ui`. |
+| `WebSocket /ws/suggest` | Keep a live suggestion channel open while a user types. |
+| `GET /ui` | Open the browser interface for testing and tuning suggestions. |
 
 Minimal REST request:
 
@@ -246,6 +254,8 @@ After changing code or prompt text, restart any running `synarmo serve` process 
 
 ### Service Mode
 
+Service mode means running Synarmo as a local server instead of calling it directly from Python. Use it when another process needs suggestions, such as a desktop app, web app, keyboard, browser UI, or a client that wants REST or WebSocket access. The service loads the selected backend once, keeps the model warm, and exposes local endpoints from the same engine instance.
+
 Start the local service with the configured `.env` model:
 
 ```bash
@@ -266,7 +276,17 @@ The service defaults to:
 http://127.0.0.1:8765
 ```
 
-Check health:
+Once it is running, use these local endpoints:
+
+| Endpoint | What it does |
+| --- | --- |
+| `GET /health` | Confirms the service is ready and reports the active backend/model. |
+| `POST /suggest` | Returns ranked suggestions for text and optional context. |
+| `POST /evaluate/autocomplete` | Returns autocomplete candidates and token scores for tuning. |
+| `WebSocket /ws/suggest` | Accepts repeated suggestion requests over one live connection. |
+| `GET /ui` | Opens the browser UI backed by the same service. |
+
+Check health from another terminal:
 
 ```bash
 curl http://127.0.0.1:8765/health
@@ -295,7 +315,7 @@ The browser UI is for tuning API calls before building a production client. It l
 
 `Logprobs` does not directly mean "show this many suggestions." `Top P` shapes the candidate pool first, then `Logprobs` controls how many scored options Synarmo can inspect from that pool. For example, if `Top P = 0.70` leaves only `go`, `watch`, and `eat` as useful next-token candidates, then `Logprobs = 24` will not create 24 useful starters. It can only inspect what the pool makes available. With `Choices = 3`, Synarmo then picks up to 3 useful unique starters from the inspected options.
 
-### REST And WebSocket API
+### Use Service Endpoints
 
 Basic suggestions:
 
@@ -385,7 +405,7 @@ The reusable package contains the prediction engine:
 - `synarmo` Python package for inference, context assembly, prompt construction, user memory, ranking, and configuration
 - GGUF inference through `llama.cpp` / `llama-cpp-python`
 - local service mode for desktop, web, keyboard, mobile, or other clients
-- interactive `/ui` to test and evaluate autocomplete requests with different contexts and compose token-prediction parameters, before building a client with REST APIs
+- interactive `/ui` to test and evaluate autocomplete requests with different contexts and compose token-prediction parameters, before building a client against service endpoints
 
 The model layer is intentionally swappable at the GGUF level. If another model works with llama.cpp, Synarmo can test it by changing model configuration rather than changing application code.
 
