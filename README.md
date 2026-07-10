@@ -24,12 +24,7 @@ sizes, and other load diagnostics.
 
 > Local-first next-word and next-phrase suggestions tuned for short completions.
 
-<video width="100%" controls>
-  <source src="https://raw.githubusercontent.com/vrraj/synarmo/main/assets/synarmo-auto-suggest.mp4" type="video/mp4">
-  Your browser does not support HTML video.
-</video>
-
-<p align="center"><em>Synarmo context-aware compose loop predicting short suggestions locally.</em></p>
+![Synarmo context-aware auto-suggest UI](https://raw.githubusercontent.com/vrraj/synarmo/main/assets/synarmo-context-aware-auto-suggest.png)
 
 Synarmo is intended to be used as:
 
@@ -107,8 +102,6 @@ synarmo suggest "My goals" \
 ## Install - Interactive `/ui` (Git Repo Clone)
 
 The Interactive `/ui` allows you to test local suggestions with context and auto-suggest parameters. It needs FastAPI service, static UI assets, and a virtual environment.
-
-![Synarmo context-aware auto-suggest UI](https://raw.githubusercontent.com/vrraj/synarmo/main/assets/synarmo-context-aware-auto-suggest.png)
 
 **Step 1 — Clone the repository:**
 
