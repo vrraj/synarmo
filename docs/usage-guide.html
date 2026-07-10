@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Usage Guide</title>
+            <style>
+/* From extension vscode.github */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.vscode-dark img[src$=\#gh-light-mode-only],
+.vscode-light img[src$=\#gh-dark-mode-only],
+.vscode-high-contrast:not(.vscode-high-contrast-light) img[src$=\#gh-light-mode-only],
+.vscode-high-contrast-light img[src$=\#gh-dark-mode-only] {
+	display: none;
+}
+
+</style>
+            
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item {
+    list-style-type: none;
+}
+
+.task-list-item-checkbox {
+    margin-left: -20px;
+    vertical-align: middle;
+    pointer-events: none;
+}
+</style>
+<style>
+:root {
+  --color-note: #0969da;
+  --color-tip: #1a7f37;
+  --color-warning: #9a6700;
+  --color-severe: #bc4c00;
+  --color-caution: #d1242f;
+  --color-important: #8250df;
+}
+
+</style>
+<style>
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-note: #2f81f7;
+    --color-tip: #3fb950;
+    --color-warning: #d29922;
+    --color-severe: #db6d28;
+    --color-caution: #f85149;
+    --color-important: #a371f7;
+  }
+}
+
+</style>
+<style>
+.markdown-alert {
+  padding: 0.5rem 1rem;
+  margin-bottom: 16px;
+  color: inherit;
+  border-left: .25em solid #888;
+}
+
+.markdown-alert>:first-child {
+  margin-top: 0
+}
+
+.markdown-alert>:last-child {
+  margin-bottom: 0
+}
+
+.markdown-alert .markdown-alert-title {
+  display: flex;
+  font-weight: 500;
+  align-items: center;
+  line-height: 1
+}
+
+.markdown-alert .markdown-alert-title .octicon {
+  margin-right: 0.5rem;
+  display: inline-block;
+  overflow: visible !important;
+  vertical-align: text-bottom;
+  fill: currentColor;
+}
+
+.markdown-alert.markdown-alert-note {
+  border-left-color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-note .markdown-alert-title {
+  color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-important {
+  border-left-color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-important .markdown-alert-title {
+  color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-warning {
+  border-left-color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-warning .markdown-alert-title {
+  color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-tip {
+  border-left-color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-tip .markdown-alert-title {
+  color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-caution {
+  border-left-color: var(--color-caution);
+}
+
+.markdown-alert.markdown-alert-caution .markdown-alert-title {
+  color: var(--color-caution);
+}
+
+</style>
+        
+        </head>
+        <body class="vscode-body vscode-light">
+            <hr>
+<h2 id="layout-defaulttitle-usage-guide--synarmodescription-usage-examples-and-patterns-for-synarmo-package">layout: default
+title: &quot;Usage Guide | Synarmo&quot;
+description: &quot;Usage examples and patterns for synarmo package.&quot;</h2>
+<h1 id="usage-guide">Usage Guide</h1>
+<p>This guide provides practical usage examples and patterns for the Synarmo
+auto-suggest engine.</p>
+<h2 id="quick-start">Quick Start</h2>
+<h3 id="prediction-with-local-gguf-model">Prediction with Local GGUF Model</h3>
+<p>For real predictions, use the llama-cpp backend with a configured GGUF model:</p>
+<pre><code class="language-dotenv">LOCAL_MODELS_CACHE=~/models/synarmo
+SYNARMO_MAX_SUGGESTIONS=3
+SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF
+SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
+</code></pre>
+<p>The first load checks <code>LOCAL_MODELS_CACHE</code> and downloads <code>SYNARMO_MODEL</code> from
+<code>SYNARMO_MODEL_REPO_ID</code> if the GGUF file is missing. That download can take
+some time.</p>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
+
+engine = SynarmoEngine.load(backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>)
+suggestions = engine.suggest(
+    text=<span class="hljs-string">&quot;I want to&quot;</span>,
+    context=<span class="hljs-string">&quot;At home, asking for help&quot;</span>,
+)
+<span class="hljs-built_in">print</span>([s.text <span class="hljs-keyword">for</span> s <span class="hljs-keyword">in</span> suggestions])
+</code></pre>
+<h3 id="mock-backend-check">Mock Backend Check</h3>
+<p>The mock backend does not require a model and is useful for testing package,
+CLI, service, or UI wiring. It returns canned deterministic suggestions, not
+real predictions:</p>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
+
+engine = SynarmoEngine.load(backend=<span class="hljs-string">&quot;mock&quot;</span>)
+suggestions = engine.suggest(<span class="hljs-string">&quot;I want to&quot;</span>)
+<span class="hljs-built_in">print</span>([s.text <span class="hljs-keyword">for</span> s <span class="hljs-keyword">in</span> suggestions])
+</code></pre>
+<h2 id="how-suggestions-work">How Suggestions Work</h2>
+<p>Synarmo uses the same basic flow from Python, the CLI, the local service, and
+the browser UI:</p>
+<pre><code class="language-text">User types text
+  -&gt; Synarmo API
+  -&gt; Context assembly
+  -&gt; Prompt building
+  -&gt; Model generation
+  -&gt; Suggestion ranking
+  -&gt; Short suggestions
+</code></pre>
+<p>The engine combines the current typed text, optional context, and profile
+memory when style adaptation is enabled. It builds a prompt for short
+continuations, sends that prompt to the selected backend, then cleans and ranks
+the returned candidates.</p>
+<p>The ranker removes duplicates, trims punctuation, limits suggestion length,
+filters instruction echoes, and returns up to the configured number of
+suggestions. The default is three suggestions, with each suggestion usually
+limited to one to four words.</p>
+<h2 id="context-usage">Context Usage</h2>
+<h3 id="simple-context">Simple Context</h3>
+<p>Provide a simple context string to guide suggestions:</p>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
+
+engine = SynarmoEngine.load(backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>)
+
+<span class="hljs-comment"># Greeting context</span>
+suggestions = engine.suggest(
+    text=<span class="hljs-string">&quot;hello&quot;</span>,
+    context=<span class="hljs-string">&quot;greeting a friend&quot;</span>
+)
+
+<span class="hljs-comment"># Work context</span>
+suggestions = engine.suggest(
+    text=<span class="hljs-string">&quot;I need to&quot;</span>,
+    context=<span class="hljs-string">&quot;at work, sending an email&quot;</span>
+)
+</code></pre>
+<h3 id="multiple-contexts-for-evaluation">Multiple Contexts for Evaluation</h3>
+<p>Evaluate suggestions across different contexts:</p>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
+
+engine = SynarmoEngine.load(backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>)
+
+evaluations = engine.evaluate_autocomplete(
+    text=<span class="hljs-string">&quot;I want to&quot;</span>,
+    contexts=[<span class="hljs-string">&quot;At home&quot;</span>, <span class="hljs-string">&quot;At work&quot;</span>, <span class="hljs-string">&quot;With friends&quot;</span>],
+    choices=<span class="hljs-number">3</span>,
+    temperature=<span class="hljs-number">0.5</span>,
+)
+
+<span class="hljs-keyword">for</span> <span class="hljs-built_in">eval</span> <span class="hljs-keyword">in</span> evaluations:
+    <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;\nContext: <span class="hljs-subst">{<span class="hljs-built_in">eval</span>.context}</span>&quot;</span>)
+    <span class="hljs-keyword">for</span> candidate <span class="hljs-keyword">in</span> <span class="hljs-built_in">eval</span>.candidates:
+        <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;  <span class="hljs-subst">{candidate.text}</span> (logprob: <span class="hljs-subst">{candidate.logprob}</span>)&quot;</span>)
+</code></pre>
+<h2 id="configuration-patterns">Configuration Patterns</h2>
+<h3 id="custom-temperature-and-top-p">Custom Temperature and Top-P</h3>
+<p>Adjust randomness and focus of suggestions:</p>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
+
+<span class="hljs-comment"># More predictable suggestions</span>
+engine = SynarmoEngine.load(
+    backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>,
+    temperature=<span class="hljs-number">0.1</span>,  <span class="hljs-comment"># Lower = more predictable</span>
+    top_p=<span class="hljs-number">0.90</span>,
+)
+
+<span class="hljs-comment"># More varied suggestions</span>
+engine = SynarmoEngine.load(
+    backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>,
+    temperature=<span class="hljs-number">0.7</span>,  <span class="hljs-comment"># Higher = more varied</span>
+    top_p=<span class="hljs-number">0.95</span>,
+)
+</code></pre>
+<h3 id="adjust-suggestion-length">Adjust Suggestion Length</h3>
+<p>Control the length of suggestions:</p>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
+
+<span class="hljs-comment"># Short suggestions (1-2 words)</span>
+engine = SynarmoEngine.load(
+    backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>,
+    max_suggestion_words=<span class="hljs-number">2</span>,
+)
+
+<span class="hljs-comment"># Longer suggestions (up to 4 words)</span>
+engine = SynarmoEngine.load(
+    backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>,
+    max_suggestion_words=<span class="hljs-number">4</span>,
+)
+</code></pre>
+<h3 id="number-of-suggestions">Number of Suggestions</h3>
+<p>Control how many suggestions are returned:</p>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
+
+<span class="hljs-comment"># Fewer suggestions</span>
+engine = SynarmoEngine.load(
+    backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>,
+    max_suggestions=<span class="hljs-number">3</span>,
+)
+
+<span class="hljs-comment"># More suggestions</span>
+engine = SynarmoEngine.load(
+    backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>,
+    max_suggestions=<span class="hljs-number">5</span>,
+)
+</code></pre>
+<h2 id="user-profiles-and-memory">User Profiles and Memory</h2>
+<h3 id="using-user-profiles">Using User Profiles</h3>
+<p>Create and use different user profiles for personalized suggestions:</p>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
+
+<span class="hljs-comment"># Load with a specific profile</span>
+engine = SynarmoEngine.load(
+    backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>,
+    profile=<span class="hljs-string">&quot;myuser&quot;</span>,
+)
+
+suggestions = engine.suggest(<span class="hljs-string">&quot;I want to&quot;</span>)
+</code></pre>
+<h3 id="remembering-phrases">Remembering Phrases</h3>
+<p>Add phrases to user memory for style adaptation:</p>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
+
+engine = SynarmoEngine.load(
+    backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>,
+    profile=<span class="hljs-string">&quot;myuser&quot;</span>,
+)
+
+<span class="hljs-comment"># Remember common phrases</span>
+engine.remember_phrase(<span class="hljs-string">&quot;let&#x27;s grab coffee&quot;</span>)
+engine.remember_phrase(<span class="hljs-string">&quot;see you later&quot;</span>)
+engine.remember_phrase(<span class="hljs-string">&quot;how&#x27;s it going&quot;</span>)
+
+<span class="hljs-comment"># Future suggestions will adapt to this style</span>
+suggestions = engine.suggest(<span class="hljs-string">&quot;I want to&quot;</span>)
+</code></pre>
+<h3 id="style-adaptation-toggle">Style Adaptation Toggle</h3>
+<p>Enable or disable style adaptation:</p>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
+
+<span class="hljs-comment"># Style adaptation enabled (default)</span>
+engine = SynarmoEngine.load(
+    backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>,
+    style_adaptation=<span class="hljs-literal">True</span>,
+)
+
+<span class="hljs-comment"># Style adaptation disabled</span>
+engine = SynarmoEngine.load(
+    backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>,
+    style_adaptation=<span class="hljs-literal">False</span>,
+)
+</code></pre>
+<h2 id="runtime-configuration">Runtime Configuration</h2>
+<h3 id="update-configuration-at-runtime">Update Configuration at Runtime</h3>
+<p>Change configuration without reloading the engine:</p>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
+
+engine = SynarmoEngine.load(backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>)
+
+<span class="hljs-comment"># Update configuration</span>
+engine.configure(
+    max_suggestions=<span class="hljs-number">5</span>,
+    temperature=<span class="hljs-number">0.3</span>,
+    max_suggestion_words=<span class="hljs-number">3</span>,
+)
+
+<span class="hljs-comment"># Suggestions now use new configuration</span>
+suggestions = engine.suggest(<span class="hljs-string">&quot;I want to&quot;</span>)
+</code></pre>
+<h2 id="one-shot-prediction">One-Shot Prediction</h2>
+<h3 id="using-convenience-functions">Using Convenience Functions</h3>
+<p>Use <code>predict()</code> or <code>suggest()</code> for one-off predictions:</p>
+<pre><code class="language-python"><span class="hljs-keyword">import</span> synarmo
+
+<span class="hljs-comment"># One-shot prediction</span>
+suggestions = synarmo.predict(
+    text=<span class="hljs-string">&quot;hello&quot;</span>,
+    context=<span class="hljs-string">&quot;greeting&quot;</span>,
+    backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>,
+    max_suggestions=<span class="hljs-number">3</span>,
+)
+
+<span class="hljs-comment"># Alternative alias</span>
+suggestions = synarmo.suggest(
+    text=<span class="hljs-string">&quot;hello&quot;</span>,
+    context=<span class="hljs-string">&quot;greeting&quot;</span>,
+    backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>,
+)
+</code></pre>
+<h2 id="model-configuration">Model Configuration</h2>
+<h3 id="using-environment-variables">Using Environment Variables</h3>
+<p>Configure models via <code>.env</code> file:</p>
+<pre><code class="language-dotenv"># .env
+LOCAL_MODELS_CACHE=~/models/synarmo
+SYNARMO_MAX_SUGGESTIONS=3
+SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF
+SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
+</code></pre>
+<p>Then load without specifying model path:</p>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
+
+engine = SynarmoEngine.load(backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>)
+</code></pre>
+<p>If the GGUF file is missing, the first load downloads it from Hugging Face and
+can take some time. Later loads reuse the cached file.</p>
+<h3 id="using-local-model-path">Using Local Model Path</h3>
+<p>Specify a local model path directly:</p>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
+
+engine = SynarmoEngine.load(
+    backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>,
+    model_path=<span class="hljs-string">&quot;~/models/synarmo/Llama-3.2-1B.Q4_K_M.gguf&quot;</span>,
+)
+</code></pre>
+<h3 id="using-absolute-path">Using Absolute Path</h3>
+<p>Use an absolute path to the model:</p>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
+
+engine = SynarmoEngine.load(
+    backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>,
+    model_path=<span class="hljs-string">&quot;/Users/raj/models/qwen2.5-1.5b-instruct-q4_k_m.gguf&quot;</span>,
+)
+</code></pre>
+<h2 id="cli-usage">CLI Usage</h2>
+<h3 id="single-suggestion-request">Single Suggestion Request</h3>
+<p>Use the CLI for quick testing:</p>
+<pre><code class="language-bash">synarmo suggest <span class="hljs-string">&quot;I want to&quot;</span> \
+  --context <span class="hljs-string">&quot;At home, asking for help&quot;</span> \
+  --backend llama-cpp
+</code></pre>
+<h3 id="compose-loop">Compose Loop</h3>
+<p>Use the interactive compose loop:</p>
+<pre><code class="language-bash">synarmo compose <span class="hljs-string">&quot;I want to&quot;</span> \
+  --context <span class="hljs-string">&quot;At home, asking for help&quot;</span> \
+  --backend llama-cpp
+</code></pre>
+<p>This shows suggestions, lets you choose one, appends it to the text, and immediately predicts the next suggestions.</p>
+<h2 id="service-mode">Service Mode</h2>
+<h3 id="start-the-service">Start the Service</h3>
+<p>Service mode means running Synarmo as a local server instead of calling it
+directly from Python. Use it when another process needs suggestions, such as a
+desktop app, web app, keyboard, browser UI, or a client that wants REST or
+WebSocket access. The service loads the selected backend once, keeps the model
+warm, and exposes local endpoints from the same engine instance.</p>
+<p>Start the local service:</p>
+<pre><code class="language-bash">synarmo serve --backend llama-cpp
+</code></pre>
+<p>The service defaults to <code>http://127.0.0.1:8765</code>. If <code>SYNARMO_MODEL_REPO_ID</code> is
+configured and the GGUF file is missing, service startup downloads it before
+<code>/health</code> is ready. That first download can take some time.</p>
+<h3 id="check-health">Check Health</h3>
+<pre><code class="language-bash">curl http://127.0.0.1:8765/health
+</code></pre>
+<h3 id="use-service-endpoints">Use Service Endpoints</h3>
+<p>Once service mode is running, clients can call these local endpoints:</p>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /health</code></td>
+<td>Confirms the service is ready and reports the active backend/model.</td>
+</tr>
+<tr>
+<td><code>POST /suggest</code></td>
+<td>Returns ranked suggestions for text and optional context.</td>
+</tr>
+<tr>
+<td><code>POST /evaluate/autocomplete</code></td>
+<td>Returns auto-suggest candidates and token scores for tuning.</td>
+</tr>
+<tr>
+<td><code>WebSocket /ws/suggest</code></td>
+<td>Accepts repeated suggestion requests over one live connection.</td>
+</tr>
+<tr>
+<td><code>GET /ui</code></td>
+<td>Opens the browser UI backed by the same service.</td>
+</tr>
+</tbody>
+</table>
+<p>Basic REST suggestion request:</p>
+<pre><code class="language-bash">curl -X POST http://127.0.0.1:8765/suggest \
+  -H <span class="hljs-string">&#x27;content-type: application/json&#x27;</span> \
+  -d <span class="hljs-string">&#x27;{&quot;text&quot;:&quot;I want to&quot;,&quot;context&quot;:&quot;At home, asking for help&quot;}&#x27;</span>
+</code></pre>
+<p>Auto-suggest evaluation request:</p>
+<pre><code class="language-bash">curl -X POST http://127.0.0.1:8765/evaluate/autocomplete \
+  -H <span class="hljs-string">&#x27;content-type: application/json&#x27;</span> \
+  -d <span class="hljs-string">&#x27;{
+    &quot;text&quot;: &quot;I want to&quot;,
+    &quot;contexts&quot;: [&quot;At home, asking for help&quot;],
+    &quot;choices&quot;: 3,
+    &quot;candidate_tokens&quot;: 5,
+    &quot;candidate_words&quot;: 2,
+    &quot;temperature&quot;: 0.5,
+    &quot;top_p&quot;: 0.95,
+    &quot;logprob_pool&quot;: 24
+  }&#x27;</span>
+</code></pre>
+<p>Connect to the WebSocket endpoint:</p>
+<pre><code class="language-text">ws://127.0.0.1:8765/ws/suggest
+</code></pre>
+<p>Send JSON messages:</p>
+<pre><code class="language-json"><span class="hljs-punctuation">{</span><span class="hljs-attr">&quot;text&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;I want to&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;context&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;At home, asking for help&quot;</span><span class="hljs-punctuation">}</span>
+</code></pre>
+<h2 id="web-ui">Web UI</h2>
+<h3 id="access-the-interactive-ui">Access the Interactive UI</h3>
+<p>With the service running, open:</p>
+<pre><code class="language-text">http://127.0.0.1:8765/ui
+</code></pre>
+<p>From a source checkout, you can start the browser UX directly:</p>
+<pre><code class="language-bash">make ux
+</code></pre>
+<p>For real inference, run <code>make model-ensure</code> first if you want to download or
+verify the configured GGUF model before starting the UI. <code>make ux</code> performs the
+same model load when the service starts.</p>
+<p>For a no-model wiring check, start it with the mock backend:</p>
+<pre><code class="language-bash">make ux-mock
+</code></pre>
+<p>Stop the background service with:</p>
+<pre><code class="language-bash">make stop
+</code></pre>
+<p>The UI lets you:</p>
+<ul>
+<li>Type the current message</li>
+<li>Provide conversation or scene context</li>
+<li>Change auto-suggest parameters (choices, tokens, words, temperature, top-p, logprob pool)</li>
+<li>Inspect how the service responds</li>
+</ul>
+<h3 id="ui-parameters">UI Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th style="text-align:right">Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Choices</td>
+<td style="text-align:right">3</td>
+<td>Number of suggestions to show</td>
+</tr>
+<tr>
+<td>Tokens</td>
+<td style="text-align:right">5</td>
+<td>Maximum generated tokens per suggestion</td>
+</tr>
+<tr>
+<td>Words</td>
+<td style="text-align:right">1</td>
+<td>Maximum words displayed per suggestion</td>
+</tr>
+<tr>
+<td>Temperature</td>
+<td style="text-align:right">0.5</td>
+<td>Controls randomness (lower = more predictable)</td>
+</tr>
+<tr>
+<td>Top P</td>
+<td style="text-align:right">0.95</td>
+<td>Nucleus sampling value passed to the one-token llama.cpp probe.</td>
+</tr>
+<tr>
+<td>Logprobs</td>
+<td style="text-align:right">24</td>
+<td>Number of top next-token log probabilities to request from llama.cpp for starter selection.</td>
+</tr>
+<tr>
+<td>Auto - Suggest on Spacebar</td>
+<td style="text-align:right">On</td>
+<td>Automatically request suggestions after typing a space</td>
+</tr>
+</tbody>
+</table>
+<h2 id="integration-examples">Integration Examples</h2>
+<h3 id="fastapi-integration">FastAPI Integration</h3>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> fastapi <span class="hljs-keyword">import</span> FastAPI
+<span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
+
+app = FastAPI()
+engine = SynarmoEngine.load(backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>)
+
+<span class="hljs-meta">@app.post(<span class="hljs-params"><span class="hljs-string">&quot;/suggest&quot;</span></span>)</span>
+<span class="hljs-keyword">async</span> <span class="hljs-keyword">def</span> <span class="hljs-title function_">get_suggestions</span>(<span class="hljs-params">text: <span class="hljs-built_in">str</span>, context: <span class="hljs-built_in">str</span> = <span class="hljs-literal">None</span></span>):
+    suggestions = engine.suggest(text=text, context=context)
+    <span class="hljs-keyword">return</span> {<span class="hljs-string">&quot;suggestions&quot;</span>: [s.text <span class="hljs-keyword">for</span> s <span class="hljs-keyword">in</span> suggestions]}
+</code></pre>
+<h3 id="flask-integration">Flask Integration</h3>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> flask <span class="hljs-keyword">import</span> Flask, request, jsonify
+<span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
+
+app = Flask(__name__)
+engine = SynarmoEngine.load(backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>)
+
+<span class="hljs-meta">@app.route(<span class="hljs-params"><span class="hljs-string">&quot;/suggest&quot;</span>, methods=[<span class="hljs-string">&quot;POST&quot;</span>]</span>)</span>
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">suggest</span>():
+    data = request.json
+    suggestions = engine.suggest(
+        text=data.get(<span class="hljs-string">&quot;text&quot;</span>),
+        context=data.get(<span class="hljs-string">&quot;context&quot;</span>)
+    )
+    <span class="hljs-keyword">return</span> jsonify({<span class="hljs-string">&quot;suggestions&quot;</span>: [s.text <span class="hljs-keyword">for</span> s <span class="hljs-keyword">in</span> suggestions]})
+</code></pre>
+<h3 id="async-integration">Async Integration</h3>
+<pre><code class="language-python"><span class="hljs-keyword">import</span> asyncio
+<span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
+
+<span class="hljs-keyword">async</span> <span class="hljs-keyword">def</span> <span class="hljs-title function_">async_suggest</span>(<span class="hljs-params">text: <span class="hljs-built_in">str</span>, context: <span class="hljs-built_in">str</span> = <span class="hljs-literal">None</span></span>):
+    engine = SynarmoEngine.load(backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>)
+    suggestions = engine.suggest(text=text, context=context)
+    <span class="hljs-keyword">return</span> [s.text <span class="hljs-keyword">for</span> s <span class="hljs-keyword">in</span> suggestions]
+
+<span class="hljs-comment"># Usage</span>
+suggestions = <span class="hljs-keyword">await</span> async_suggest(<span class="hljs-string">&quot;I want to&quot;</span>, <span class="hljs-string">&quot;At home&quot;</span>)
+</code></pre>
+<h2 id="verification-without-a-model">Verification Without a Model</h2>
+<h3 id="compile-check">Compile Check</h3>
+<p>Verify the package compiles without a model:</p>
+<pre><code class="language-bash">python3 -m compileall src tests
+</code></pre>
+<h3 id="run-verification-specs">Run Verification Specs</h3>
+<p>Run the verification specs (uses mock backend):</p>
+<pre><code class="language-bash">pip install -e <span class="hljs-string">&quot;.[dev]&quot;</span>
+PYTHONPATH=src pytest
+</code></pre>
+<h3 id="mock-backend-verification">Mock Backend Verification</h3>
+<p>Use the mock backend for development and verification:</p>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
+
+engine = SynarmoEngine.load(backend=<span class="hljs-string">&quot;mock&quot;</span>)
+suggestions = engine.suggest(<span class="hljs-string">&quot;I want to&quot;</span>)
+<span class="hljs-built_in">print</span>([s.text <span class="hljs-keyword">for</span> s <span class="hljs-keyword">in</span> suggestions])
+</code></pre>
+<h2 id="common-use-cases">Common Use Cases</h2>
+<h3 id="messaging-application">Messaging Application</h3>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
+
+engine = SynarmoEngine.load(backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>)
+
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">get_suggestions_for_message</span>(<span class="hljs-params">current_text: <span class="hljs-built_in">str</span>, conversation_context: <span class="hljs-built_in">str</span></span>):
+    suggestions = engine.suggest(
+        text=current_text,
+        context=conversation_context
+    )
+    <span class="hljs-keyword">return</span> [s.text <span class="hljs-keyword">for</span> s <span class="hljs-keyword">in</span> suggestions]
+</code></pre>
+<h3 id="email-client">Email Client</h3>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
+
+engine = SynarmoEngine.load(
+    backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>,
+    profile=<span class="hljs-string">&quot;email_user&quot;</span>,
+    max_suggestion_words=<span class="hljs-number">4</span>,
+)
+
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">complete_email_subject</span>(<span class="hljs-params">subject: <span class="hljs-built_in">str</span></span>):
+    suggestions = engine.suggest(
+        text=subject,
+        context=<span class="hljs-string">&quot;writing an email subject line&quot;</span>
+    )
+    <span class="hljs-keyword">return</span> [s.text <span class="hljs-keyword">for</span> s <span class="hljs-keyword">in</span> suggestions]
+</code></pre>
+<h3 id="assistive-typing">Assistive Typing</h3>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
+
+engine = SynarmoEngine.load(
+    backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>,
+    max_suggestion_words=<span class="hljs-number">2</span>,
+    temperature=<span class="hljs-number">0.1</span>,  <span class="hljs-comment"># More predictable</span>
+)
+
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">get_typing_suggestions</span>(<span class="hljs-params">current_text: <span class="hljs-built_in">str</span></span>):
+    suggestions = engine.suggest(text=current_text)
+    <span class="hljs-keyword">return</span> [s.text <span class="hljs-keyword">for</span> s <span class="hljs-keyword">in</span> suggestions]
+</code></pre>
+<h2 id="performance-tips">Performance Tips</h2>
+<h3 id="keep-engine-warm">Keep Engine Warm</h3>
+<p>Load the engine once and reuse it:</p>
+<pre><code class="language-python"><span class="hljs-comment"># Good: Load once</span>
+engine = SynarmoEngine.load(backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>)
+
+<span class="hljs-keyword">for</span> text <span class="hljs-keyword">in</span> texts:
+    suggestions = engine.suggest(text)
+
+<span class="hljs-comment"># Bad: Load for each request</span>
+<span class="hljs-keyword">for</span> text <span class="hljs-keyword">in</span> texts:
+    engine = SynarmoEngine.load(backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>)  <span class="hljs-comment"># Slow!</span>
+    suggestions = engine.suggest(text)
+</code></pre>
+<h3 id="use-appropriate-context-window">Use Appropriate Context Window</h3>
+<p>Adjust context window based on your needs:</p>
+<pre><code class="language-python"><span class="hljs-comment"># Short context for faster predictions</span>
+engine = SynarmoEngine.load(
+    backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>,
+    context_window=<span class="hljs-number">512</span>,
+)
+
+<span class="hljs-comment"># Longer context for more context-aware predictions</span>
+engine = SynarmoEngine.load(
+    backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>,
+    context_window=<span class="hljs-number">2048</span>,
+)
+</code></pre>
+<h3 id="batch-similar-requests">Batch Similar Requests</h3>
+<p>Process similar requests together to benefit from caching:</p>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
+
+engine = SynarmoEngine.load(backend=<span class="hljs-string">&quot;llama-cpp&quot;</span>)
+
+<span class="hljs-comment"># Batch similar contexts</span>
+contexts = [<span class="hljs-string">&quot;At home&quot;</span>, <span class="hljs-string">&quot;At work&quot;</span>, <span class="hljs-string">&quot;With friends&quot;</span>]
+evaluations = engine.evaluate_autocomplete(
+    text=<span class="hljs-string">&quot;I want to&quot;</span>,
+    contexts=contexts,
+    choices=<span class="hljs-number">3</span>,
+)
+</code></pre>
+
+            
+            
+        </body>
+        </html>

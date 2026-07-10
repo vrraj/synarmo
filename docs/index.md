@@ -29,6 +29,10 @@ REST/WebSocket suggestion service, test auto-suggest behavior in a browser
 
 > Local-first next-word and next-phrase suggestions tuned for short completions.
 
+<video src="https://github.com/user-attachments/assets/ff5bdbd1-2391-4d5a-96e7-730c8100e6c8" controls muted playsinline width="100%"></video>
+
+<p align="center"><em>Synarmo context-aware compose loop predicting short suggestions locally.</em></p>
+
 ![Synarmo context-aware auto-suggest UI](https://raw.githubusercontent.com/vrraj/synarmo/main/assets/synarmo-context-aware-auto-suggest.jpeg)
 
 ## Why this exists
