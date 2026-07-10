@@ -29,7 +29,10 @@ REST/WebSocket suggestion service, test auto-suggest behavior in a browser
 
 > Local-first next-word and next-phrase suggestions tuned for short completions.
 
-<video src="https://github.com/user-attachments/assets/ff5bdbd1-2391-4d5a-96e7-730c8100e6c8" controls muted playsinline width="100%"></video>
+<video width="100%" controls>
+  <source src="https://raw.githubusercontent.com/vrraj/synarmo/main/assets/synarmo-auto-suggest.mp4" type="video/mp4">
+  Your browser does not support HTML video.
+</video>
 
 <p align="center"><em>Synarmo context-aware compose loop predicting short suggestions locally.</em></p>
 
