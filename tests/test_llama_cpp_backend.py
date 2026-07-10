@@ -33,6 +33,7 @@ def test_llama_cpp_backend_uses_from_pretrained_for_repo_model(tmp_path, monkeyp
         "filename": "llama-3.2-1b-instruct-q4_k_m.gguf",
         "local_dir": str(tmp_path),
         "n_ctx": 1024,
+        "n_gpu_layers": 0,
         "logits_all": True,
         "verbose": False,
     }
@@ -66,3 +67,23 @@ def test_llama_cpp_backend_generate_passes_sampling_options(tmp_path, monkeypatc
         "top_p": 0.8,
         "stop": ["\n"],
     }
+
+
+def test_llama_cpp_backend_passes_gpu_layers_to_local_model(tmp_path, monkeypatch) -> None:
+    calls = {}
+
+    class FakeLlama:
+        def __init__(self, **kwargs):
+            calls.update(kwargs)
+
+        def __call__(self, *args, **kwargs):
+            return {"choices": [{"text": "hello"}]}
+
+    model_path = tmp_path / "model.gguf"
+    model_path.write_text("", encoding="utf-8")
+    fake_module = types.SimpleNamespace(Llama=FakeLlama)
+    monkeypatch.setitem(sys.modules, "llama_cpp", fake_module)
+
+    LlamaCppBackend(model_path, n_gpu_layers=-1)
+
+    assert calls["n_gpu_layers"] == -1

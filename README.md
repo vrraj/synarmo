@@ -30,7 +30,8 @@ Synarmo is intended to be used as:
 - a PyPI package for predicting suggestions from Python
 - integration surfaces for other applications through REST and WebSocket
 - an interactive browser `/ui` for testing and tuning API calls with context and parameters
-- a llama.cpp/GGUF-backed engine that can test different local models through `.env`
+- a llama.cpp/GGUF-backed engine that can run on CPU or supported GPUs such as
+  Apple Metal, with model and GPU-layer settings controlled through `.env`
 
 The primary path uses a local GGUF model for inference through llama.cpp. For
 no-model verification checks of package install, CLI, service, or UI wiring, see
@@ -48,11 +49,13 @@ mkdir -p ~/models/synarmo
 ```
 
 Create a `.env` file in the directory where you will run `synarmo` or your
-Python app:
+Python app. This example assumes an Apple Silicon Mac with one integrated Metal
+GPU:
 
 ```dotenv
 LOCAL_MODELS_CACHE=~/models/synarmo
 SYNARMO_MAX_SUGGESTIONS=3
+SYNARMO_N_GPU_LAYERS=-1
 SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF
 SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
 ```
@@ -61,7 +64,10 @@ The first `--backend llama-cpp` command checks `LOCAL_MODELS_CACHE` and
 downloads `SYNARMO_MODEL` from `SYNARMO_MODEL_REPO_ID` if the GGUF model file is
 missing. The first model download can take some time, so the first real request
 is slower than later runs. In a source checkout, you can do that check before
-the first request with `make model-ensure`.
+the first request with `make model-ensure`. See
+[Configure A Local Model](#configure-a-local-model) for model paths and
+[Infrastructure - llama.cpp Configuration](#infrastructure---llamacpp-configuration)
+for CPU/GPU settings.
 
 Then run Synarmo with the llama.cpp backend:
 
@@ -118,8 +124,11 @@ mkdir -p ~/models/synarmo
 ```
 
 The included `.env.example` is configured for automatic download from Hugging
-Face. See [Configure A Local Model](#configure-a-local-model) for manual model
-paths and other model options.
+Face and assumes an Apple Silicon Mac with one integrated Metal GPU. See
+[Configure A Local Model](#configure-a-local-model) for manual model paths and
+other model options, and
+[Infrastructure - llama.cpp Configuration](#infrastructure---llamacpp-configuration)
+for CPU/GPU settings.
 
 **Step 4 — Download or verify the local inference model:**
 
@@ -187,6 +196,7 @@ Use this `.env` for automatic download from Hugging Face:
 ```dotenv
 LOCAL_MODELS_CACHE=~/models/synarmo
 SYNARMO_MAX_SUGGESTIONS=3
+SYNARMO_N_GPU_LAYERS=-1
 SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF
 SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
 ```
@@ -203,6 +213,7 @@ Use this `.env` for a manually downloaded model in the cache directory:
 
 ```dotenv
 LOCAL_MODELS_CACHE=~/models/synarmo
+SYNARMO_N_GPU_LAYERS=-1
 SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
 ```
 
@@ -216,6 +227,7 @@ above points to:
 Use this `.env` for a model stored somewhere else:
 
 ```dotenv
+SYNARMO_N_GPU_LAYERS=-1
 SYNARMO_MODEL=/Users/raj/models/qwen2.5-1.5b-instruct-q4_k_m.gguf
 ```
 
@@ -245,6 +257,176 @@ make model-ensure
 `make model-ensure` checks model readiness once. For `llama-cpp`, it verifies
 that the selected model is available and downloads it if needed. `synarmo serve
 --backend llama-cpp` performs the same model load when the service starts.
+
+---
+
+## Infrastructure - llama.cpp Configuration
+
+Synarmo uses `llama-cpp-python`, which packages the llama.cpp runtime used to
+load GGUF models. The hardware behavior is controlled in two places:
+
+- install/build options for `llama-cpp-python`
+- the runtime layer offload setting passed to `llama_cpp.Llama`
+
+The setup flow is:
+
+```text
+Install Synarmo with [llama]
+  -> pip installs llama-cpp-python
+  -> llama-cpp-python provides the available runtime backend
+     (CPU, Apple Metal, CUDA, or another supported backend)
+  -> .env sets SYNARMO_N_GPU_LAYERS
+  -> Synarmo passes that value to llama_cpp.Llama as n_gpu_layers
+  -> llama.cpp offloads that many model layers if the installed backend supports it
+```
+
+In short: `llama-cpp-python` determines what hardware backends exist; Synarmo's
+`.env` setting determines how many model layers to ask llama.cpp to offload.
+
+Synarmo exposes the runtime setting as:
+
+```dotenv
+SYNARMO_N_GPU_LAYERS=-1
+```
+
+`SYNARMO_N_GPU_LAYERS` is the number of transformer layers to offload to the
+available GPU backend. It is not the number of GPUs.
+
+The included `.env.example` assumes a modern Apple Silicon Mac with one
+integrated Metal GPU:
+
+```dotenv
+SYNARMO_N_GPU_LAYERS=-1
+```
+
+The hard-coded fallback when no `.env` value is set remains CPU-only for
+portability:
+
+```dotenv
+SYNARMO_N_GPU_LAYERS=0
+```
+
+An Apple M2 has one integrated GPU using unified memory. A 16 GB unified-memory
+Mac is a comfortable baseline for local testing and leaves headroom for the
+service, browser UI, and small quantized GGUF models. Smaller models can run
+with less memory; larger models may need more memory or fewer offloaded layers.
+
+| Value | Behavior | When to use |
+| ---: | --- | --- |
+| `0` | CPU inference | Portable default, CPU-only machines, or debugging GPU issues. |
+| `-1` | Offload all possible layers | Apple Silicon with Metal, NVIDIA CUDA, or another supported GPU build. |
+| positive integer | Offload only that many layers | Machines with limited GPU memory or when tuning heat/memory use. |
+
+For this checkout on an Apple M2, `.env` uses:
+
+```dotenv
+SYNARMO_N_GPU_LAYERS=-1
+```
+
+That asks llama.cpp to use the M2 integrated GPU through Metal for all possible
+model layers. Apple M2 has one integrated GPU device; the `-1` means "all
+possible layers", not "one GPU".
+
+### CPU-Only Setup
+
+CPU-only users do not need special Metal, CUDA, or GPU build flags. Install the
+normal llama extra and leave GPU offload disabled:
+
+```bash
+pip install -e ".[llama,service]"
+```
+
+```dotenv
+SYNARMO_N_GPU_LAYERS=0
+```
+
+This is slower than GPU offload but is the most portable path.
+
+### What The Install Step Builds
+
+The README install commands install Synarmo's `[llama]` extra, which installs
+`llama-cpp-python`:
+
+```bash
+pip install "synarmo[llama,service]"
+pip install -e ".[llama,service]"
+```
+
+That package either installs a compatible wheel or builds its bundled
+llama.cpp runtime during pip installation. CPU-only users usually do not need
+any extra build command. Apple Silicon users should first try the normal
+install with `SYNARMO_N_GPU_LAYERS=-1`; if GPU offload is not reported, force
+the Metal rebuild below. NVIDIA users generally need a CUDA-enabled install or
+rebuild before GPU offload will work.
+
+### Apple Silicon / Metal Setup
+
+On macOS, llama.cpp's current CMake build enables Metal by default, so the
+normal README install is usually enough on an arm64 Python. If you need to
+force a source rebuild of `llama-cpp-python` with Metal enabled, use the
+current `GGML_METAL` option:
+
+```bash
+CMAKE_ARGS="-DGGML_METAL=on" pip install --upgrade --force-reinstall --no-cache-dir llama-cpp-python
+```
+
+If Python or the wheel architecture is wrong on Apple Silicon, force arm64 too:
+
+```bash
+CMAKE_ARGS="-DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_APPLE_SILICON_PROCESSOR=arm64 -DGGML_METAL=on" pip install --upgrade --force-reinstall --no-cache-dir llama-cpp-python
+```
+
+Then use:
+
+```dotenv
+SYNARMO_N_GPU_LAYERS=-1
+```
+
+### NVIDIA / CUDA Setup
+
+NVIDIA GPUs need a CUDA-enabled `llama-cpp-python` build. The normal CPU wheel
+does not become GPU-capable just because `SYNARMO_N_GPU_LAYERS=-1` is set.
+
+For a source rebuild with CUDA enabled, install or reinstall
+`llama-cpp-python` with:
+
+```bash
+CMAKE_ARGS="-DGGML_CUDA=on" pip install --upgrade --force-reinstall --no-cache-dir llama-cpp-python
+```
+
+Then use:
+
+```dotenv
+SYNARMO_N_GPU_LAYERS=-1
+```
+
+If GPU memory is limited, use a positive number instead of `-1` to offload only
+some model layers.
+
+### Verify CPU/GPU Support
+
+Check the installed package version and architecture:
+
+```bash
+.venv/bin/python -c "import llama_cpp, platform; print(llama_cpp.__version__); print(platform.machine())"
+```
+
+Check whether the native runtime reports GPU offload support:
+
+```bash
+.venv/bin/python -c "from llama_cpp import llama_cpp; print(llama_cpp.llama_supports_gpu_offload())"
+```
+
+On macOS, check whether the installed `libllama` links the Metal backend:
+
+```bash
+otool -L .venv/lib/python3.13/site-packages/llama_cpp/lib/libllama.dylib
+```
+
+Look for `libggml-metal` in the output. To see llama.cpp's model-load logs,
+temporarily run with verbose logging in the backend or a direct llama.cpp
+command; Synarmo sets `verbose=False` during normal operation to keep CLI and
+service output quiet.
 
 ---
 

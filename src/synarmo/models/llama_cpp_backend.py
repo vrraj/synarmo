@@ -17,6 +17,7 @@ class LlamaCppBackend:
         model_filename: str | None = None,
         models_cache_dir: Path | None = None,
         n_ctx: int = 2048,
+        n_gpu_layers: int = 0,
     ) -> None:
         try:
             from llama_cpp import Llama
@@ -33,6 +34,7 @@ class LlamaCppBackend:
                 filename=model_filename,
                 local_dir=str(models_cache_dir) if models_cache_dir else None,
                 n_ctx=n_ctx,
+                n_gpu_layers=n_gpu_layers,
                 logits_all=True,
                 verbose=False,
             )
@@ -50,6 +52,7 @@ class LlamaCppBackend:
         self._llm = Llama(
             model_path=str(model_path),
             n_ctx=n_ctx,
+            n_gpu_layers=n_gpu_layers,
             logits_all=True,
             verbose=False,
         )

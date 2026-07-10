@@ -118,11 +118,13 @@ mkdir -p ~/models/synarmo
 ```
 
 Create a `.env` file in the directory where you will run `synarmo` or your
-Python app:
+Python app. This example assumes an Apple Silicon Mac with one integrated Metal
+GPU:
 
 ```dotenv
 LOCAL_MODELS_CACHE=~/models/synarmo
 SYNARMO_MAX_SUGGESTIONS=3
+SYNARMO_N_GPU_LAYERS=-1
 SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF
 SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
 ```
@@ -131,6 +133,30 @@ When the `llama-cpp` backend starts, Synarmo checks `LOCAL_MODELS_CACHE` and
 downloads `SYNARMO_MODEL` from `SYNARMO_MODEL_REPO_ID` if the GGUF file is
 missing. The first real request can take longer while the model downloads and
 loads; later runs reuse the cached file.
+
+## CPU/GPU support
+
+Synarmo's `llama-cpp` backend can run on CPU-only systems or use GPU
+acceleration when the installed `llama-cpp-python` runtime supports a backend
+such as Apple Metal or NVIDIA CUDA.
+
+The included `.env.example` configures runtime offload with:
+
+```dotenv
+SYNARMO_N_GPU_LAYERS=-1
+```
+
+Use `-1` to offload all possible model layers to the available GPU. Use `0`
+for CPU inference or when debugging GPU issues. On this Apple M2 development
+setup, the local `.env` uses:
+
+```dotenv
+SYNARMO_N_GPU_LAYERS=-1
+```
+
+`SYNARMO_N_GPU_LAYERS` is the number of model layers to offload, not the
+number of GPUs. Apple M2 has one integrated Metal GPU; `-1` tells llama.cpp to
+use it for all possible layers.
 
 ## Quick example
 

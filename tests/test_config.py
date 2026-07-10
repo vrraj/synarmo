@@ -7,6 +7,7 @@ from synarmo.config import (
     configured_model_path,
     configured_model_repo_id,
     configured_models_cache,
+    configured_n_gpu_layers,
     load_env_file,
 )
 
@@ -87,6 +88,18 @@ def test_configured_max_suggestions_reads_env(monkeypatch) -> None:
     assert configured_max_suggestions() == 5
 
 
+def test_configured_n_gpu_layers_defaults_to_cpu(monkeypatch) -> None:
+    monkeypatch.delenv("SYNARMO_N_GPU_LAYERS", raising=False)
+
+    assert configured_n_gpu_layers() == 0
+
+
+def test_configured_n_gpu_layers_reads_env(monkeypatch) -> None:
+    monkeypatch.setenv("SYNARMO_N_GPU_LAYERS", "-1")
+
+    assert configured_n_gpu_layers() == -1
+
+
 def test_config_validates_sampling_and_word_limit() -> None:
     assert SynarmoConfig(top_p=0.5, max_suggestion_words=2).top_p == 0.5
 
@@ -107,3 +120,12 @@ def test_config_rejects_invalid_suggestion_word_limit() -> None:
         assert "max_suggestion_words" in str(exc)
     else:
         raise AssertionError("Expected invalid max_suggestion_words to raise ValueError")
+
+
+def test_config_rejects_invalid_gpu_layers() -> None:
+    try:
+        SynarmoConfig(n_gpu_layers=-2)
+    except ValueError as exc:
+        assert "n_gpu_layers" in str(exc)
+    else:
+        raise AssertionError("Expected invalid n_gpu_layers to raise ValueError")

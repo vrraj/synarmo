@@ -14,6 +14,7 @@ MODEL_ENV = "SYNARMO_MODEL"
 MODEL_PATH_ENV = "SYNARMO_MODEL_PATH"
 MODEL_REPO_ID_ENV = "SYNARMO_MODEL_REPO_ID"
 MAX_SUGGESTIONS_ENV = "SYNARMO_MAX_SUGGESTIONS"
+N_GPU_LAYERS_ENV = "SYNARMO_N_GPU_LAYERS"
 
 
 def load_env_file(path: str | Path = ENV_FILE) -> None:
@@ -75,6 +76,11 @@ def configured_max_suggestions() -> int:
     return int(value) if value else 3
 
 
+def configured_n_gpu_layers() -> int:
+    value = os.getenv(N_GPU_LAYERS_ENV)
+    return int(value) if value else 0
+
+
 @dataclass(slots=True)
 class SynarmoConfig:
     backend: BackendName = "mock"
@@ -91,6 +97,7 @@ class SynarmoConfig:
     top_p: float = 0.95
     max_tokens: int = 5
     max_suggestion_words: int = 4
+    n_gpu_layers: int = field(default_factory=configured_n_gpu_layers)
     stop: list[str] = field(default_factory=lambda: ["\n\n"])
     profiles_dir: Path = Path("profiles")
 
@@ -112,6 +119,8 @@ class SynarmoConfig:
             raise ValueError("max_tokens must be between 1 and 128")
         if not 1 <= self.max_suggestion_words <= 20:
             raise ValueError("max_suggestion_words must be between 1 and 20")
+        if self.n_gpu_layers < -1:
+            raise ValueError("n_gpu_layers must be -1 or greater")
 
     def resolved_profile_dir(self) -> Path:
         return self.profiles_dir.expanduser().resolve() / self.profile
