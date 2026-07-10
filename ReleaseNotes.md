@@ -1,65 +1,73 @@
 # Release Notes
 
-## Docs: README and Documentation Cleanup
+## Synarmo Platform v1
 
-This release restructures the project README and companion docs for clarity,
-and documents the new LAN service binding helper. It includes a small CLI
-help/test update for `synarmo serve --host`.
+Synarmo Platform v1 establishes the project as a local-first auto-suggest
+platform: a reusable Python engine, a local service layer, a browser-based
+interaction surface, and a documented GGUF model setup path for private
+type-ahead suggestions.
 
-### Why
+This release turns Synarmo from a package-shaped prototype into a platform that
+can be embedded, served locally, tested without a model, and run with real
+local llama.cpp inference.
 
-The previous README interleaved setup, configuration, and architecture
-content, and repeated the same `.env`/model configuration steps in three
-different places. This made it unclear which steps were required for each use
-case, especially the difference between mock-backed wiring checks and real
-GGUF inference.
+### Highlights
 
-### What Changed
+- **Local-first suggestion engine** with `SynarmoEngine.load(...)`,
+  `engine.suggest(...)`, and convenience prediction APIs for embedding
+  Synarmo in Python applications.
+- **Backend-swappable model layer** with a deterministic `mock` backend for
+  tests and wiring checks, plus a `llama-cpp` backend for local GGUF inference.
+- **Short type-ahead suggestions** tuned around next-word and next-phrase
+  completion rather than broad chat responses.
+- **Local REST and WebSocket service mode** for applications that need a warm
+  local Synarmo process instead of in-process Python calls.
+- **Browser `/ui` experience** for interactive local suggestion testing,
+  context comparison, and autocomplete evaluation.
+- **Model readiness workflow** through `synarmo model-ensure` and
+  `make model-ensure`, including local cache handling and configured model
+  download support.
+- **Environment-driven runtime configuration** for model cache, model filename
+  or path, suggestion count, token limits, temperature, top-p, logprob pool,
+  GPU offload layers, and llama.cpp verbosity.
+- **GPU setup and diagnostics** for llama.cpp inference, including
+  `SYNARMO_N_GPU_LAYERS`, CPU-only fallback, supported offload checks, and
+  runtime diagnostics surfaced by the CLI and service health endpoint.
+- **LAN-capable local service binding** with `synarmo serve --host 0.0.0.0`
+  and `make serve-lan` for trusted-network testing.
+- **Developer Make targets** for service startup, mock startup, browser UX,
+  model checks, health checks, and shutdown.
 
-- **Made real local inference the primary setup path** right after the intro:
-  install `synarmo[llama,service]`, configure `.env`, then run with
-  `--backend llama-cpp`.
-- **Moved mock mode into a supporting role** with a top-level tip and a
-  dedicated `Mock Mode` section that explains what it can test: package, CLI,
-  service, UI wiring, deterministic tests, and suggestion parsing/ranking.
-- **Clarified model download timing** so users know `pip install` does not
-  install a GGUF model. `synarmo model-ensure --backend llama-cpp`, `make
-  model-ensure`, or service startup can download the configured model and may
-  take some time.
-- **Documented GPU setup and diagnostics** for llama.cpp inference, including
-  `SYNARMO_N_GPU_LAYERS`, CPU vs. Metal/CUDA offload, GPU support checks, and
-  verbose prefill/generation tokens-per-second logs.
-- **Updated the Interactive `/ui` path** into a linear sequence: clone the repo
-  → create a venv → install dev/llama/service extras → copy `.env.example` →
-  create the model cache directory → run `make model-ensure` → run `make ux` →
-  open the browser UI.
-- **Consolidated model/`.env` configuration** into a single
-  `Configure A Local Model` section, referenced by both paths instead of
-  duplicated across three sections.
-- **Merged duplicate architecture sections** — "Current Shape" and "System
-  Overview" combined into one `How It Works` section.
-- **Merged forward-looking sections** — "Extending Inference" and "Mobile
-  Direction" combined into one `Extending Inference & Mobile Direction`
-  section, grouped with other roadmap/architecture content instead of being
-  split apart by unrelated sections.
-- **Reordered** the document so setup-oriented content (real local inference →
-  interactive UI → model configuration → interfaces) comes before
-  conceptual/reference content (integration details → use cases → how it works
-  → roadmap → repository layout), matching the order a new reader typically
-  needs it.
-- **Added LAN service guidance** for binding `synarmo serve` to `0.0.0.0`
-  on trusted networks, including `make serve-lan` and the loopback caveat for
-  `/etc/hosts`.
-- **Added UX Make targets** so users can run `make ux` to start the browser
-  UI with the configured backend, `make ux-mock` for a no-model wiring check,
-  and `make stop` to stop the background service.
-- **Fixed docs accuracy issues** around Python version support, `top_p`
-  validation, model examples, mock auto-suggest fallback behavior, and the
-  usage guide heading.
+### Platform Surface
 
-### Not Changed
+Platform v1 includes four supported ways to use Synarmo:
 
-- The prediction engine, service endpoints, model configuration variables, and
-  public Python API are unchanged.
-- No model files, generated profiles, or personal conversation data are
-  included.
+- **Python API** for direct embedding through `SynarmoEngine`.
+- **CLI** for quick local suggestions, interactive compose flows, model checks,
+  and service startup.
+- **Local service** for REST and WebSocket clients that need a persistent warm
+  engine.
+- **Browser UI** for local evaluation and hands-on type-ahead testing.
+
+### Documentation
+
+The README and companion docs were reorganized around the v1 platform path:
+real local inference first, browser UX setup next, shared model configuration
+in one place, then API, service, architecture, and roadmap details.
+
+This release also clarifies:
+
+- when a GGUF model is downloaded or only verified;
+- how `LOCAL_MODELS_CACHE`, `SYNARMO_MODEL`, and `SYNARMO_MODEL_PATH` are used;
+- how mock mode differs from real llama.cpp inference;
+- how to configure CPU-only vs. GPU-offloaded inference;
+- how to run the local service on loopback or a trusted LAN;
+- how suggestion controls such as choices, candidate tokens, candidate words,
+  temperature, top-p, and logprob pool map to runtime behavior.
+
+### Not Included
+
+- No model files are committed.
+- No generated profiles or personal conversation data are included.
+- UI applications beyond the local browser surface remain outside the reusable
+  core package.
