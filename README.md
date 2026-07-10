@@ -14,6 +14,8 @@ APIs, and llama.cpp/GGUF support for swappable local models.
 
 <video src="./assets/synarmo-auto-suggest.mp4" controls muted playsinline width="100%"></video>
 
+<p align="center"><em>Synarmo context-aware compose loop predicting short suggestions locally.</em></p>
+
 Synarmo is intended to be used as:
 
 - a PyPI package for predicting suggestions from Python
