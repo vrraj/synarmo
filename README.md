@@ -105,7 +105,7 @@ synarmo suggest "My goals" \
 
 The Interactive `/ui` allows you to test local suggestions with context and auto-suggest parameters. It needs FastAPI service, static UI assets, and a virtual environment.
 
-![Synarmo context-aware auto-suggest UI](./assets/synarmo-context-aware-auto-suggest.png)
+![Synarmo context-aware auto-suggest UI](https://raw.githubusercontent.com/vrraj/synarmo/main/assets/synarmo-context-aware-auto-suggest.png)
 
 **Step 1 — Clone the repository:**
 
