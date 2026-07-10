@@ -108,22 +108,20 @@ class SynarmoEngine:
                     top_p=self.config.top_p,
                     logprob_pool=self.config.logprob_pool,
                 )
-            seen: set[str] = set()
-            suggestions: list[Suggestion] = []
-            for candidate in evaluation.candidates:
-                normalized = candidate.text.strip()
-                key = normalized.lower()
-                if not normalized or key in seen:
-                    continue
-                seen.add(key)
-                suggestions.append(
-                    Suggestion(
-                        text=normalized,
-                        score=candidate.logprob,
-                        source="autocomplete",
-                    )
+            ranked = self.ranker.rank(
+                "\n".join(candidate.text for candidate in evaluation.candidates),
+                current_text=text,
+                max_suggestions=self.config.max_suggestions,
+                max_words=self.config.max_suggestion_words,
+            )
+            return [
+                Suggestion(
+                    text=suggestion.text,
+                    score=suggestion.score,
+                    source="autocomplete",
                 )
-            return suggestions
+                for suggestion in ranked
+            ]
 
         generation_count = min(self.config.max_suggestions * 3, 10)
         generation_max_tokens = max(self.config.max_tokens, generation_count * 8)

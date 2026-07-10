@@ -33,6 +33,16 @@ class LlamaCppBackend:
         if support_probe is not None:
             self.gpu_offload_supported = bool(support_probe())
 
+        if model_path is not None and model_path.exists():
+            self._llm = Llama(
+                model_path=str(model_path),
+                n_ctx=n_ctx,
+                n_gpu_layers=n_gpu_layers,
+                logits_all=True,
+                verbose=verbose,
+            )
+            return
+
         if model_repo_id:
             if not model_filename:
                 raise ValueError("SYNARMO_MODEL is required when SYNARMO_MODEL_REPO_ID is set")

@@ -46,6 +46,38 @@ def test_llama_cpp_backend_uses_from_pretrained_for_repo_model(tmp_path, monkeyp
     }
 
 
+def test_llama_cpp_backend_prefers_existing_local_model_over_repo(tmp_path, monkeypatch) -> None:
+    calls = {}
+
+    class FakeLlama:
+        def __init__(self, **kwargs):
+            calls["local"] = kwargs
+
+        @classmethod
+        def from_pretrained(cls, **kwargs):
+            calls["repo"] = kwargs
+            return cls()
+
+        def __call__(self, *args, **kwargs):
+            return {"choices": [{"text": "hello"}]}
+
+    model_path = tmp_path / "model.gguf"
+    model_path.write_text("", encoding="utf-8")
+    fake_module = types.SimpleNamespace(Llama=FakeLlama, llama_cpp=fake_llama_cpp_module())
+    monkeypatch.setitem(sys.modules, "llama_cpp", fake_module)
+
+    LlamaCppBackend(
+        model_path,
+        model_repo_id="hugging-quants/Llama-3.2-1B-Instruct-Q4_K_M-GGUF",
+        model_filename="model.gguf",
+        models_cache_dir=tmp_path,
+        n_ctx=1024,
+    )
+
+    assert "repo" not in calls
+    assert calls["local"]["model_path"] == str(model_path)
+
+
 def test_llama_cpp_backend_generate_passes_sampling_options(tmp_path, monkeypatch) -> None:
     calls = {}
 

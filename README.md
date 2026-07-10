@@ -88,7 +88,9 @@ See
 [Infrastructure - llama.cpp Configuration](#infrastructure---llamacpp-configuration)
 for CPU/GPU settings.
 
-**Step 4: Test Synarmo with the llama.cpp backend**
+**Step 4: Test the installed package with the llama.cpp backend**
+
+Run one suggestion request:
 
 ```bash
 synarmo suggest "My goals" \
@@ -96,6 +98,16 @@ synarmo suggest "My goals" \
   --backend llama-cpp
 ```
 
+Run the interactive autosuggest loop from the installed package:
+
+```bash
+synarmo compose "I want to" \
+  --context "At the gym, with my coach. Discussing strength training and endurance goals like running up a flight of stairs." \
+  --backend llama-cpp
+```
+
+`compose` shows suggestions, lets you choose one, appends it to the typed
+text, and immediately predicts the next suggestions.
 
 ---
 
@@ -280,6 +292,19 @@ SYNARMO_N_GPU_LAYERS=-1
 `SYNARMO_N_GPU_LAYERS` is a layer count, not a GPU count. The included
 `.env.example` uses `-1` for Apple Silicon/Metal. If the variable is unset,
 Synarmo falls back to CPU-only (`0`) for portability.
+
+Older Intel Macs with discrete low-memory GPUs may report Metal support but
+fail during GPU-offloaded requests, sometimes appearing in the browser as
+`Failed to fetch`. For those machines, prefer CPU mode:
+
+```dotenv
+SYNARMO_N_GPU_LAYERS=0
+```
+
+For Apple Silicon Metal offload, 16 GB or more of unified memory is a practical
+recommended floor for smooth local testing with the default 1B Q4_K_M model and
+service UI. Systems with less available GPU/unified memory should use CPU mode
+or a small positive layer count instead of `-1`.
 
 ### Performance Logs
 
@@ -614,6 +639,27 @@ synarmo compose "My goals" \
 
 `compose` shows suggestions, lets you choose one, appends it to the typed
 text, and immediately predicts the next suggestions.
+
+From a source checkout, you can also run the repo-only interactive autosuggest
+smoke script:
+
+```bash
+python scripts/test_package_predict.py
+```
+
+The script imports `synarmo` like a normal package consumer, loads compose
+defaults from `.env`, and then repeatedly asks for suggestions, lets you pick
+one, appends it, and predicts the next set. Use it from a checkout after
+installing Synarmo into the active Python environment and setting up a model:
+
+```bash
+python scripts/test_package_predict.py \
+  --text "I want to" \
+  --context "At the gym, with my coach. Discussing strength training and endurance goals like running up a flight of stairs." \
+  --backend llama-cpp
+```
+
+Add `--auto` to always accept the first candidate for a quick end-to-end run.
 
 Expected shape:
 

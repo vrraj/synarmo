@@ -27,9 +27,18 @@ class AutocompleteEvaluation:
 
 
 def build_autocomplete_prompt(context: str, typed_text: str) -> str:
-    return f"""{context.rstrip()}
+    context_lines = [
+        line
+        for line in context.rstrip().splitlines()
+        if not line.lower().startswith("current typed text:")
+    ]
+    context_block = "\n".join(context_lines).strip()
+    if context_block:
+        context_block = f"Context:\n{context_block}\n\n"
 
-Live message:
+    return f"""{context_block}Continue the message with only the next few words.
+Do not repeat labels or earlier text.
+Message:
 {typed_text}"""
 
 

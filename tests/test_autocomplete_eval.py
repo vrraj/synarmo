@@ -1,4 +1,18 @@
-from synarmo.autocomplete_eval import evaluate_with_llama, extract_top_logprobs
+from synarmo.autocomplete_eval import (
+    build_autocomplete_prompt,
+    evaluate_with_llama,
+    extract_top_logprobs,
+)
+
+
+def test_build_autocomplete_prompt_omits_duplicate_current_typed_text_label() -> None:
+    prompt = build_autocomplete_prompt(
+        "Current context: At the gym\nCurrent typed text: I want to",
+        "I want to",
+    )
+
+    assert "Current typed text:" not in prompt
+    assert prompt.endswith("Message:\nI want to")
 
 
 def test_extract_top_logprobs_returns_empty_dict_for_empty_llama_logprobs() -> None:

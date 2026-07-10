@@ -68,6 +68,12 @@ class AutocompleteBackend:
             prompt="prompt",
             candidates=[
                 AutocompleteCandidate(
+                    text=". I want to",
+                    starter=".",
+                    rest=" I want to",
+                    logprob=-0.1,
+                ),
+                AutocompleteCandidate(
                     text="go outside",
                     starter=" go",
                     rest=" outside",
@@ -93,3 +99,19 @@ def test_engine_suggest_uses_autocomplete_evaluator_when_available(tmp_path) -> 
     assert backend.called
     assert [item.text for item in suggestions] == ["go outside"]
     assert suggestions[0].source == "autocomplete"
+
+
+def test_engine_filters_autocomplete_candidates_against_current_text(tmp_path) -> None:
+    from synarmo.config import SynarmoConfig
+    from synarmo.memory import UserMemory
+
+    backend = AutocompleteBackend()
+    engine = SynarmoEngine(
+        config=SynarmoConfig(max_suggestions=2, max_suggestion_words=4, profiles_dir=tmp_path),
+        backend=backend,
+        memory=UserMemory(profile="test"),
+    )
+
+    suggestions = engine.suggest("I want to be able to run", context="At the gym")
+
+    assert [item.text for item in suggestions] == ["go outside"]

@@ -56,6 +56,8 @@ class SuggestionRanker:
 
     def _normalize(self, text: str, *, max_words: int) -> str:
         text = re.sub(r"\s+", " ", text).strip()
+        text = text.lstrip(" \t\r\n\"'`.,;:!?")
+        text = text.rstrip(" \t\r\n\"'`")
         text = re.sub(r"\s+(?:\(?\d+[\].)]|\[\d+\])\s*$", "", text)
         text = re.sub(r"\s*(?:\[\d+\]|\(\d+\))\s*$", "", text)
         text = re.sub(r"[.!?]+$", "", text)
@@ -80,6 +82,11 @@ class SuggestionRanker:
         lowered = suggestion.lower()
         blocked_phrases = (
             "answer",
+            "context:",
+            "current context",
+            "current typed text",
+            "live message",
+            "message:",
             "more different",
             "plain text",
             "short lines",

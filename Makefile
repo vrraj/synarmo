@@ -124,6 +124,11 @@ ux-mock: start-mock ui
 start:
 	@if [ -f "$(PID_FILE)" ] && kill -0 "$$(cat $(PID_FILE))" 2>/dev/null; then \
 		echo "Synarmo is already running with PID $$(cat $(PID_FILE))"; \
+	elif command -v lsof >/dev/null 2>&1 && lsof -nP -iTCP:$(PORT) -sTCP:LISTEN >/dev/null 2>&1; then \
+		echo "Synarmo cannot start because port $(PORT) is already in use."; \
+		echo "Stop the process using that port, or choose another port with PORT=8766."; \
+		lsof -nP -iTCP:$(PORT) -sTCP:LISTEN; \
+		exit 1; \
 	else \
 		nohup $(SYNARMO) serve --host $(HOST) --port $(PORT) --profile $(PROFILE) --backend $(BACKEND) > "$(LOG_FILE)" 2>&1 & echo $$! > "$(PID_FILE)"; \
 		STARTED=0; \
