@@ -6,6 +6,7 @@
 #   make test         Run the Python test suite.
 #   make serve        Run the local service in the foreground.
 #   make serve-lan    Run the local service on all network interfaces.
+#   make ux           Start the local UX in the background and print its URL.
 #   make start        Start the local service in the background.
 #   make stop         Stop the background service started by make start.
 #   make ui           Print the browser UI URL.
@@ -25,7 +26,7 @@
 #   make start PORT=8766
 #   make suggest TEXT="I want to" CONTEXT="At home, asking for help"
 
-.PHONY: help install dev llama test compile serve serve-lan serve-mock start start-mock stop restart status health ui docs suggest compose models model-current model-ensure clean
+.PHONY: help install dev llama test compile serve serve-lan serve-mock ux ux-mock start start-mock stop restart status health ui docs suggest compose models model-current model-ensure clean
 
 PYTHON ?= .venv/bin/python
 SYNARMO ?= .venv/bin/synarmo
@@ -57,6 +58,8 @@ help:
 	@echo "  make serve        Run service in foreground with BACKEND=$(BACKEND)"
 	@echo "  make serve-lan    Run service in foreground on all interfaces"
 	@echo "  make serve-mock   Run service in foreground with mock backend"
+	@echo "  make ux           Start background service and print /ui URL"
+	@echo "  make ux-mock      Start background mock service and print /ui URL"
 	@echo "  make start        Start service in background; logs go to $(LOG_FILE)"
 	@echo "  make start-mock   Start mock service in background"
 	@echo "  make stop         Stop background service"
@@ -109,6 +112,12 @@ serve-lan:
 # Run the deterministic mock backend in the foreground.
 serve-mock:
 	$(SYNARMO) serve --host $(HOST) --port $(PORT) --profile $(PROFILE) --backend mock
+
+# Start the browser UX in the background with the configured backend.
+ux: start ui
+
+# Start the browser UX in the background with the deterministic mock backend.
+ux-mock: start-mock ui
 
 # Start the service in the background and write a PID file.
 start:

@@ -138,6 +138,25 @@ synarmo serve \
 
 The service starts on `http://127.0.0.1:8765`
 
+From a source checkout, the shortest way to start the local browser UX is:
+
+```bash
+make ux
+```
+
+This starts the configured backend in the background, waits for `/health`, and
+prints the `/ui` URL. For a no-model wiring check, use:
+
+```bash
+make ux-mock
+```
+
+Stop the background service with:
+
+```bash
+make stop
+```
+
 To access the service from another machine on the same trusted network, bind it
 to all interfaces:
 

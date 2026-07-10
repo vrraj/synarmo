@@ -234,6 +234,15 @@ SYNARMO_MODEL=llama-3.2-1b-instruct-q4_k_m.gguf
   --model-path ~/models/synarmo/Llama-3.2-1B.Q4_K_M.gguf
 </code></pre>
 <p>The service starts on <code>http://127.0.0.1:8765</code></p>
+<p>From a source checkout, the shortest way to start the local browser UX is:</p>
+<pre><code class="language-bash">make ux
+</code></pre>
+<p>This starts the configured backend in the background, waits for <code>/health</code>, and prints the <code>/ui</code> URL. For a no-model wiring check, use:</p>
+<pre><code class="language-bash">make ux-mock
+</code></pre>
+<p>Stop the background service with:</p>
+<pre><code class="language-bash">make stop
+</code></pre>
 <h3 id="service-endpoints">Service Endpoints</h3>
 <ul>
 <li><code>GET /health</code> - Health check endpoint</li>

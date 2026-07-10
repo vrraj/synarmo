@@ -20,6 +20,11 @@ dev = ["pytest>=8.2", "ruff>=0.5"]
 [project.scripts]
 synarmo = "synarmo.cli:app"
 
+[tool.hatch.build]
+exclude = [
+    "/assets",
+]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/synarmo"]
 

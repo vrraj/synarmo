@@ -108,10 +108,16 @@ pip install -e ".[dev,llama,service]"
 **Step 4 — Start the service with real local inference:**
 
 ```bash
-synarmo serve --backend llama-cpp
+make ux
 ```
 
-**Step 5 — Open the UI:**
+`make ux` starts the configured backend in the background, waits for `/health`, and prints the browser UI URL. To start the same UX without a model for a quick wiring check, use:
+
+```bash
+make ux-mock
+```
+
+**Step 5 — Open the UI shown by `make ux`:**
 
 ```text
 http://127.0.0.1:8765/ui
@@ -159,6 +165,9 @@ Any llama.cpp-compatible GGUF model works this way — no code change needed. To
 Useful model commands:
 
 ```bash
+make ux
+make ux-mock
+make stop
 make models
 make model-current
 make model-ensure

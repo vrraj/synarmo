@@ -424,6 +424,15 @@ engine = SynarmoEngine.load(
 <p>With the service running, open:</p>
 <pre><code class="language-text">http://127.0.0.1:8765/ui
 </code></pre>
+<p>From a source checkout, you can start the browser UX directly:</p>
+<pre><code class="language-bash">make ux
+</code></pre>
+<p>For a no-model wiring check, start it with the mock backend:</p>
+<pre><code class="language-bash">make ux-mock
+</code></pre>
+<p>Stop the background service with:</p>
+<pre><code class="language-bash">make stop
+</code></pre>
 <p>The UI lets you:</p>
 <ul>
 <li>Type the current message</li>

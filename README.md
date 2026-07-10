@@ -12,6 +12,8 @@ APIs, and llama.cpp/GGUF support for swappable local models.
 
 > Local-first next-word and next-phrase suggestions tuned for short completions.
 
+<video src="./assets/synarmo-auto-suggest.mp4" controls muted playsinline width="100%"></video>
+
 Synarmo is intended to be used as:
 
 - a PyPI package for predicting suggestions from Python
@@ -54,17 +56,27 @@ Tests use deterministic local test doubles and monkeypatched llama.cpp adapter
 checks, so the default suite validates package behavior without ever touching
 a real model.
 
-### Adding real inference
+### Add real local inference
 
-To get actual predictions instead of test doubles, install the llama.cpp and
-service extras and point Synarmo at a GGUF model:
+The basic package install uses the mock backend. For real predictions, install
+the llama.cpp extra and configure a local GGUF model first:
 
 ```bash
 pip install "synarmo[llama,service]"
+mkdir -p ~/models/synarmo
 ```
 
-Then configure a model — see [Configure A Local Model](#configure-a-local-model)
-below. Once configured, run a smoke test:
+Create a `.env` file in the directory where you will run `synarmo` or your
+Python app:
+
+```dotenv
+LOCAL_MODELS_CACHE=~/models/synarmo
+SYNARMO_MAX_SUGGESTIONS=3
+SYNARMO_MODEL_REPO_ID=hugging-quants/Llama-3.2-1B-Instruct-Q4_K_M-GGUF
+SYNARMO_MODEL=llama-3.2-1b-instruct-q4_k_m.gguf
+```
+
+Then run Synarmo with the llama.cpp backend:
 
 ```bash
 synarmo suggest "My goals" \
@@ -72,13 +84,17 @@ synarmo suggest "My goals" \
   --backend llama-cpp
 ```
 
-If the model hasn't been downloaded yet, this first run can take a while since
-it has to fetch and load the GGUF file. Later predictions reuse the already
-downloaded model.
+With that `.env`, the first `--backend llama-cpp` run downloads the model to:
+
+```text
+~/models/synarmo/llama-3.2-1b-instruct-q4_k_m.gguf
+```
+
+Later runs reuse the already downloaded file.
 
 **Summary:** `pip install synarmo` → package works, testable without a model.
-Add `[llama,service]` + a configured `.env` → same package now produces real
-suggestions.
+Add `[llama,service]` + your own `.env` with `LOCAL_MODELS_CACHE` and
+`SYNARMO_MODEL` → same package now produces real suggestions.
 
 ---
 
@@ -88,6 +104,8 @@ The browser `/ui` is most useful with a real model, but it can also run against
 the deterministic `mock` backend for wiring checks. It requires the repository
 itself (not just the PyPI package), since it needs the FastAPI service, static
 UI assets, and a venv to run in.
+
+![Synarmo context-aware auto-suggest UI](./assets/synarmo-context-aware-auto-suggest.jpeg)
 
 **Step 1 — Clone the repository:**
 
@@ -111,10 +129,18 @@ pip install -e ".[dev,llama,service]"
 **Step 4 — Start the service with real local inference:**
 
 ```bash
-synarmo serve --backend llama-cpp
+make ux
 ```
 
-**Step 5 — Open the UI:**
+`make ux` starts the configured backend in the background, waits for `/health`,
+and prints the browser UI URL. To start the same UX without a model for a quick
+wiring check, use:
+
+```bash
+make ux-mock
+```
+
+**Step 5 — Open the UI shown by `make ux`:**
 
 ```text
 http://127.0.0.1:8765/ui
@@ -127,15 +153,30 @@ client application can call directly.
 
 ## Configure A Local Model
 
-Used by both the PyPI package (once you add `[llama,service]`) and the
-interactive `/ui`. Copy the example environment file and set a model:
+Real local inference needs two things:
+
+- the `llama-cpp` backend dependencies, installed with `[llama]`
+- a `.env` file that tells Synarmo where the model is and what it is called
+
+Synarmo does not create `.env` automatically. It reads a file literally named
+`.env` from the current working directory when `SynarmoEngine.load()` runs.
+
+For a source checkout, start from the included example:
 
 ```bash
 cp .env.example .env
 mkdir -p ~/models/synarmo
 ```
 
-Default `.env` shape:
+For an installed PyPI package, there may be no `.env.example` next to your app.
+Create `.env` yourself in your app directory or the terminal directory where
+you run `synarmo`:
+
+```bash
+mkdir -p ~/models/synarmo
+```
+
+Use this `.env` for automatic download from Hugging Face:
 
 ```dotenv
 LOCAL_MODELS_CACHE=~/models/synarmo
@@ -145,28 +186,51 @@ SYNARMO_MODEL=llama-3.2-1b-instruct-q4_k_m.gguf
 ```
 
 When `SYNARMO_MODEL_REPO_ID` is set, `llama-cpp-python` checks
-`LOCAL_MODELS_CACHE` and downloads `SYNARMO_MODEL` if it is missing.
+`LOCAL_MODELS_CACHE` and downloads `SYNARMO_MODEL` there if it is missing. With
+the default values above, the downloaded file will be stored at:
 
-You can also point at a manually downloaded model:
+```text
+~/models/synarmo/llama-3.2-1b-instruct-q4_k_m.gguf
+```
+
+Use this `.env` for a manually downloaded model in the cache directory:
 
 ```dotenv
 LOCAL_MODELS_CACHE=~/models/synarmo
 SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
 ```
 
-or an absolute path:
+Relative model filenames are resolved from `LOCAL_MODELS_CACHE`, so the example
+above points to:
+
+```text
+~/models/synarmo/Llama-3.2-1B.Q4_K_M.gguf
+```
+
+Use this `.env` for a model stored somewhere else:
 
 ```dotenv
 SYNARMO_MODEL=/Users/raj/models/qwen2.5-1.5b-instruct-q4_k_m.gguf
 ```
 
-Any llama.cpp-compatible GGUF model works this way — no code change needed. To
-try another family such as Qwen, change `SYNARMO_MODEL_REPO_ID` and
-`SYNARMO_MODEL`, or point `SYNARMO_MODEL` at a different local `.gguf` file.
+You can also skip `.env` for one command by passing a model path directly:
+
+```bash
+synarmo suggest "My goals" \
+  --backend llama-cpp \
+  --model-path ~/models/synarmo/Llama-3.2-1B.Q4_K_M.gguf
+```
+
+Any llama.cpp-compatible GGUF model works this way. To try another family such
+as Qwen, change `SYNARMO_MODEL_REPO_ID` and `SYNARMO_MODEL`, point
+`SYNARMO_MODEL` at a different local `.gguf` file, or pass `--model-path`.
 
 Useful model commands:
 
 ```bash
+make ux
+make ux-mock
+make stop
 make models
 make model-current
 make model-ensure

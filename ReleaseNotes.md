@@ -44,6 +44,9 @@ GGUF inference.
 - **Added LAN service guidance** for binding `synarmo serve` to `0.0.0.0`
   on trusted networks, including `make serve-lan` and the loopback caveat for
   `/etc/hosts`.
+- **Added UX Make targets** so users can run `make ux` to start the browser
+  UI with the configured backend, `make ux-mock` for a no-model wiring check,
+  and `make stop` to stop the background service.
 - **Fixed docs accuracy issues** around Python version support, `top_p`
   validation, mock autocomplete fallback behavior, and the usage guide heading.
 

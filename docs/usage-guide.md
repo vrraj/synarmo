@@ -397,6 +397,24 @@ With the service running, open:
 http://127.0.0.1:8765/ui
 ```
 
+From a source checkout, you can start the browser UX directly:
+
+```bash
+make ux
+```
+
+For a no-model wiring check, start it with the mock backend:
+
+```bash
+make ux-mock
+```
+
+Stop the background service with:
+
+```bash
+make stop
+```
+
 The UI lets you:
 - Type the current message
 - Provide conversation or scene context
