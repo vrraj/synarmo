@@ -92,8 +92,6 @@ User typing
 Current model backends:
 
 - `llama-cpp`: local GGUF inference through `llama_cpp.Llama`
-- `mock`: deterministic no-model backend for API, service, UI, and CI wiring
-  checks
 
 See [Architecture](ARCHITECTURE.html) for the full design notes and mobile
 direction.
@@ -103,7 +101,6 @@ direction.
 - **Python prediction package** with `SynarmoEngine`, `predict()`, and
   `suggest()`
 - **Local llama.cpp/GGUF backend** for real on-device inference
-- **Mock backend** for deterministic tests and no-model wiring checks
 - **Context and profile memory hooks** for personalized suggestions
 - **Suggestion ranking and filtering** tuned for short continuations
 - **CLI commands** for one-off suggestions and an interactive compose loop
@@ -134,13 +131,6 @@ When the `llama-cpp` backend starts, Synarmo checks `LOCAL_MODELS_CACHE` and
 downloads `SYNARMO_MODEL` from `SYNARMO_MODEL_REPO_ID` if the GGUF file is
 missing. The first real request can take longer while the model downloads and
 loads; later runs reuse the cached file.
-
-For a lightweight no-model wiring check:
-
-```bash
-pip install synarmo
-python -c "from synarmo import SynarmoEngine; e=SynarmoEngine.load(); print([s.text for s in e.suggest('I want to')])"
-```
 
 ## Quick example
 
@@ -224,30 +214,10 @@ Open:
 http://127.0.0.1:8765/ui
 ```
 
-For a no-model UI wiring check:
-
-```bash
-make ux-mock
-```
-
 Stop the background service when finished:
 
 ```bash
 make stop
-```
-
-## Mock mode
-
-The `mock` backend returns deterministic canned suggestions and sends them
-through the same context, prompt, service, and ranking pipeline used by the real
-backend. Use it for package imports, CLI wiring, service startup, UI rendering,
-and CI checks without downloading a GGUF model.
-
-From a source checkout:
-
-```bash
-pip install -e ".[dev]"
-PYTHONPATH=src pytest
 ```
 
 ## Summary
