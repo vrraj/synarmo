@@ -24,7 +24,7 @@ sizes, and other load diagnostics.
 
 > Local-first next-word and next-phrase suggestions tuned for short completions.
 
-[![Watch the video](https://raw.githubusercontent.com/vrraj/synarmo/main/assets/synarmo-video-demo-thumbnail.png)](https://raw.githubusercontent.com/vrraj/synarmo/main/assets/synarmo-auto-suggest.mp4)
+<video src="https://raw.githubusercontent.com/vrraj/synarmo/main/assets/synarmo-auto-suggest.mp4" controls muted playsinline width="100%" poster="https://raw.githubusercontent.com/vrraj/synarmo/main/assets/synarmo-video-demo-thumbnail.png"></video>
 
 <p align="center"><em>Synarmo context-aware compose loop predicting short suggestions locally.</em></p>
 
