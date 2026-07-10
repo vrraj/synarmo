@@ -23,45 +23,16 @@ Synarmo is intended to be used as:
 - an interactive browser `/ui` for testing and tuning API calls with context and parameters
 - a llama.cpp/GGUF-backed engine that can test different local models through `.env`
 
-There are two ways to work with Synarmo, and they don't require the same setup:
-
-| | Requires | Needs a GGUF model? |
-| --- | --- | --- |
-| **[Python Package](#python-package)** | `pip install synarmo` | No — only if you want real inference |
-| **[Interactive `/ui`](#interactive-ui)** | Cloning the repo | No for wiring checks; yes for real predictions |
+The primary path is local GGUF inference through llama.cpp. Synarmo also ships
+with a deterministic mock backend for development checks when you want to test
+the package, CLI, service, or UI without downloading a model. See
+[Mock Mode](#mock-mode) for what that does and does not test.
 
 ---
 
-## Python Package
+## Real Local Inference
 
-Install the package from PyPI:
-
-```bash
-pip install synarmo
-```
-
-This alone lets you exercise the package API with the deterministic mock
-backend — **no GGUF model or download required.**
-
-```bash
-python -c "from synarmo import SynarmoEngine; e=SynarmoEngine.load(); print([s.text for s in e.suggest('I want to')])"
-```
-
-When working from a source checkout, you can also run the test suite:
-
-```bash
-pip install -e ".[dev]"
-PYTHONPATH=src pytest
-```
-
-Tests use deterministic local test doubles and monkeypatched llama.cpp adapter
-checks, so the default suite validates package behavior without ever touching
-a real model.
-
-### Add real local inference
-
-The basic package install uses the mock backend. For real predictions, install
-the llama.cpp extra and configure a local GGUF model first:
+Install Synarmo with llama.cpp and service support:
 
 ```bash
 pip install "synarmo[llama,service]"
@@ -74,9 +45,19 @@ Python app:
 ```dotenv
 LOCAL_MODELS_CACHE=~/models/synarmo
 SYNARMO_MAX_SUGGESTIONS=3
-SYNARMO_MODEL_REPO_ID=hugging-quants/Llama-3.2-1B-Instruct-Q4_K_M-GGUF
-SYNARMO_MODEL=llama-3.2-1b-instruct-q4_k_m.gguf
+SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF
+SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
 ```
+
+> Tip: For quick API or UI wiring checks without a model download, use
+> [Mock Mode](#mock-mode). Mock mode returns canned deterministic suggestions;
+> it is not a prediction-quality test.
+
+The first `--backend llama-cpp` command checks `LOCAL_MODELS_CACHE` and
+downloads `SYNARMO_MODEL` from `SYNARMO_MODEL_REPO_ID` if the GGUF file is
+missing. That download can take some time, so the first real request is slower
+than later runs. In a source checkout, you can do that check before the first
+request with `make model-ensure`.
 
 Then run Synarmo with the llama.cpp backend:
 
@@ -86,26 +67,22 @@ synarmo suggest "My goals" \
   --backend llama-cpp
 ```
 
-With that `.env`, the first `--backend llama-cpp` run downloads the model to:
+With that `.env`, the model is stored at:
 
 ```text
-~/models/synarmo/llama-3.2-1b-instruct-q4_k_m.gguf
+~/models/synarmo/Llama-3.2-1B.Q4_K_M.gguf
 ```
 
 Later runs reuse the already downloaded file.
-
-**Summary:** `pip install synarmo` → package works, testable without a model.
-Add `[llama,service]` + your own `.env` with `LOCAL_MODELS_CACHE` and
-`SYNARMO_MODEL` → same package now produces real suggestions.
 
 ---
 
 ## Interactive `/ui`
 
-The browser `/ui` is most useful with a real model, but it can also run against
-the deterministic `mock` backend for wiring checks. It requires the repository
-itself (not just the PyPI package), since it needs the FastAPI service, static
-UI assets, and a venv to run in.
+The browser `/ui` is for trying real local inference with context and
+autocomplete parameters. It requires the repository itself (not just the PyPI
+package), since it needs the FastAPI service, static UI assets, and a venv to
+run in.
 
 ![Synarmo context-aware auto-suggest UI](./assets/synarmo-context-aware-auto-suggest.jpeg)
 
@@ -125,24 +102,43 @@ source .venv/bin/activate
 pip install -e ".[dev,llama,service]"
 ```
 
-**Step 3 — Configure a local GGUF model** — see
-[Configure A Local Model](#configure-a-local-model) below.
+**Step 3 — Configure a local GGUF model:**
 
-**Step 4 — Start the service with real local inference:**
+```bash
+cp .env.example .env
+mkdir -p ~/models/synarmo
+```
+
+The included `.env.example` is configured for automatic download from Hugging
+Face. See [Configure A Local Model](#configure-a-local-model) for manual model
+paths and other model options.
+
+**Step 4 — Download or verify the configured model:**
+
+```bash
+make model-ensure
+```
+
+This checks `LOCAL_MODELS_CACHE` and downloads `SYNARMO_MODEL` from
+`SYNARMO_MODEL_REPO_ID` if the GGUF file is missing. `make ux` performs the
+same model load when the service starts, but doing it here makes the download
+step explicit. The first download can take some time.
+
+**Step 5 — Start the service with real local inference:**
 
 ```bash
 make ux
 ```
 
-`make ux` starts the configured backend in the background, waits for `/health`,
-and prints the browser UI URL. To start the same UX without a model for a quick
-wiring check, use:
+`make ux` starts the configured llama.cpp backend in the background, waits for
+`/health`, and prints the browser UI URL. For a no-model wiring check, see
+[Mock Mode](#mock-mode) or run:
 
 ```bash
 make ux-mock
 ```
 
-**Step 5 — Open the UI shown by `make ux`:**
+**Step 6 — Open the UI shown by `make ux`:**
 
 ```text
 http://127.0.0.1:8765/ui
@@ -183,8 +179,8 @@ Use this `.env` for automatic download from Hugging Face:
 ```dotenv
 LOCAL_MODELS_CACHE=~/models/synarmo
 SYNARMO_MAX_SUGGESTIONS=3
-SYNARMO_MODEL_REPO_ID=hugging-quants/Llama-3.2-1B-Instruct-Q4_K_M-GGUF
-SYNARMO_MODEL=llama-3.2-1b-instruct-q4_k_m.gguf
+SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF
+SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
 ```
 
 When `SYNARMO_MODEL_REPO_ID` is set, `llama-cpp-python` checks
@@ -192,7 +188,7 @@ When `SYNARMO_MODEL_REPO_ID` is set, `llama-cpp-python` checks
 the default values above, the downloaded file will be stored at:
 
 ```text
-~/models/synarmo/llama-3.2-1b-instruct-q4_k_m.gguf
+~/models/synarmo/Llama-3.2-1B.Q4_K_M.gguf
 ```
 
 Use this `.env` for a manually downloaded model in the cache directory:
@@ -227,7 +223,7 @@ Any llama.cpp-compatible GGUF model works this way. To try another family such
 as Qwen, change `SYNARMO_MODEL_REPO_ID` and `SYNARMO_MODEL`, point
 `SYNARMO_MODEL` at a different local `.gguf` file, or pass `--model-path`.
 
-Useful model commands:
+In a source checkout, useful model commands are:
 
 ```bash
 make ux
@@ -309,7 +305,9 @@ suggestions = synarmo.predict(
 ```
 
 The engine loads the model once and reuses it for later predictions when used
-as an object or service.
+as an object or service. If `SYNARMO_MODEL_REPO_ID` is configured and the GGUF
+file is missing, this first load downloads the model before returning
+suggestions, which can take some time.
 
 After changing code or prompt text, restart any running `synarmo serve`
 process so the service reloads the updated Python modules. The service keeps
@@ -323,6 +321,10 @@ Start the local service with the configured `.env` model:
 ```bash
 synarmo serve --backend llama-cpp
 ```
+
+If `SYNARMO_MODEL_REPO_ID` is configured and the GGUF file is missing, service
+startup downloads it before `/health` is ready, which can take some time. If
+you pass a direct `--model-path`, that local file must already exist.
 
 When using `pyenv` and a specific local GGUF file:
 
@@ -444,6 +446,50 @@ My goals
 3. talk to you
 Choose 1-3, enter custom text, or q to quit:
 ```
+
+---
+
+## Mock Mode
+
+Mock mode is a deterministic development backend for testing Synarmo without a
+GGUF model, llama.cpp setup, or model download. It does not produce intelligent
+predictions. It returns canned short suggestions and then sends them through
+the same context, prompt, service, and ranking pipeline used by the real
+backend.
+
+Use it to check:
+
+- Python package imports and API calls
+- CLI wiring for `suggest` and `compose`
+- FastAPI startup, `/health`, `/suggest`, and `/evaluate/autocomplete`
+- browser `/ui` request and rendering behavior
+- deterministic tests and CI runs
+- suggestion parsing, deduping, filtering, truncation, and max suggestion count
+
+Install the lightweight package and run a no-model API check:
+
+```bash
+pip install synarmo
+python -c "from synarmo import SynarmoEngine; e=SynarmoEngine.load(); print([s.text for s in e.suggest('I want to')])"
+```
+
+From a source checkout, run tests without downloading a model:
+
+```bash
+pip install -e ".[dev]"
+PYTHONPATH=src pytest
+```
+
+Start the service or browser UI with the mock backend:
+
+```bash
+synarmo serve --backend mock
+make ux-mock
+```
+
+Mock mode cannot validate real suggestion quality, real model latency, memory
+usage, token probabilities, or whether a specific GGUF model behaves well. Use
+`--backend llama-cpp` for those checks.
 
 ---
 

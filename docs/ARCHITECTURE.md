@@ -78,6 +78,72 @@ Future backends:
 - MLX for Apple Silicon experiments
 - remote backend for evaluation only
 
+## Technology Components
+
+### Backend
+
+**Core Python Package**
+- `SynarmoEngine`: Main engine API for loading models and generating suggestions
+- `ModelBackend`: Protocol for pluggable inference backends
+  - `LlamaCppBackend`: GGUF model inference via llama-cpp-python
+  - `MockBackend`: Deterministic test backend
+- `ContextAssembler`: Builds conversation context from user memory
+- `UserMemory`: Manages user profiles, preferences, and conversation history
+- `PromptBuilder`: Constructs prompts for the model
+- `SuggestionRanker`: Ranks and filters generated suggestions
+- `SynarmoConfig`: Configuration management with environment variable support
+
+**Model Backends**
+- llama-cpp-python: Local GGUF model inference
+- huggingface-hub: Model downloading and caching
+- Future: Core ML (iOS), MLX (Apple Silicon)
+
+### Service Layer
+
+**FastAPI Application**
+- REST API endpoints
+- WebSocket support for real-time suggestions
+- Static file serving for web UI
+- Jinja2 templating for HTML responses
+- Pydantic models for request/response validation
+
+**API Endpoints**
+- `GET /health`: Service health and model status
+- `POST /suggest`: Generate suggestions (REST)
+- `POST /evaluate/autocomplete`: Evaluate autocomplete quality
+- `WebSocket /ws/suggest`: Real-time suggestion streaming
+- `GET /ui`: Browser-based UI
+- `GET /docs`: FastAPI auto-generated API documentation
+
+### Frontend
+
+**Web UI**
+- HTML templates (Jinja2)
+- Static assets (CSS, JavaScript)
+- Browser-based interface for testing and demonstration
+- WebSocket client for real-time suggestions
+
+### Interfaces
+
+**Python API**
+```python
+from synarmo import SynarmoEngine
+
+engine = SynarmoEngine.load(backend="llama-cpp")
+suggestions = engine.suggest("I want to", context="At home")
+```
+
+**Local Service**
+- REST API over HTTP
+- WebSocket for streaming
+- Configurable host and port
+- Background process support
+
+**Configuration**
+- Environment variables (.env file)
+- Profile-based user settings
+- Runtime configuration updates
+
 ## Performance Principles
 
 - Load the model once and keep it warm.
