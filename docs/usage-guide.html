@@ -405,7 +405,7 @@ engine = SynarmoEngine.load(
     &quot;text&quot;: &quot;I want to&quot;,
     &quot;contexts&quot;: [&quot;At home, asking for help&quot;],
     &quot;choices&quot;: 3,
-    &quot;candidate_tokens&quot;: 10,
+    &quot;candidate_tokens&quot;: 5,
     &quot;candidate_words&quot;: 2,
     &quot;temperature&quot;: 0.5,
     &quot;top_p&quot;: 0.95,
@@ -457,7 +457,7 @@ engine = SynarmoEngine.load(
 </tr>
 <tr>
 <td>Tokens</td>
-<td style="text-align:right">10</td>
+<td style="text-align:right">5</td>
 <td>Maximum generated tokens per suggestion</td>
 </tr>
 <tr>
@@ -473,12 +473,12 @@ engine = SynarmoEngine.load(
 <tr>
 <td>Top P</td>
 <td style="text-align:right">0.95</td>
-<td>Nucleus sampling threshold (lower = more focused)</td>
+<td>Nucleus sampling value passed to the one-token llama.cpp probe.</td>
 </tr>
 <tr>
 <td>Logprobs</td>
 <td style="text-align:right">24</td>
-<td>Number of scored next-token options to inspect</td>
+<td>Number of top next-token log probabilities to request from llama.cpp for starter selection.</td>
 </tr>
 <tr>
 <td>Auto - Suggest on Spacebar</td>

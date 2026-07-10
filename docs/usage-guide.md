@@ -422,7 +422,7 @@ curl -X POST http://127.0.0.1:8765/evaluate/autocomplete \
     "text": "I want to",
     "contexts": ["At home, asking for help"],
     "choices": 3,
-    "candidate_tokens": 10,
+    "candidate_tokens": 5,
     "candidate_words": 2,
     "temperature": 0.5,
     "top_p": 0.95,
@@ -485,11 +485,11 @@ The UI lets you:
 | Parameter | Default | What it does |
 | --- | ---: | --- |
 | Choices | 3 | Number of suggestions to show |
-| Tokens | 10 | Maximum generated tokens per suggestion |
+| Tokens | 5 | Maximum generated tokens per suggestion |
 | Words | 1 | Maximum words displayed per suggestion |
 | Temperature | 0.5 | Controls randomness (lower = more predictable) |
-| Top P | 0.95 | Nucleus sampling threshold (lower = more focused) |
-| Logprobs | 24 | Number of scored next-token options to inspect |
+| Top P | 0.95 | Nucleus sampling value passed to the one-token llama.cpp probe. |
+| Logprobs | 24 | Number of top next-token log probabilities to request from llama.cpp for starter selection. |
 | Auto - Suggest on Spacebar | On | Automatically request suggestions after typing a space |
 
 ## Integration Examples

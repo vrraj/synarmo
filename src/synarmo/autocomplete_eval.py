@@ -69,7 +69,7 @@ def evaluate_with_llama(
     context: str,
     typed_text: str,
     choices: int = 3,
-    max_tokens: int = 10,
+    max_tokens: int = 5,
     max_words: int = 1,
     temperature: float = 0.5,
     top_p: float = 0.95,

@@ -28,7 +28,7 @@ API calls with context and parameters.
 Synarmo is intended to be used as:
 
 - a PyPI package for predicting suggestions from Python
-- a local service mode that exposes REST, WebSocket, and browser UI endpoints
+- integration surfaces for other applications through REST and WebSocket
 - an interactive browser `/ui` for testing and tuning API calls with context and parameters
 - a llama.cpp/GGUF-backed engine that can test different local models through `.env`
 
@@ -96,14 +96,19 @@ git clone https://github.com/vrraj/synarmo.git
 cd synarmo
 ```
 
-**Step 2 — Create a virtual environment and install with dev, llama.cpp, and
-service extras:**
+**Step 2 — Create a virtual environment and install with llama.cpp and service
+extras:**
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -e ".[dev,llama,service]"
+pip install -e ".[llama,service]"
 ```
+
+The editable install does not build a standalone app for the UI. It makes the
+source checkout importable inside the virtual environment, installs the
+`synarmo` command used by `make ux`, and adds the FastAPI/uvicorn service
+dependencies. The `[dev]` extra is only needed for running tests and linters.
 
 **Step 3 — Configure a local GGUF model:**
 
@@ -116,7 +121,7 @@ The included `.env.example` is configured for automatic download from Hugging
 Face. See [Configure A Local Model](#configure-a-local-model) for manual model
 paths and other model options.
 
-**Step 4 — Download or verify the configured model:**
+**Step 4 — Download or verify the local inference model:**
 
 ```bash
 make model-ensure
@@ -144,6 +149,12 @@ http://127.0.0.1:8765/ui
 
 The UI calls the same `/health` and `/evaluate/autocomplete` endpoints that a
 client application can call directly.
+
+**Stop the background service when you are done:**
+
+```bash
+make stop
+```
 
 ---
 
@@ -383,20 +394,74 @@ lets you:
 | Parameter | Default | What it does |
 | --- | ---: | --- |
 | Choices | 3 | Number of suggestions to show. |
-| Tokens | 10 | Maximum generated tokens behind each suggestion. Higher values allow longer completions but can take longer. |
+| Tokens | 5 | Maximum generated tokens behind each suggestion. Higher values allow longer completions but can take longer. |
 | Words | 1 | Maximum words displayed for each suggestion. |
 | Temperature | 0.5 | Controls randomness. Lower is more predictable; higher is more varied. |
-| Top P | 0.95 | Shapes the useful candidate pool first by keeping likely tokens whose combined probability reaches this value. Lower values are more focused. |
-| Logprobs | 24 | Number of scored next-token options to inspect after Top P has shaped the pool. Higher values give Synarmo more candidates to choose from, while Choices still controls how many suggestions appear. |
+| Top P | 0.95 | Nucleus sampling value passed to the one-token llama.cpp probe. |
+| Logprobs | 24 | Number of top next-token log probabilities to request from llama.cpp for starter selection. |
 | Auto - Suggest on Spacebar | On | Automatically asks for new suggestions after typing a space. |
 
-`Logprobs` does not directly mean "show this many suggestions." `Top P` shapes
-the candidate pool first, then `Logprobs` controls how many scored options
-Synarmo can inspect from that pool. For example, if `Top P = 0.70` leaves only
-`go`, `watch`, and `eat` as useful next-token candidates, then `Logprobs = 24`
-will not create 24 useful starters. It can only inspect what the pool makes
-available. With `Choices = 3`, Synarmo then picks up to 3 useful unique
-starters from the inspected options.
+`Logprobs` does not directly mean "show this many suggestions." For the
+autocomplete evaluator, Synarmo asks llama.cpp for a one-token probe with
+`logprobs` enabled, sorts the returned next-token log probabilities, removes
+duplicate first-word starters, and expands up to `Choices` starters into short
+suggestions. `Top P` is passed to the probe sampling call, but Synarmo does not
+apply its own Top P cutoff to the returned logprob table. The follow-up
+expansion for each selected starter is deterministic.
+
+#### How The Autocomplete Flow Works
+
+Suppose the current text is:
+
+```text
+I want to
+```
+
+Synarmo first asks the model for likely next-token starters. The top scored
+starters might be:
+
+```text
+go
+eat
+help
+```
+
+Those starters become the beginning of each candidate:
+
+```text
+I want to go
+I want to eat
+I want to help
+```
+
+Then Synarmo expands each starter just enough to make a cleaner word or short
+phrase:
+
+```text
+go outside
+eat lunch
+help me
+```
+
+`Tokens` controls the internal room the model has for that expansion. `Words`
+controls how many whitespace-separated words are kept for display. For example,
+if the model produces:
+
+```text
+go outside with my friends
+```
+
+then the displayed suggestion depends on `Words`:
+
+```text
+Words = 1  -> go
+Words = 2  -> go outside
+Words = 3  -> go outside with
+```
+
+> This is not beam search. Synarmo does not keep expanding and rescoring many
+paths. It uses logprobs to pick strong starter tokens, then makes one short
+deterministic expansion call for each starter.
 
 ### Use Service Endpoints
 
@@ -417,7 +482,7 @@ curl -X POST http://127.0.0.1:8765/evaluate/autocomplete \
     "text": "My goals",
     "contexts": ["in the gym working out with a coach. I am looking to build strength and being able to run up a flight of stairs without tiring"],
     "choices": 3,
-    "candidate_tokens": 10,
+    "candidate_tokens": 5,
     "candidate_words": 2,
     "temperature": 0.5,
     "top_p": 0.95,

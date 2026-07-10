@@ -12,6 +12,7 @@ const charCount = document.getElementById("char-count");
 const choicesInput = document.getElementById("choices");
 const candidateTokensInput = document.getElementById("candidate-tokens");
 const candidateWordsInput = document.getElementById("candidate-words");
+const tokenRecommendation = document.getElementById("token-recommendation");
 const temperatureInput = document.getElementById("temperature");
 const topPInput = document.getElementById("top-p");
 const logprobPoolInput = document.getElementById("logprob-pool");
@@ -22,6 +23,28 @@ let lastSuggestionRequestText = "";
 function updateCount() {
   const count = typedText.value.length;
   charCount.textContent = `${count} ${count === 1 ? "character" : "characters"}`;
+}
+
+function updateTokenRecommendation() {
+  const words = Math.max(1, Math.round(numberValue(candidateWordsInput, 1)));
+  const tokens = Math.max(1, Math.round(numberValue(candidateTokensInput, 1)));
+  const recommended = Math.max(2, Math.ceil(words * 1.5));
+  const high = recommended + 2;
+  let message = `For ${words} ${words === 1 ? "word" : "words"}, about ${recommended} tokens is usually enough.`;
+  let isWarning = false;
+
+  if (tokens < recommended) {
+    message += ` Current ${tokens} may truncate suggestions.`;
+    isWarning = true;
+  } else if (tokens > high) {
+    message += ` Current ${tokens} may add latency.`;
+    isWarning = true;
+  } else {
+    message += ` Current ${tokens} looks balanced.`;
+  }
+
+  tokenRecommendation.textContent = message;
+  tokenRecommendation.classList.toggle("is-warning", isWarning);
 }
 
 function setError(message) {
@@ -81,7 +104,7 @@ async function fetchSuggestions(textOverride) {
         text: requestText,
         contexts: [contextText.value.trim() || ""],
         choices: numberValue(choicesInput, 3),
-        candidate_tokens: numberValue(candidateTokensInput, 10),
+        candidate_tokens: numberValue(candidateTokensInput, 5),
         candidate_words: numberValue(candidateWordsInput, 1),
         temperature: numberValue(temperatureInput, 0.5),
         top_p: numberValue(topPInput, 0.95),
@@ -218,6 +241,9 @@ clearBtn.addEventListener("click", () => {
   typedText.focus();
 });
 typedText.addEventListener("input", maybeSuggestAfterSpace);
+candidateWordsInput.addEventListener("input", updateTokenRecommendation);
+candidateTokensInput.addEventListener("input", updateTokenRecommendation);
 
 updateCount();
+updateTokenRecommendation();
 checkHealth();

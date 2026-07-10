@@ -30,7 +30,7 @@ def create_app(engine: SynarmoEngine):
         text: str
         contexts: list[str]
         choices: int = 3
-        candidate_tokens: int = 10
+        candidate_tokens: int = 5
         candidate_words: int = 1
         temperature: float = 0.5
         top_p: float = 0.95

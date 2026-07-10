@@ -249,6 +249,17 @@ button.secondary:hover {
   margin-bottom: 14px;
 }
 
+.parameter-note {
+  color: #555555;
+  font-size: 12px;
+  line-height: 1.35;
+  margin: -6px 0 12px;
+}
+
+.parameter-note.is-warning {
+  color: #8a5a00;
+}
+
 .field-row-wide {
   grid-column: 1 / -1;
 }

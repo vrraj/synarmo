@@ -306,14 +306,14 @@ The browser UI is for tuning API calls before building a production client. It l
 | Parameter | Default | What it does |
 | --- | ---: | --- |
 | Choices | 3 | Number of suggestions to show. |
-| Tokens | 10 | Maximum generated tokens behind each suggestion. Higher values allow longer completions but can take longer. |
+| Tokens | 5 | Maximum generated tokens behind each suggestion. Higher values allow longer completions but can take longer. |
 | Words | 1 | Maximum words displayed for each suggestion. |
 | Temperature | 0.5 | Controls randomness. Lower is more predictable; higher is more varied. |
-| Top P | 0.95 | Shapes the useful candidate pool first by keeping likely tokens whose combined probability reaches this value. Lower values are more focused. |
-| Logprobs | 24 | Number of scored next-token options to inspect after Top P has shaped the pool. Higher values give Synarmo more candidates to choose from, while Choices still controls how many suggestions appear. |
+| Top P | 0.95 | Nucleus sampling value passed to the one-token llama.cpp probe. |
+| Logprobs | 24 | Number of top next-token log probabilities to request from llama.cpp for starter selection. |
 | Auto - Suggest on Spacebar | On | Automatically asks for new suggestions after typing a space. |
 
-`Logprobs` does not directly mean "show this many suggestions." `Top P` shapes the candidate pool first, then `Logprobs` controls how many scored options Synarmo can inspect from that pool. For example, if `Top P = 0.70` leaves only `go`, `watch`, and `eat` as useful next-token candidates, then `Logprobs = 24` will not create 24 useful starters. It can only inspect what the pool makes available. With `Choices = 3`, Synarmo then picks up to 3 useful unique starters from the inspected options.
+`Logprobs` does not directly mean "show this many suggestions." For the autocomplete evaluator, Synarmo asks llama.cpp for a one-token probe with `logprobs` enabled, sorts the returned next-token log probabilities, removes duplicate first-word starters, and expands up to `Choices` starters into short suggestions. `Top P` is passed to the probe sampling call, but Synarmo does not apply its own Top P cutoff to the returned logprob table. The follow-up expansion for each selected starter is deterministic.
 
 ### Use Service Endpoints
 
@@ -334,7 +334,7 @@ curl -X POST http://127.0.0.1:8765/evaluate/autocomplete \
     "text": "My goals",
     "contexts": ["in the gym working out with a coach. I am looking to build strength and being able to run up a flight of stairs without tiring"],
     "choices": 3,
-    "candidate_tokens": 10,
+    "candidate_tokens": 5,
     "candidate_words": 2,
     "temperature": 0.5,
     "top_p": 0.95,
