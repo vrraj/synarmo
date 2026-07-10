@@ -14,6 +14,11 @@ MODEL_ENV = "SYNARMO_MODEL"
 MODEL_PATH_ENV = "SYNARMO_MODEL_PATH"
 MODEL_REPO_ID_ENV = "SYNARMO_MODEL_REPO_ID"
 MAX_SUGGESTIONS_ENV = "SYNARMO_MAX_SUGGESTIONS"
+MAX_TOKENS_ENV = "SYNARMO_MAX_TOKENS"
+MAX_SUGGESTION_WORDS_ENV = "SYNARMO_MAX_SUGGESTION_WORDS"
+TEMPERATURE_ENV = "SYNARMO_TEMPERATURE"
+TOP_P_ENV = "SYNARMO_TOP_P"
+LOGPROB_POOL_ENV = "SYNARMO_LOGPROB_POOL"
 N_GPU_LAYERS_ENV = "SYNARMO_N_GPU_LAYERS"
 LLAMA_VERBOSE_ENV = "SYNARMO_LLAMA_VERBOSE"
 
@@ -77,6 +82,31 @@ def configured_max_suggestions() -> int:
     return int(value) if value else 3
 
 
+def configured_max_tokens() -> int:
+    value = os.getenv(MAX_TOKENS_ENV)
+    return int(value) if value else 5
+
+
+def configured_max_suggestion_words() -> int:
+    value = os.getenv(MAX_SUGGESTION_WORDS_ENV)
+    return int(value) if value else 4
+
+
+def configured_temperature() -> float:
+    value = os.getenv(TEMPERATURE_ENV)
+    return float(value) if value else 0.25
+
+
+def configured_top_p() -> float:
+    value = os.getenv(TOP_P_ENV)
+    return float(value) if value else 0.95
+
+
+def configured_logprob_pool() -> int:
+    value = os.getenv(LOGPROB_POOL_ENV)
+    return int(value) if value else 24
+
+
 def configured_n_gpu_layers() -> int:
     value = os.getenv(N_GPU_LAYERS_ENV)
     return int(value) if value else 0
@@ -99,10 +129,11 @@ class SynarmoConfig:
     max_latency_ms: int = 100
     context_window: int = 2048
     style_adaptation: bool = True
-    temperature: float = 0.25
-    top_p: float = 0.95
-    max_tokens: int = 5
-    max_suggestion_words: int = 4
+    temperature: float = field(default_factory=configured_temperature)
+    top_p: float = field(default_factory=configured_top_p)
+    max_tokens: int = field(default_factory=configured_max_tokens)
+    max_suggestion_words: int = field(default_factory=configured_max_suggestion_words)
+    logprob_pool: int = field(default_factory=configured_logprob_pool)
     n_gpu_layers: int = field(default_factory=configured_n_gpu_layers)
     llama_verbose: bool = field(default_factory=configured_llama_verbose)
     stop: list[str] = field(default_factory=lambda: ["\n\n"])
@@ -126,6 +157,8 @@ class SynarmoConfig:
             raise ValueError("max_tokens must be between 1 and 128")
         if not 1 <= self.max_suggestion_words <= 20:
             raise ValueError("max_suggestion_words must be between 1 and 20")
+        if not 1 <= self.logprob_pool <= 50:
+            raise ValueError("logprob_pool must be between 1 and 50")
         if self.n_gpu_layers < -1:
             raise ValueError("n_gpu_layers must be -1 or greater")
 

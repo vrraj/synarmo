@@ -74,7 +74,7 @@
                       tabindex="0"
                     >?</span>
                   </label>
-                  <input id="choices" type="number" min="1" max="10" step="1" value="3" />
+                  <input id="choices" type="number" min="1" max="10" step="1" value="{{ compose_defaults.choices }}" />
                 </div>
                 <div class="field-row">
                   <label class="parameter-label" for="candidate-tokens">
@@ -86,7 +86,7 @@
                       tabindex="0"
                     >?</span>
                   </label>
-                  <input id="candidate-tokens" type="number" min="1" max="64" step="1" value="5" />
+                  <input id="candidate-tokens" type="number" min="1" max="64" step="1" value="{{ compose_defaults.candidate_tokens }}" />
                 </div>
                 <div class="field-row field-row-wide">
                   <label class="parameter-label" for="candidate-words">
@@ -98,7 +98,7 @@
                       tabindex="0"
                     >?</span>
                   </label>
-                  <input id="candidate-words" type="number" min="1" max="8" step="1" value="1" />
+                  <input id="candidate-words" type="number" min="1" max="8" step="1" value="{{ compose_defaults.candidate_words }}" />
                   <div id="token-recommendation" class="parameter-note" aria-live="polite"></div>
                 </div>
                 <div class="field-row">
@@ -111,7 +111,7 @@
                       tabindex="0"
                     >?</span>
                   </label>
-                  <input id="temperature" type="number" min="0" max="2" step="0.1" value="0.5" />
+                  <input id="temperature" type="number" min="0" max="2" step="0.1" value="{{ compose_defaults.temperature }}" />
                 </div>
                 <div class="field-row">
                   <label class="parameter-label" for="top-p">
@@ -123,7 +123,7 @@
                       tabindex="0"
                     >?</span>
                   </label>
-                  <input id="top-p" type="number" min="0" max="1" step="0.05" value="0.95" />
+                  <input id="top-p" type="number" min="0" max="1" step="0.05" value="{{ compose_defaults.top_p }}" />
                 </div>
                 <div class="field-row">
                   <label class="parameter-label" for="logprob-pool">
@@ -135,7 +135,7 @@
                       tabindex="0"
                     >?</span>
                   </label>
-                  <input id="logprob-pool" type="number" min="1" max="50" step="1" value="24" />
+                  <input id="logprob-pool" type="number" min="1" max="50" step="1" value="{{ compose_defaults.logprob_pool }}" />
                 </div>
                 <div class="field-row field-row-wide">
                   <label class="parameter-label" for="suggest-on-spacebar">

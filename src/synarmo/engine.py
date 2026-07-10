@@ -106,7 +106,7 @@ class SynarmoEngine:
                     max_words=self.config.max_suggestion_words,
                     temperature=self.config.temperature,
                     top_p=self.config.top_p,
-                    logprob_pool=24,
+                    logprob_pool=self.config.logprob_pool,
                 )
             seen: set[str] = set()
             suggestions: list[Suggestion] = []

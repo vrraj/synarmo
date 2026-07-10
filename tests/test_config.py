@@ -2,13 +2,18 @@ from pathlib import Path
 
 from synarmo.config import (
     SynarmoConfig,
+    configured_logprob_pool,
     configured_max_suggestions,
+    configured_max_suggestion_words,
+    configured_max_tokens,
     configured_model_filename,
     configured_model_path,
     configured_model_repo_id,
     configured_models_cache,
+    configured_temperature,
     configured_llama_verbose,
     configured_n_gpu_layers,
+    configured_top_p,
     load_env_file,
 )
 
@@ -87,6 +92,20 @@ def test_configured_max_suggestions_reads_env(monkeypatch) -> None:
     monkeypatch.setenv("SYNARMO_MAX_SUGGESTIONS", "5")
 
     assert configured_max_suggestions() == 5
+
+
+def test_configured_compose_generation_defaults_read_env(monkeypatch) -> None:
+    monkeypatch.setenv("SYNARMO_MAX_TOKENS", "7")
+    monkeypatch.setenv("SYNARMO_MAX_SUGGESTION_WORDS", "2")
+    monkeypatch.setenv("SYNARMO_TEMPERATURE", "0.4")
+    monkeypatch.setenv("SYNARMO_TOP_P", "0.8")
+    monkeypatch.setenv("SYNARMO_LOGPROB_POOL", "16")
+
+    assert configured_max_tokens() == 7
+    assert configured_max_suggestion_words() == 2
+    assert configured_temperature() == 0.4
+    assert configured_top_p() == 0.8
+    assert configured_logprob_pool() == 16
 
 
 def test_configured_n_gpu_layers_defaults_to_cpu(monkeypatch) -> None:

@@ -18,6 +18,8 @@ def create_app(engine: SynarmoEngine):
     except ImportError as exc:
         raise RuntimeError("Install service extras first: pip install synarmo[service]") from exc
 
+    compose_defaults = _compose_defaults(engine)
+
     class SuggestRequest(BaseModel):
         text: str
         context: str | None = None
@@ -29,12 +31,12 @@ def create_app(engine: SynarmoEngine):
     class AutocompleteEvalRequest(BaseModel):
         text: str
         contexts: list[str]
-        choices: int = 3
-        candidate_tokens: int = 5
-        candidate_words: int = 1
-        temperature: float = 0.5
-        top_p: float = 0.95
-        logprob_pool: int = 24
+        choices: int = compose_defaults["choices"]
+        candidate_tokens: int = compose_defaults["candidate_tokens"]
+        candidate_words: int = compose_defaults["candidate_words"]
+        temperature: float = compose_defaults["temperature"]
+        top_p: float = compose_defaults["top_p"]
+        logprob_pool: int = compose_defaults["logprob_pool"]
 
     class AutocompleteCandidateResponse(BaseModel):
         text: str
@@ -59,6 +61,7 @@ def create_app(engine: SynarmoEngine):
 
     _mount_ui(
         app,
+        engine=engine,
         Request=Request,
         HTMLResponse=HTMLResponse,
         RedirectResponse=RedirectResponse,
@@ -133,6 +136,7 @@ def create_app(engine: SynarmoEngine):
 def _mount_ui(
     app,
     *,
+    engine: SynarmoEngine,
     Request,
     HTMLResponse,
     RedirectResponse,
@@ -149,8 +153,23 @@ def _mount_ui(
 
     @app.get("/ui", response_class=HTMLResponse)
     def synarmo_ui(request: Request):  # type: ignore[misc]
-        return templates.TemplateResponse(request, "synarmo.html")
+        return templates.TemplateResponse(
+            request,
+            "synarmo.html",
+            {"compose_defaults": _compose_defaults(engine)},
+        )
 
     @app.get("/")
     def synarmo_ui_root():  # type: ignore[misc]
         return RedirectResponse(url="/ui")
+
+
+def _compose_defaults(engine: SynarmoEngine) -> dict[str, int | float]:
+    return {
+        "choices": engine.config.max_suggestions,
+        "candidate_tokens": engine.config.max_tokens,
+        "candidate_words": engine.config.max_suggestion_words,
+        "temperature": engine.config.temperature,
+        "top_p": engine.config.top_p,
+        "logprob_pool": engine.config.logprob_pool,
+    }
