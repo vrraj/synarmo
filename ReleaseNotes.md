@@ -23,9 +23,12 @@ GGUF inference.
   dedicated `Mock Mode` section that explains what it can test: package, CLI,
   service, UI wiring, deterministic tests, and suggestion parsing/ranking.
 - **Clarified model download timing** so users know `pip install` does not
-  install a GGUF model. The first `--backend llama-cpp` load, `make
+  install a GGUF model. `synarmo model-ensure --backend llama-cpp`, `make
   model-ensure`, or service startup can download the configured model and may
   take some time.
+- **Documented GPU setup and diagnostics** for llama.cpp inference, including
+  `SYNARMO_N_GPU_LAYERS`, CPU vs. Metal/CUDA offload, GPU support checks, and
+  verbose prefill/generation tokens-per-second logs.
 - **Updated the Interactive `/ui` path** into a linear sequence: clone the repo
   → create a venv → install dev/llama/service extras → copy `.env.example` →
   create the model cache directory → run `make model-ensure` → run `make ux` →
@@ -51,7 +54,7 @@ GGUF inference.
   UI with the configured backend, `make ux-mock` for a no-model wiring check,
   and `make stop` to stop the background service.
 - **Fixed docs accuracy issues** around Python version support, `top_p`
-  validation, model examples, mock autocomplete fallback behavior, and the
+  validation, model examples, mock auto-suggest fallback behavior, and the
   usage guide heading.
 
 ### Not Changed

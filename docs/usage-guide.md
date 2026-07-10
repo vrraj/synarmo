@@ -401,7 +401,7 @@ Once service mode is running, clients can call these local endpoints:
 | --- | --- |
 | `GET /health` | Confirms the service is ready and reports the active backend/model. |
 | `POST /suggest` | Returns ranked suggestions for text and optional context. |
-| `POST /evaluate/autocomplete` | Returns autocomplete candidates and token scores for tuning. |
+| `POST /evaluate/autocomplete` | Returns auto-suggest candidates and token scores for tuning. |
 | `WebSocket /ws/suggest` | Accepts repeated suggestion requests over one live connection. |
 | `GET /ui` | Opens the browser UI backed by the same service. |
 
@@ -413,7 +413,7 @@ curl -X POST http://127.0.0.1:8765/suggest \
   -d '{"text":"I want to","context":"At home, asking for help"}'
 ```
 
-Autocomplete evaluation request:
+Auto-suggest evaluation request:
 
 ```bash
 curl -X POST http://127.0.0.1:8765/evaluate/autocomplete \
@@ -477,7 +477,7 @@ make stop
 The UI lets you:
 - Type the current message
 - Provide conversation or scene context
-- Change autocomplete parameters (choices, tokens, words, temperature, top-p, logprob pool)
+- Change auto-suggest parameters (choices, tokens, words, temperature, top-p, logprob pool)
 - Inspect how the service responds
 
 ### UI Parameters

@@ -24,7 +24,7 @@ personalized next-word and short-phrase predictions across messaging, chat, and
 assistive typing workflows.
 
 Use it to embed short type-ahead suggestions in Python apps, run a local
-REST/WebSocket suggestion service, test autocomplete behavior in a browser
+REST/WebSocket suggestion service, test auto-suggest behavior in a browser
 `/ui`, and evaluate different local GGUF models through llama.cpp.
 
 > Local-first next-word and next-phrase suggestions tuned for short completions.
@@ -105,7 +105,7 @@ direction.
 - **Suggestion ranking and filtering** tuned for short continuations
 - **CLI commands** for one-off suggestions and an interactive compose loop
 - **FastAPI service mode** for REST, WebSocket, and browser UI clients
-- **Interactive `/ui`** for testing context, model behavior, and autocomplete
+- **Interactive `/ui`** for testing context, model behavior, and auto-suggest
   parameters
 
 ## Install
@@ -160,7 +160,7 @@ number of GPUs. Apple M2 has one integrated Metal GPU; `-1` tells llama.cpp to
 use it for all possible layers.
 
 On the Apple M2 development setup with the default 1B Q4_K_M model and Metal
-offload, local autocomplete evaluation commonly shows prefill/prompt evaluation
+offload, local auto-suggest evaluation commonly shows prefill/prompt evaluation
 around 50 tokens per second and short generation reaching around 95-100 tokens
 per second on a lightly loaded machine. Real logs can vary when other apps are
 active or when requests generate only a few tokens.
@@ -212,7 +212,7 @@ Service mode keeps one model instance warm and exposes these notable endpoints:
 | --- | --- |
 | `GET /health` | Check that the service is ready and see the active backend, model, and runtime diagnostics. |
 | `POST /suggest` | Request suggestions from an app, script, keyboard, or other client. |
-| `POST /evaluate/autocomplete` | Test autocomplete parameters; this is the endpoint used by `/ui`. |
+| `POST /evaluate/autocomplete` | Test auto-suggest parameters; this is the endpoint used by `/ui`. |
 | `WebSocket /ws/suggest` | Keep a live suggestion channel open while a user types. |
 | `GET /ui` | Open the browser interface backed by the same service. |
 
@@ -227,7 +227,7 @@ curl -X POST http://127.0.0.1:8765/suggest \
 ## Interactive UI
 
 The source checkout includes a browser UI for testing local suggestions with
-context and autocomplete parameters. It uses the same `/health` and
+context and auto-suggest parameters. It uses the same `/health` and
 `/evaluate/autocomplete` endpoints that client applications can call directly.
 
 ```bash

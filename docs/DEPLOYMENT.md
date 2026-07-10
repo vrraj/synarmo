@@ -99,13 +99,21 @@ For an installed package, create `.env` manually:
 ```dotenv
 LOCAL_MODELS_CACHE=~/models/synarmo
 SYNARMO_MAX_SUGGESTIONS=3
+SYNARMO_N_GPU_LAYERS=-1
+SYNARMO_LLAMA_VERBOSE=0
 SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF
 SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
 ```
 
-When `SYNARMO_MODEL_REPO_ID` is set, the first llama.cpp model load checks
-`LOCAL_MODELS_CACHE` and downloads `SYNARMO_MODEL` there if it is missing. That
-first download can take some time.
+Download or verify the configured model:
+
+```bash
+synarmo model-ensure --backend llama-cpp
+```
+
+This checks `LOCAL_MODELS_CACHE` and downloads `SYNARMO_MODEL` from
+`SYNARMO_MODEL_REPO_ID` if it is missing. The first download can take some
+time.
 
 ### Manual Model Download
 
@@ -121,6 +129,7 @@ Then update `.env`:
 
 ```dotenv
 LOCAL_MODELS_CACHE=~/models/synarmo
+SYNARMO_N_GPU_LAYERS=-1
 SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
 ```
 
@@ -191,7 +200,7 @@ entry only maps the name to the server's real LAN IP; it should not point at
 
 - `GET /health` - Health check endpoint
 - `POST /suggest` - Basic suggestions endpoint
-- `POST /evaluate/autocomplete` - Autocomplete evaluation endpoint
+- `POST /evaluate/autocomplete` - Auto-suggest evaluation endpoint
 - `GET /ui` - Interactive verification UI
 - `WS /ws/suggest` - WebSocket endpoint for real-time suggestions
 
@@ -243,10 +252,45 @@ async def get_suggestions(request: dict):
 - `llama-cpp-python` package (install with `[llama]` extra)
 - A compatible GGUF model file, or `SYNARMO_MODEL_REPO_ID` and `SYNARMO_MODEL`
   configured for automatic download
+- CPU inference works with `SYNARMO_N_GPU_LAYERS=0`
+- GPU offload uses `SYNARMO_N_GPU_LAYERS=-1` for all possible layers, or a
+  positive layer count for limited GPU memory
+- Metal/CUDA offload requires a `llama-cpp-python` build with that native
+  backend enabled
 
 ### For Service Mode:
 - FastAPI (install with `[service]` extra)
 - Uvicorn (install with `[service]` extra)
+
+### GPU and Performance Checks
+
+Check whether the installed llama.cpp runtime supports GPU offload:
+
+```bash
+python -c "from llama_cpp import llama_cpp; print(llama_cpp.llama_supports_gpu_offload())"
+```
+
+On Apple Silicon, the normal install is usually enough. If Metal is not
+available, rebuild:
+
+```bash
+CMAKE_ARGS="-DGGML_METAL=on" pip install --upgrade --force-reinstall --no-cache-dir llama-cpp-python
+```
+
+For NVIDIA CUDA:
+
+```bash
+CMAKE_ARGS="-DGGML_CUDA=on" pip install --upgrade --force-reinstall --no-cache-dir llama-cpp-python
+```
+
+For temporary native llama.cpp diagnostics, set:
+
+```dotenv
+SYNARMO_LLAMA_VERBOSE=1
+```
+
+Verbose logs include prefill and generation tokens/sec, KV cache details, and
+Metal/CUDA buffer sizes.
 
 ## Verification
 

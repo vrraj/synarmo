@@ -117,10 +117,8 @@ source .venv/bin/activate
 pip install -e ".[llama,service]"
 ```
 
-The editable install makes the source checkout importable inside the virtual
-environment, installs the `synarmo` command used by `make ux`, and adds the
-FastAPI/uvicorn service dependencies for the browser UI. Add the `[dev]` extra
-when running verification specs and linters.
+This installs Synarmo in editable mode with llama.cpp and service dependencies.
+Use the `[dev]` extra when running tests or linters.
 
 **Step 3 — Configure a local GGUF model:**
 
@@ -144,9 +142,8 @@ make model-ensure
 ```
 
 This checks `LOCAL_MODELS_CACHE` and downloads `SYNARMO_MODEL` from
-`SYNARMO_MODEL_REPO_ID` if the GGUF file is missing. `make ux` performs the
-same model load when the service starts; running this first lets the download
-finish before you open the UI. The first download can take some time.
+`SYNARMO_MODEL_REPO_ID` if the GGUF file is missing. The first model download
+can take some time.
 
 **Step 5 — Start the service with real local inference:**
 
@@ -154,8 +151,7 @@ finish before you open the UI. The first download can take some time.
 make ux
 ```
 
-`make ux` starts the configured llama.cpp backend in the background, waits for
-`/health`, and prints the browser UI URL.
+`make ux` starts the configured llama.cpp backend in the background and waits for `/health`.
 
 **Step 6 — Open the UI shown by `make ux`:**
 
@@ -176,29 +172,25 @@ make stop
 
 ### Configure A Local Model
 
-To run real local inference, set up:
+**Step 1 — Create `.env` and the model cache**
 
-- the `llama-cpp` backend dependencies, installed with `[llama]`
-- a `.env` file that tells Synarmo where to find the model
-
-Place `.env` in the directory where you run `synarmo` or start your Python app.
-Synarmo loads it when `SynarmoEngine.load()` runs.
-
-For a source checkout, start from the included example:
+For a source checkout:
 
 ```bash
 cp .env.example .env
 mkdir -p ~/models/synarmo
 ```
 
-For PyPI installs, create `.env` in your app directory or the terminal
-directory where you run `synarmo`:
+For PyPI installs, create `.env` in the directory where you run `synarmo` or
+start your Python app, then create the cache:
 
 ```bash
 mkdir -p ~/models/synarmo
 ```
 
-Use this `.env` for automatic download from Hugging Face:
+**Step 2 — Choose a model source**
+
+For automatic download from Hugging Face:
 
 ```dotenv
 LOCAL_MODELS_CACHE=~/models/synarmo
@@ -209,15 +201,7 @@ SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF
 SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
 ```
 
-When `SYNARMO_MODEL_REPO_ID` is set, `llama-cpp-python` checks
-`LOCAL_MODELS_CACHE` and downloads `SYNARMO_MODEL` there if it is missing. With
-the default values above, the downloaded file will be stored at:
-
-```text
-~/models/synarmo/Llama-3.2-1B.Q4_K_M.gguf
-```
-
-Use this `.env` for a manually downloaded model in the cache directory:
+For a GGUF file you downloaded yourself:
 
 ```dotenv
 LOCAL_MODELS_CACHE=~/models/synarmo
@@ -226,14 +210,7 @@ SYNARMO_LLAMA_VERBOSE=0
 SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
 ```
 
-Relative model filenames are resolved from `LOCAL_MODELS_CACHE`, so the example
-above points to:
-
-```text
-~/models/synarmo/Llama-3.2-1B.Q4_K_M.gguf
-```
-
-Use this `.env` for a model stored somewhere else:
+For a model stored outside the cache, use an absolute path:
 
 ```dotenv
 SYNARMO_N_GPU_LAYERS=-1
@@ -241,7 +218,33 @@ SYNARMO_LLAMA_VERBOSE=0
 SYNARMO_MODEL=/Users/raj/models/qwen2.5-1.5b-instruct-q4_k_m.gguf
 ```
 
-For a one-off command, pass a model path directly:
+Relative `SYNARMO_MODEL` filenames resolve inside `LOCAL_MODELS_CACHE`.
+
+**Step 3 — Download or verify the model**
+
+For PyPI installs:
+
+```bash
+synarmo model-ensure --backend llama-cpp
+```
+
+For a source checkout from the git repository:
+
+```bash
+make model-ensure
+```
+
+>Both commands load the backend once, downloading the Hugging Face GGUF file if it is missing.
+
+**Step 4 — Run with llama.cpp**
+
+```bash
+synarmo suggest "My goals" \
+  --context "at the gym working with a coach. I want to get stronger and be able to run up a flight of stairs without getting tired." \
+  --backend llama-cpp
+```
+
+For a one-off override, pass `--model-path`:
 
 ```bash
 synarmo suggest "My goals" \
@@ -249,177 +252,58 @@ synarmo suggest "My goals" \
   --model-path ~/models/synarmo/Llama-3.2-1B.Q4_K_M.gguf
 ```
 
-Any llama.cpp-compatible GGUF model works this way. To try another family such
-as Qwen, change `SYNARMO_MODEL_REPO_ID` and `SYNARMO_MODEL`, point
-`SYNARMO_MODEL` at a different local `.gguf` file, or pass `--model-path`.
-
-In a source checkout, these model commands are available:
-
-```bash
-make ux
-make ux-mock
-make stop
-make models
-make model-current
-make model-ensure
-```
-
-`make model-ensure` checks model readiness once. For `llama-cpp`, it verifies
-that the selected model is available and downloads it if needed. `synarmo serve
---backend llama-cpp` performs the same model load when the service starts.
+> Any llama.cpp-compatible GGUF model works. To try another family such as Qwen, change `SYNARMO_MODEL_REPO_ID` and `SYNARMO_MODEL`, or point `SYNARMO_MODEL` at a local `.gguf` file.
 
 ---
 
 ## Infrastructure - llama.cpp Configuration
 
-Synarmo uses `llama-cpp-python`, which packages the llama.cpp runtime used to
-load GGUF models. The hardware behavior is controlled in two places:
-
-- install/build options for `llama-cpp-python`
-- the runtime layer offload setting passed to `llama_cpp.Llama`
-
-The setup flow is:
-
-```text
-Install Synarmo with [llama]
-  -> pip installs llama-cpp-python
-  -> llama-cpp-python provides the available runtime backend
-     (CPU, Apple Metal, CUDA, or another supported backend)
-  -> .env sets SYNARMO_N_GPU_LAYERS
-  -> Synarmo passes that value to llama_cpp.Llama as n_gpu_layers
-  -> llama.cpp offloads that many model layers if the installed backend supports it
-```
-
-In short: `llama-cpp-python` determines what hardware backends exist; Synarmo's
-`.env` setting determines how many model layers to ask llama.cpp to offload.
-
-Synarmo exposes the runtime setting as:
-
-```dotenv
-SYNARMO_N_GPU_LAYERS=-1
-```
-
-`SYNARMO_N_GPU_LAYERS` is the number of transformer layers to offload to the
-available GPU backend. It is not the number of GPUs.
-
-The included `.env.example` assumes a modern Apple Silicon Mac with one
-integrated Metal GPU:
-
-```dotenv
-SYNARMO_N_GPU_LAYERS=-1
-```
-
-The hard-coded fallback when no `.env` value is set remains CPU-only for
-portability:
-
-```dotenv
-SYNARMO_N_GPU_LAYERS=0
-```
-
-An Apple M2 has one integrated GPU using unified memory. A 16 GB unified-memory
-Mac is a comfortable baseline for local testing and leaves headroom for the
-service, browser UI, and small quantized GGUF models. Smaller models can run
-with less memory; larger models may need more memory or fewer offloaded layers.
+Synarmo uses `llama-cpp-python` for GGUF inference. Install with `[llama]`,
+then choose how many layers llama.cpp should offload:
 
 | Value | Behavior | When to use |
 | ---: | --- | --- |
 | `0` | CPU inference | Portable default, CPU-only machines, or debugging GPU issues. |
 | `-1` | Offload all possible layers | Apple Silicon with Metal, NVIDIA CUDA, or another supported GPU build. |
-| positive integer | Offload only that many layers | Machines with limited GPU memory or when tuning heat/memory use. |
+| positive integer | Offload only that many layers | Limited GPU memory or heat/power tuning. |
 
-For native llama.cpp load diagnostics, temporarily enable:
+```dotenv
+SYNARMO_N_GPU_LAYERS=-1
+```
+
+`SYNARMO_N_GPU_LAYERS` is a layer count, not a GPU count. The included
+`.env.example` uses `-1` for Apple Silicon/Metal. If the variable is unset,
+Synarmo falls back to CPU-only (`0`) for portability.
+
+### Performance Logs
+
+Temporarily enable native llama.cpp logs:
 
 ```dotenv
 SYNARMO_LLAMA_VERBOSE=1
 ```
 
-That prints llama.cpp startup lines such as model metadata key-value counts,
-tensor quantization types, model type and parameter count, KV cache size,
-Metal/CUDA buffer sizes, and model size. Leave it `0` for normal service use.
+Verbose logs include prefill/prompt evaluation tokens/sec, generation
+tokens/sec, KV cache details, and Metal/CUDA buffer sizes. Leave it `0` during normal service use.
 
-### Apple M2 Performance Note
+> On this Apple M2 setup, the default 1B Q4_K_M model with Metal offload commonly shows about 50 prompt-evaluation tokens/sec and 95-100 generation tokens/sec on a lightly loaded machine.
 
-With the default 1B Q4_K_M GGUF model, Apple M2 Metal offload, and
-`SYNARMO_N_GPU_LAYERS=-1`, local autocomplete evaluation on this Apple M2
-setup commonly shows prefill/prompt evaluation around 50 tokens per second and
-short generation reaching around 95-100 tokens per second on a lightly loaded
-machine. Actual verbose logs may vary when other apps are active, when the
-request is mostly prompt evaluation, or when only a few tokens are generated.
-Use `SYNARMO_LLAMA_VERBOSE=1` to inspect the native `llama_perf_context_print`
-timings for your own machine.
+### CPU, Metal, CUDA
 
-For this checkout on an Apple M2, `.env` uses:
-
-```dotenv
-SYNARMO_N_GPU_LAYERS=-1
-```
-
-That asks llama.cpp to use the M2 integrated GPU through Metal for all possible
-model layers. Apple M2 has one integrated GPU device; the `-1` means "all
-possible layers", not "one GPU".
-
-### CPU-Only Setup
-
-CPU-only users do not need special Metal, CUDA, or GPU build flags. Install the
-normal llama extra and leave GPU offload disabled:
-
-```bash
-pip install -e ".[llama,service]"
-```
+For CPU-only:
 
 ```dotenv
 SYNARMO_N_GPU_LAYERS=0
 ```
 
-This is slower than GPU offload but is the most portable path.
-
-### What The Install Step Builds
-
-The README install commands install Synarmo's `[llama]` extra, which installs
-`llama-cpp-python`:
-
-```bash
-pip install "synarmo[llama,service]"
-pip install -e ".[llama,service]"
-```
-
-That package either installs a compatible wheel or builds its bundled
-llama.cpp runtime during pip installation. CPU-only users usually do not need
-any extra build command. Apple Silicon users should first try the normal
-install with `SYNARMO_N_GPU_LAYERS=-1`; if GPU offload is not reported, force
-the Metal rebuild below. NVIDIA users generally need a CUDA-enabled install or
-rebuild before GPU offload will work.
-
-### Apple Silicon / Metal Setup
-
-On macOS, llama.cpp's current CMake build enables Metal by default, so the
-normal README install is usually enough on an arm64 Python. If you need to
-force a source rebuild of `llama-cpp-python` with Metal enabled, use the
-current `GGML_METAL` option:
+On Apple Silicon, the normal install is usually enough. If Metal offload is not
+available, rebuild `llama-cpp-python` with Metal:
 
 ```bash
 CMAKE_ARGS="-DGGML_METAL=on" pip install --upgrade --force-reinstall --no-cache-dir llama-cpp-python
 ```
 
-If Python or the wheel architecture is wrong on Apple Silicon, force arm64 too:
-
-```bash
-CMAKE_ARGS="-DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_APPLE_SILICON_PROCESSOR=arm64 -DGGML_METAL=on" pip install --upgrade --force-reinstall --no-cache-dir llama-cpp-python
-```
-
-Then use:
-
-```dotenv
-SYNARMO_N_GPU_LAYERS=-1
-```
-
-### NVIDIA / CUDA Setup
-
-NVIDIA GPUs need a CUDA-enabled `llama-cpp-python` build. The normal CPU wheel
-does not become GPU-capable just because `SYNARMO_N_GPU_LAYERS=-1` is set.
-
-For a source rebuild with CUDA enabled, install or reinstall
-`llama-cpp-python` with:
+For NVIDIA CUDA:
 
 ```bash
 CMAKE_ARGS="-DGGML_CUDA=on" pip install --upgrade --force-reinstall --no-cache-dir llama-cpp-python
@@ -431,33 +315,20 @@ Then use:
 SYNARMO_N_GPU_LAYERS=-1
 ```
 
-If GPU memory is limited, use a positive number instead of `-1` to offload only
-some model layers.
+> If GPU memory is tight, use a positive layer count instead of `-1`.
 
-### Verify CPU/GPU Support
-
-Check the installed package version and architecture:
+### Verify GPU Support
 
 ```bash
 .venv/bin/python -c "import llama_cpp, platform; print(llama_cpp.__version__); print(platform.machine())"
-```
-
-Check whether the native runtime reports GPU offload support:
-
-```bash
 .venv/bin/python -c "from llama_cpp import llama_cpp; print(llama_cpp.llama_supports_gpu_offload())"
 ```
 
-On macOS, check whether the installed `libllama` links the Metal backend:
+On macOS, `libggml-metal` should appear here when Metal support is linked:
 
 ```bash
 otool -L .venv/lib/python3.13/site-packages/llama_cpp/lib/libllama.dylib
 ```
-
-Look for `libggml-metal` in the output. To see llama.cpp's model-load logs,
-temporarily run with verbose logging in the backend or a direct llama.cpp
-command; Synarmo sets `verbose=False` during normal operation to keep CLI and
-service output quiet.
 
 ---
 
@@ -476,7 +347,7 @@ that model available over local endpoints:
 | --- | --- |
 | `GET /health` | Check that the service is ready and see the active backend/model. |
 | `POST /suggest` | Request suggestions from an app, script, keyboard, or other client. |
-| `POST /evaluate/autocomplete` | Test autocomplete parameters; this is the endpoint used by `/ui`. |
+| `POST /evaluate/autocomplete` | Test auto-suggest parameters; this is the endpoint used by `/ui`. |
 | `WebSocket /ws/suggest` | Keep a live suggestion channel open while a user types. |
 | `GET /ui` | Open the browser interface for testing and tuning suggestions. |
 
@@ -544,57 +415,37 @@ construction. The service keeps the model warm while it is running.
 
 ### Service Mode
 
-Service mode runs Synarmo as a local server for clients outside the Python
-process. Use it when another process needs suggestions, such as a desktop app,
-web app, keyboard, browser UI, or a client that wants REST or WebSocket access.
-The service loads the selected backend once, keeps the model warm, and exposes
-local endpoints from the same engine instance.
-
-Start the local service with the configured `.env` model:
+Run Synarmo as a local REST/WebSocket server when another app or the browser
+`/ui` needs suggestions. The service loads the backend once and keeps it warm.
 
 ```bash
 synarmo serve --backend llama-cpp
 ```
 
-If `SYNARMO_MODEL_REPO_ID` is configured and the GGUF file is missing, service
-startup downloads it before `/health` is ready, which can take some time. If
-you pass a direct `--model-path`, that local file must already exist.
-
-When using `pyenv` and a specific local GGUF file:
-
-```bash
-pyenv exec synarmo serve \
-  --backend llama-cpp \
-  --model-path ~/models/synarmo/Llama-3.2-1B.Q4_K_M.gguf
-```
-
-The service defaults to:
+By default it listens at:
 
 ```text
 http://127.0.0.1:8765
 ```
 
-Once it is running, use these local endpoints:
+Useful endpoints:
 
 | Endpoint | What it does |
 | --- | --- |
 | `GET /health` | Confirms the service is ready and reports the active backend/model. |
 | `POST /suggest` | Returns ranked suggestions for text and optional context. |
-| `POST /evaluate/autocomplete` | Returns autocomplete candidates and token scores for tuning. |
+| `POST /evaluate/autocomplete` | Returns auto-suggest candidates and token scores for tuning. |
 | `WebSocket /ws/suggest` | Accepts repeated suggestion requests over one live connection. |
 | `GET /ui` | Opens the browser UI backed by the same service. |
 
-Check health from another terminal:
+Check readiness from another terminal:
 
 ```bash
 curl http://127.0.0.1:8765/health
 ```
 
-The health response includes runtime diagnostics such as `n_gpu_layers`,
-`requested_gpu_layers`, `gpu_offload_supported`, `llama_verbose`, and the model
-layer count when reported by the installed llama.cpp runtime. `synarmo serve`
-prints the same summary when the service starts. Set `SYNARMO_LLAMA_VERBOSE=1`
-before startup to include the native llama.cpp model-loader log lines.
+If the configured Hugging Face model is missing, startup downloads it before
+`/health` is ready.
 
 ### Test And Tune With `/ui`
 
@@ -603,7 +454,7 @@ lets you:
 
 - type the current message
 - provide conversation or scene context
-- change autocomplete parameters such as choices, candidate words, temperature,
+- change auto-suggest parameters such as choices, candidate words, temperature,
   top-p, and logprob pool
 - inspect how the service responds
 
@@ -619,16 +470,16 @@ lets you:
 | Logprobs | 24 | Number of top next-token log probabilities to request from llama.cpp for starter selection. |
 | Auto - Suggest on Spacebar | On | Automatically asks for new suggestions after typing a space. |
 
-For autocomplete, Synarmo uses `Logprobs` as the starter pool size. It asks
+For auto-suggest, Synarmo uses `Logprobs` as the starter pool size. It asks
 llama.cpp for a one-token probe with `logprobs` enabled, sorts the returned
 next-token probabilities, removes duplicate first-word starters, and expands up
 to `Choices` starters into short suggestions. `Top P` is passed to the probe
 sampling call; the follow-up expansion for each selected starter is
 deterministic.
 
-#### How The Autocomplete Flow Works
+#### How The Auto-suggest Flow Works
 
-With the llama.cpp backend, this same autocomplete flow powers
+With the llama.cpp backend, this same auto-suggest flow powers
 `synarmo.predict()`, `engine.suggest()`, REST `/suggest`, WebSocket
 `/ws/suggest`, and the browser `/ui`.
 
@@ -680,7 +531,7 @@ Words = 2  -> go outside
 Words = 3  -> go outside with
 ```
 
-This autocomplete strategy uses logprobs to pick strong starter tokens, then
+This auto-suggest strategy uses logprobs to pick strong starter tokens, then
 makes one short deterministic expansion call for each starter.
 
 ### Use Service Endpoints
@@ -693,7 +544,7 @@ curl -X POST http://127.0.0.1:8765/suggest \
   -d '{"text":"My goals","context":"in the gym working out with a coach. I am looking to build strength and being able to run up a flight of stairs without tiring"}'
 ```
 
-Autocomplete evaluation used by `/ui`:
+Auto-suggest evaluation (via `/evaluate/autocomplete`) used by `/ui`:
 
 ```bash
 curl -X POST http://127.0.0.1:8765/evaluate/autocomplete \
@@ -802,37 +653,24 @@ memory usage, token probabilities, or how a specific GGUF model behaves.
 
 ---
 
-## Use Cases
-
-- messaging, email, or chat clients that need short completions inline
-- assistive typing workflows where each keystroke matters
-- local or air-gapped deployments that keep user text off remote APIs
-- desktop and browser clients that need a local prediction service
-- mobile keyboards or apps that need consistent suggestion behavior across
-  contexts
-
----
-
 ## How It Works
 
-Synarmo separates UI concerns from the reusable engine. The core package
-covers context assembly, personalization memory, prompt construction,
-inference, and ranking. Applications call the Python API directly or
-communicate with the local FastAPI service.
+Synarmo keeps UI code outside the core package. A client sends current text,
+optional context, and profile settings to the engine. The engine builds a
+prompt, runs the selected backend, then ranks and trims candidates into short
+suggestions.
 
-The reusable package contains the prediction engine:
+```text
+client or /ui
+  -> SynarmoEngine
+  -> context + memory + prompt
+  -> model backend
+  -> ranking and filtering
+  -> short suggestions
+```
 
-- `synarmo` Python package for inference, context assembly, prompt
-  construction, user memory, ranking, and configuration
-- GGUF inference through `llama.cpp` / `llama-cpp-python`
-- local service mode for desktop, web, keyboard, mobile, or other clients
-- interactive `/ui` to test and evaluate autocomplete requests with different
-  contexts and compose token-prediction parameters, before building a client
-  against service endpoints
-
-The model layer is intentionally swappable at the GGUF level. If another
-model works with llama.cpp, Synarmo can test it by changing model
-configuration while keeping application code stable.
+The model layer is swappable. Any llama.cpp-compatible GGUF model can be tried
+by changing `.env` values or passing `--model-path`.
 
 ## Extending Inference & Mobile Direction
 

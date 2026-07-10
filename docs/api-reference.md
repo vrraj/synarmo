@@ -202,7 +202,7 @@ for suggestion in suggestions:
 
 ### `evaluate_autocomplete()`
 
-Evaluate autocomplete with detailed token-level information. The llama-cpp backend returns model logprobs; the mock backend returns deterministic fallback candidates for tests and wiring checks.
+Evaluate auto-suggest behavior with detailed token-level information. The llama-cpp backend returns model logprobs; the mock backend returns deterministic fallback candidates for tests and wiring checks.
 
 ```python
 def evaluate_autocomplete(
@@ -232,7 +232,7 @@ def evaluate_autocomplete(
 | `top_p` | `float` | 0.95 | Nucleus sampling threshold |
 | `logprob_pool` | `int` | 24 | Number of logprob tokens to inspect |
 
-**Returns:** `list[AutocompleteEvaluation]` - Detailed evaluation results
+**Returns:** `list[AutocompleteEvaluation]` - Detailed auto-suggest evaluation results
 
 **Example:**
 

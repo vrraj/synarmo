@@ -70,7 +70,8 @@ class ModelBackend(Protocol):
 
 Runtime backend:
 
-- `llama-cpp`: GGUF backend through `llama_cpp.Llama`
+- `llama-cpp`: GGUF backend through `llama_cpp.Llama`, with CPU or supported
+  GPU offload controlled by `SYNARMO_N_GPU_LAYERS`
 - `mock`: deterministic verification backend for API, service, UI, and CI wiring checks
 
 Future backends:
@@ -97,10 +98,20 @@ Future backends:
 
 | Infrastructure Component | Role |
 | --- | --- |
-| llama-cpp-python | Local GGUF model inference runtime |
+| llama-cpp-python | Local GGUF model inference runtime, including CPU, Metal, CUDA, or other supported native backends |
 | huggingface-hub | Model downloading and caching for configured Hugging Face repos |
 | Core ML | Future iOS model runtime option |
 | MLX | Future Apple Silicon experiment runtime option |
+
+### Runtime Configuration
+
+| Setting | Role |
+| --- | --- |
+| `SYNARMO_MODEL_REPO_ID` | Hugging Face repo used for automatic GGUF download |
+| `SYNARMO_MODEL` | GGUF filename in the repo/cache, or a local model path |
+| `LOCAL_MODELS_CACHE` | Local model cache directory |
+| `SYNARMO_N_GPU_LAYERS` | Number of model layers to offload; `0` is CPU-only, `-1` asks llama.cpp to offload all possible layers |
+| `SYNARMO_LLAMA_VERBOSE` | Enables native llama.cpp load/performance logs, including prefill and generation tokens/sec |
 
 ### Service Layer
 
@@ -116,7 +127,7 @@ Future backends:
 | --- | --- |
 | `GET /health` | Service health and model status |
 | `POST /suggest` | Generate suggestions over REST |
-| `POST /evaluate/autocomplete` | Evaluate autocomplete candidates |
+| `POST /evaluate/autocomplete` | Evaluate auto-suggest candidates |
 | `WebSocket /ws/suggest` | Real-time suggestion channel |
 | `GET /ui` | Browser-based UI |
 | `GET /docs` | FastAPI-generated API documentation |
@@ -128,7 +139,7 @@ Future backends:
 | HTML templates | Browser UI structure rendered by Jinja2 |
 | CSS assets | Local UI styling |
 | JavaScript assets | Browser-side API calls, parameter controls, and rendering |
-| `/ui` page | Interface for testing context and autocomplete parameters |
+| `/ui` page | Interface for testing context and auto-suggest parameters |
 
 ### Interfaces
 
@@ -150,6 +161,10 @@ suggestions = engine.suggest("I want to", context="At home")
 ## Performance Principles
 
 - Load the model once and keep it warm.
+- Use `SYNARMO_N_GPU_LAYERS=-1` when the installed llama.cpp runtime supports
+  Metal/CUDA GPU offload; use `0` for portable CPU-only operation.
+- Use `SYNARMO_LLAMA_VERBOSE=1` temporarily to inspect native llama.cpp
+  throughput, KV cache, and buffer diagnostics.
 - Keep the prompt short and purpose-built.
 - Return a small set of short phrase continuations; the default is three.
 - Prefer WebSocket for live typing.
