@@ -24,7 +24,7 @@ sizes, and other load diagnostics.
 
 > Local-first next-word and next-phrase suggestions tuned for short completions.
 
-<video src="https://github.com/user-attachments/assets/ad153346-7b2c-42e8-a747-d4325a45672d" controls muted playsinline width="100%"></video>
+<video src="https://github.com/user-attachments/assets/ff5bdbd1-2391-4d5a-96e7-730c8100e6c8" controls muted playsinline width="100%"></video>
 
 <p align="center"><em>Synarmo context-aware compose loop predicting short suggestions locally.</em></p>
 
@@ -105,7 +105,7 @@ synarmo suggest "My goals" \
 
 The Interactive `/ui` allows you to test local suggestions with context and auto-suggest parameters. It needs FastAPI service, static UI assets, and a virtual environment.
 
-![Synarmo context-aware auto-suggest UI](./assets/synarmo-context-aware-auto-suggest.jpeg)
+![Synarmo context-aware auto-suggest UI](./assets/synarmo-context-aware-auto-suggest.png)
 
 **Step 1 — Clone the repository:**
 
