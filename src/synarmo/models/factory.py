@@ -17,5 +17,6 @@ def create_backend(config: SynarmoConfig) -> ModelBackend:
             models_cache_dir=config.models_cache_dir,
             n_ctx=config.context_window,
             n_gpu_layers=config.n_gpu_layers,
+            verbose=config.llama_verbose,
         )
     raise ValueError(f"Unsupported backend: {config.backend}")

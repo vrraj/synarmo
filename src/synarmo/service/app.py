@@ -67,15 +67,8 @@ def create_app(engine: SynarmoEngine):
     )
 
     @app.get("/health")
-    def health() -> dict[str, str]:
-        model = ""
-        if engine.config.model_path is not None:
-            model = str(engine.config.model_path)
-        elif engine.config.model_filename is not None:
-            model = engine.config.model_filename
-        elif engine.config.model_repo_id is not None:
-            model = engine.config.model_repo_id
-        return {"status": "ok", "backend": engine.backend.name, "model": model}
+    def health() -> dict[str, object]:
+        return {"status": "ok", **engine.runtime_diagnostics()}
 
     @app.post("/suggest", response_model=SuggestResponse)
     def suggest(request: SuggestRequest) -> SuggestResponse:

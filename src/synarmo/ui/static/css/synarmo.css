@@ -113,7 +113,8 @@ body {
   color: #a11d1d;
 }
 
-.model-name {
+.model-name,
+.gpu-layers {
   display: inline-block;
   font-weight: 600;
   max-width: min(430px, 100%);

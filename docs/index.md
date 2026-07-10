@@ -125,6 +125,7 @@ GPU:
 LOCAL_MODELS_CACHE=~/models/synarmo
 SYNARMO_MAX_SUGGESTIONS=3
 SYNARMO_N_GPU_LAYERS=-1
+SYNARMO_LLAMA_VERBOSE=0
 SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF
 SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
 ```
@@ -157,6 +158,11 @@ SYNARMO_N_GPU_LAYERS=-1
 `SYNARMO_N_GPU_LAYERS` is the number of model layers to offload, not the
 number of GPUs. Apple M2 has one integrated Metal GPU; `-1` tells llama.cpp to
 use it for all possible layers.
+
+On the Apple M2 development setup with the default 1B Q4_K_M model and Metal
+offload, local autocomplete evaluation is expected around 100-110 tokens per
+second on a lightly loaded machine. Real logs can be lower when other apps are
+active or when requests generate only a few tokens.
 
 ## Quick example
 
@@ -199,13 +205,13 @@ Start the local service:
 synarmo serve --backend llama-cpp
 ```
 
-Service mode keeps one model instance warm and exposes:
+Service mode keeps one model instance warm and exposes these notable endpoints:
 
 | Endpoint | Use it for |
 | --- | --- |
-| `GET /health` | Check service readiness and active backend/model details. |
-| `POST /suggest` | Request ranked suggestions for text and optional context. |
-| `POST /evaluate/autocomplete` | Tune autocomplete candidates and token-scoring parameters. |
+| `GET /health` | Check that the service is ready and see the active backend, model, and runtime diagnostics. |
+| `POST /suggest` | Request suggestions from an app, script, keyboard, or other client. |
+| `POST /evaluate/autocomplete` | Test autocomplete parameters; this is the endpoint used by `/ui`. |
 | `WebSocket /ws/suggest` | Keep a live suggestion channel open while a user types. |
 | `GET /ui` | Open the browser interface backed by the same service. |
 

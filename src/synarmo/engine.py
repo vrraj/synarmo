@@ -64,6 +64,27 @@ class SynarmoEngine:
         model_backend = create_backend(config)
         return cls(config=config, backend=model_backend, memory=memory)
 
+    def model_label(self) -> str:
+        if self.config.model_path is not None:
+            return str(self.config.model_path)
+        if self.config.model_filename is not None:
+            return self.config.model_filename
+        if self.config.model_repo_id is not None:
+            return self.config.model_repo_id
+        return ""
+
+    def runtime_diagnostics(self) -> dict[str, object]:
+        diagnostics: dict[str, object] = {
+            "backend": self.backend.name,
+            "model": self.model_label(),
+            "n_gpu_layers": self.config.n_gpu_layers,
+            "llama_verbose": self.config.llama_verbose,
+        }
+        backend_diagnostics = getattr(self.backend, "diagnostics", None)
+        if callable(backend_diagnostics):
+            diagnostics.update(backend_diagnostics())
+        return diagnostics
+
     def configure(self, **updates: object) -> None:
         self.config = self.config.copy_with(**updates)
         self.context_assembler = ContextAssembler(max_chars=self.config.context_window * 2)

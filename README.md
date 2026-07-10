@@ -56,6 +56,7 @@ GPU:
 LOCAL_MODELS_CACHE=~/models/synarmo
 SYNARMO_MAX_SUGGESTIONS=3
 SYNARMO_N_GPU_LAYERS=-1
+SYNARMO_LLAMA_VERBOSE=0
 SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF
 SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
 ```
@@ -197,6 +198,7 @@ Use this `.env` for automatic download from Hugging Face:
 LOCAL_MODELS_CACHE=~/models/synarmo
 SYNARMO_MAX_SUGGESTIONS=3
 SYNARMO_N_GPU_LAYERS=-1
+SYNARMO_LLAMA_VERBOSE=0
 SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF
 SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
 ```
@@ -214,6 +216,7 @@ Use this `.env` for a manually downloaded model in the cache directory:
 ```dotenv
 LOCAL_MODELS_CACHE=~/models/synarmo
 SYNARMO_N_GPU_LAYERS=-1
+SYNARMO_LLAMA_VERBOSE=0
 SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
 ```
 
@@ -228,6 +231,7 @@ Use this `.env` for a model stored somewhere else:
 
 ```dotenv
 SYNARMO_N_GPU_LAYERS=-1
+SYNARMO_LLAMA_VERBOSE=0
 SYNARMO_MODEL=/Users/raj/models/qwen2.5-1.5b-instruct-q4_k_m.gguf
 ```
 
@@ -316,6 +320,26 @@ with less memory; larger models may need more memory or fewer offloaded layers.
 | `0` | CPU inference | Portable default, CPU-only machines, or debugging GPU issues. |
 | `-1` | Offload all possible layers | Apple Silicon with Metal, NVIDIA CUDA, or another supported GPU build. |
 | positive integer | Offload only that many layers | Machines with limited GPU memory or when tuning heat/memory use. |
+
+For native llama.cpp load diagnostics, temporarily enable:
+
+```dotenv
+SYNARMO_LLAMA_VERBOSE=1
+```
+
+That prints llama.cpp startup lines such as model metadata key-value counts,
+tensor quantization types, model type and parameter count, KV cache size,
+Metal/CUDA buffer sizes, and model size. Leave it `0` for normal service use.
+
+### Apple M2 Performance Note
+
+With the default 1B Q4_K_M GGUF model, Apple M2 Metal offload, and
+`SYNARMO_N_GPU_LAYERS=-1`, local autocomplete evaluation is expected to land
+around 100-110 tokens per second on a lightly loaded machine. Actual verbose
+logs may show lower per-call numbers when other apps are active, when the
+request is mostly prompt evaluation, or when only a few tokens are generated.
+Use `SYNARMO_LLAMA_VERBOSE=1` to inspect the native `llama_perf_context_print`
+timings for your own machine.
 
 For this checkout on an Apple M2, `.env` uses:
 
@@ -558,6 +582,12 @@ Check health from another terminal:
 ```bash
 curl http://127.0.0.1:8765/health
 ```
+
+The health response includes runtime diagnostics such as `n_gpu_layers`,
+`requested_gpu_layers`, `gpu_offload_supported`, `llama_verbose`, and the model
+layer count when reported by the installed llama.cpp runtime. `synarmo serve`
+prints the same summary when the service starts. Set `SYNARMO_LLAMA_VERBOSE=1`
+before startup to include the native llama.cpp model-loader log lines.
 
 ### Test And Tune With `/ui`
 

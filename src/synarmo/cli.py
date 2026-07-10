@@ -67,6 +67,7 @@ def app() -> None:
         from synarmo.service.app import create_app
 
         engine = _load_engine(args)
+        print(_format_runtime_diagnostics(engine))
         uvicorn.run(create_app(engine), host=args.host, port=args.port)
 
 
@@ -81,6 +82,24 @@ def _load_engine(args: argparse.Namespace) -> SynarmoEngine:
         model_path=args.model_path,
         **options,
     )
+
+
+def _format_runtime_diagnostics(engine: SynarmoEngine) -> str:
+    diagnostics = engine.runtime_diagnostics()
+    parts = [
+        f"backend={diagnostics.get('backend', '')}",
+        f"model={diagnostics.get('model', '')}",
+        f"n_gpu_layers={diagnostics.get('n_gpu_layers', '')}",
+    ]
+    if "requested_gpu_layers" in diagnostics:
+        parts.append(f"requested_gpu_layers={diagnostics['requested_gpu_layers']}")
+    if "model_layers" in diagnostics:
+        parts.append(f"model_layers={diagnostics['model_layers']}")
+    if "gpu_offload_supported" in diagnostics:
+        parts.append(f"gpu_offload_supported={diagnostics['gpu_offload_supported']}")
+    if "llama_verbose" in diagnostics:
+        parts.append(f"llama_verbose={diagnostics['llama_verbose']}")
+    return "Synarmo runtime: " + " ".join(parts)
 
 
 def _compose(engine: SynarmoEngine, *, text: str, context: str) -> None:

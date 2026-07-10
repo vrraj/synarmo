@@ -7,6 +7,7 @@ const suggestionStatus = document.getElementById("suggestion-status");
 const serviceStatus = document.getElementById("service-status");
 const serviceStatusValue = document.getElementById("service-status-value");
 const modelNameValue = document.getElementById("model-name-value");
+const gpuLayersValue = document.getElementById("gpu-layers-value");
 const errorBanner = document.getElementById("error-banner");
 const charCount = document.getElementById("char-count");
 const choicesInput = document.getElementById("choices");
@@ -64,14 +65,21 @@ async function checkHealth() {
     const data = await response.json();
     const statusText = titleCase(data.status || "unknown");
     const modelName = data.model ? basename(data.model) : data.backend || "Unknown";
+    const gpuLayerText = formatGpuLayers(data);
     serviceStatusValue.textContent = statusText;
     serviceStatusValue.classList.toggle("is-ok", data.status === "ok");
     serviceStatusValue.classList.toggle("is-error", data.status !== "ok");
     modelNameValue.textContent = modelName;
+    gpuLayersValue.textContent = gpuLayerText;
     serviceStatus.title = [
       `Service status: ${statusText}`,
       data.backend ? `Backend: ${data.backend}` : "",
       data.model ? `Model: ${data.model}` : "",
+      `GPU layers: ${gpuLayerText}`,
+      typeof data.model_layers === "number" ? `Model layers: ${data.model_layers}` : "",
+      typeof data.gpu_offload_supported === "boolean"
+        ? `GPU offload supported: ${data.gpu_offload_supported ? "yes" : "no"}`
+        : "",
     ]
       .filter(Boolean)
       .join(" / ");
@@ -80,6 +88,7 @@ async function checkHealth() {
     serviceStatusValue.classList.remove("is-ok");
     serviceStatusValue.classList.add("is-error");
     modelNameValue.textContent = "Unknown";
+    gpuLayersValue.textContent = "Unknown";
     serviceStatus.title = "Service status: Unavailable";
   }
 }
@@ -224,6 +233,22 @@ function numberValue(input, fallback) {
 
 function basename(path) {
   return String(path).split(/[\\/]/).filter(Boolean).pop() || String(path);
+}
+
+function formatGpuLayers(data) {
+  if (data.requested_gpu_layers === "all") {
+    return typeof data.model_layers === "number" ? `All (${data.model_layers})` : "All";
+  }
+  if (data.n_gpu_layers === 0) {
+    return "CPU";
+  }
+  if (typeof data.requested_gpu_layers === "number") {
+    return String(data.requested_gpu_layers);
+  }
+  if (typeof data.n_gpu_layers === "number") {
+    return String(data.n_gpu_layers);
+  }
+  return "Unknown";
 }
 
 function titleCase(value) {

@@ -16,6 +16,21 @@ def test_suggest_endpoint_accepts_json_body() -> None:
     assert "request" not in parameter_names
 
 
+def test_health_endpoint_reports_runtime_diagnostics() -> None:
+    pytest.importorskip("fastapi")
+    from fastapi.testclient import TestClient
+
+    app = create_app(SynarmoEngine.load(profile="service-health-test", n_gpu_layers=0))
+    client = TestClient(app)
+
+    response = client.get("/health")
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"
+    assert response.json()["backend"] == "mock"
+    assert response.json()["n_gpu_layers"] == 0
+
+
 def test_autocomplete_evaluation_endpoint_accepts_json_body() -> None:
     pytest.importorskip("fastapi")
 
@@ -45,6 +60,7 @@ def test_ui_endpoints_render_static_assets() -> None:
     assert response.status_code == 200
     assert "/static/css/synarmo.css" in response.text
     assert "/static/js/synarmo.js" in response.text
+    assert "gpu-layers-value" in response.text
     assert "<style>" not in response.text
     assert "<script>" not in response.text
 

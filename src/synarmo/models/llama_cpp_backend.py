@@ -18,13 +18,20 @@ class LlamaCppBackend:
         models_cache_dir: Path | None = None,
         n_ctx: int = 2048,
         n_gpu_layers: int = 0,
+        verbose: bool = False,
     ) -> None:
+        self.n_gpu_layers = n_gpu_layers
+        self.verbose = verbose
+        self.gpu_offload_supported = False
         try:
-            from llama_cpp import Llama
+            from llama_cpp import Llama, llama_cpp
         except ImportError as exc:
             raise RuntimeError(
                 "llama-cpp-python is not installed. Install with: pip install synarmo[llama]"
             ) from exc
+        support_probe = getattr(llama_cpp, "llama_supports_gpu_offload", None)
+        if support_probe is not None:
+            self.gpu_offload_supported = bool(support_probe())
 
         if model_repo_id:
             if not model_filename:
@@ -36,7 +43,7 @@ class LlamaCppBackend:
                 n_ctx=n_ctx,
                 n_gpu_layers=n_gpu_layers,
                 logits_all=True,
-                verbose=False,
+                verbose=verbose,
             )
             return
 
@@ -54,8 +61,29 @@ class LlamaCppBackend:
             n_ctx=n_ctx,
             n_gpu_layers=n_gpu_layers,
             logits_all=True,
-            verbose=False,
+            verbose=verbose,
         )
+
+    def diagnostics(self) -> dict[str, object]:
+        requested_layers: int | str = "all" if self.n_gpu_layers == -1 else self.n_gpu_layers
+        diagnostics: dict[str, object] = {
+            "n_gpu_layers": self.n_gpu_layers,
+            "requested_gpu_layers": requested_layers,
+            "gpu_offload_supported": self.gpu_offload_supported,
+            "llama_verbose": self.verbose,
+        }
+        total_layers = self._model_layer_count()
+        if total_layers is not None:
+            diagnostics["model_layers"] = total_layers
+        return diagnostics
+
+    def _model_layer_count(self) -> int | None:
+        try:
+            from llama_cpp import llama_cpp
+
+            return int(llama_cpp.llama_model_n_layer(self._llm.model))
+        except Exception:
+            return None
 
     def generate(self, prompt: str, options: GenerationOptions) -> str:
         result = self._llm(

@@ -7,6 +7,7 @@ from synarmo.config import (
     configured_model_path,
     configured_model_repo_id,
     configured_models_cache,
+    configured_llama_verbose,
     configured_n_gpu_layers,
     load_env_file,
 )
@@ -98,6 +99,18 @@ def test_configured_n_gpu_layers_reads_env(monkeypatch) -> None:
     monkeypatch.setenv("SYNARMO_N_GPU_LAYERS", "-1")
 
     assert configured_n_gpu_layers() == -1
+
+
+def test_configured_llama_verbose_defaults_to_false(monkeypatch) -> None:
+    monkeypatch.delenv("SYNARMO_LLAMA_VERBOSE", raising=False)
+
+    assert configured_llama_verbose() is False
+
+
+def test_configured_llama_verbose_reads_truthy_env(monkeypatch) -> None:
+    monkeypatch.setenv("SYNARMO_LLAMA_VERBOSE", "yes")
+
+    assert configured_llama_verbose() is True
 
 
 def test_config_validates_sampling_and_word_limit() -> None:

@@ -23,6 +23,8 @@ synarmo = "synarmo.cli:app"
 [tool.hatch.build]
 exclude = [
     "/assets",
+    "*.log",
+    ".synarmo-service.log",
 ]
 
 [tool.hatch.build.targets.wheel]

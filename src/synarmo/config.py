@@ -15,6 +15,7 @@ MODEL_PATH_ENV = "SYNARMO_MODEL_PATH"
 MODEL_REPO_ID_ENV = "SYNARMO_MODEL_REPO_ID"
 MAX_SUGGESTIONS_ENV = "SYNARMO_MAX_SUGGESTIONS"
 N_GPU_LAYERS_ENV = "SYNARMO_N_GPU_LAYERS"
+LLAMA_VERBOSE_ENV = "SYNARMO_LLAMA_VERBOSE"
 
 
 def load_env_file(path: str | Path = ENV_FILE) -> None:
@@ -81,6 +82,11 @@ def configured_n_gpu_layers() -> int:
     return int(value) if value else 0
 
 
+def configured_llama_verbose() -> bool:
+    value = os.getenv(LLAMA_VERBOSE_ENV)
+    return value is not None and value.strip().lower() in {"1", "true", "yes", "on"}
+
+
 @dataclass(slots=True)
 class SynarmoConfig:
     backend: BackendName = "mock"
@@ -98,6 +104,7 @@ class SynarmoConfig:
     max_tokens: int = 5
     max_suggestion_words: int = 4
     n_gpu_layers: int = field(default_factory=configured_n_gpu_layers)
+    llama_verbose: bool = field(default_factory=configured_llama_verbose)
     stop: list[str] = field(default_factory=lambda: ["\n\n"])
     profiles_dir: Path = Path("profiles")
 
