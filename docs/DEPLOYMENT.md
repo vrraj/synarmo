@@ -71,7 +71,7 @@ pip install git+https://github.com/vrraj/synarmo.git
 With extras:
 
 ```bash
-pip install "git+https://github.com/vrraj/synarmo.git[llama,service]"
+pip install "synarmo[llama,service] @ git+https://github.com/vrraj/synarmo.git"
 ```
 
 ## Model Configuration
@@ -86,20 +86,26 @@ mkdir -p ~/models/synarmo
 
 ### Set Up Environment Variables
 
-Create a `.env` file in your project directory:
+Create a `.env` file in the directory where you will run `synarmo`.
+
+From a source checkout:
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` with your model configuration:
+For an installed package, create `.env` manually:
 
 ```dotenv
 LOCAL_MODELS_CACHE=~/models/synarmo
 SYNARMO_MAX_SUGGESTIONS=3
-SYNARMO_MODEL_REPO_ID=hugging-quants/Llama-3.2-1B-Instruct-Q4_K_M-GGUF
-SYNARMO_MODEL=llama-3.2-1b-instruct-q4_k_m.gguf
+SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF
+SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
 ```
+
+When `SYNARMO_MODEL_REPO_ID` is set, the first llama.cpp model load checks
+`LOCAL_MODELS_CACHE` and downloads `SYNARMO_MODEL` there if it is missing. That
+first download can take some time.
 
 ### Manual Model Download
 
@@ -108,14 +114,14 @@ If you prefer to download the model manually:
 ```bash
 # Download from Hugging Face
 cd ~/models/synarmo
-wget https://huggingface.co/hugging-quants/Llama-3.2-1B-Instruct-Q4_K_M-GGUF/resolve/main/llama-3.2-1b-instruct-q4_k_m.gguf
+wget https://huggingface.co/QuantFactory/Llama-3.2-1B-GGUF/resolve/main/Llama-3.2-1B.Q4_K_M.gguf
 ```
 
 Then update `.env`:
 
 ```dotenv
 LOCAL_MODELS_CACHE=~/models/synarmo
-SYNARMO_MODEL=llama-3.2-1b-instruct-q4_k_m.gguf
+SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
 ```
 
 ## Running the Service
@@ -127,6 +133,10 @@ After installation, start the FastAPI service:
 ```bash
 synarmo serve --backend llama-cpp
 ```
+
+If `SYNARMO_MODEL_REPO_ID` is configured and the GGUF file is missing, service
+startup downloads it before `/health` is ready. That first download can take
+some time.
 
 With a specific model path:
 
@@ -141,11 +151,13 @@ The service starts on `http://127.0.0.1:8765`
 From a source checkout, the shortest way to start the local browser UX is:
 
 ```bash
+make model-ensure
 make ux
 ```
 
-This starts the configured backend in the background, waits for `/health`, and
-prints the `/ui` URL. For a no-model wiring check, use:
+`make model-ensure` downloads or verifies the configured GGUF file before the
+UI starts. `make ux` starts the configured backend in the background, waits for
+`/health`, and prints the `/ui` URL. For a no-model wiring check, use:
 
 ```bash
 make ux-mock
@@ -229,7 +241,8 @@ async def get_suggestions(request: dict):
 
 ### For llama.cpp Backend:
 - `llama-cpp-python` package (install with `[llama]` extra)
-- A compatible GGUF model file
+- A compatible GGUF model file, or `SYNARMO_MODEL_REPO_ID` and `SYNARMO_MODEL`
+  configured for automatic download
 
 ### For Service Mode:
 - FastAPI (install with `[service]` extra)
@@ -264,6 +277,9 @@ synarmo suggest "I want to" \
   --context "At home" \
   --backend llama-cpp
 ```
+
+If the configured model is missing and `SYNARMO_MODEL_REPO_ID` is set, this
+command downloads the model first and may take some time.
 
 ## Building the Package
 
@@ -302,7 +318,8 @@ pip install synarmo
 If the model is not found:
 
 1. Check your `.env` file configuration
-2. Verify the model path is correct
+2. Verify `SYNARMO_MODEL_REPO_ID` and `SYNARMO_MODEL` are correct, or verify
+   the direct `--model-path` exists
 3. Ensure the models cache directory exists:
    ```bash
    mkdir -p ~/models/synarmo
@@ -452,6 +469,7 @@ RUN mkdir -p /models/synarmo
 EXPOSE 8765
 
 # Run service
+ENV LOCAL_MODELS_CACHE=/models/synarmo
 CMD ["synarmo", "serve", "--backend", "llama-cpp", "--host", "0.0.0.0"]
 ```
 
@@ -459,7 +477,11 @@ Build and run:
 
 ```bash
 docker build -t synarmo .
-docker run -p 8765:8765 -v ~/models/synarmo:/models/synarmo synarmo
+docker run -p 8765:8765 \
+  -e SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF \
+  -e SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf \
+  -v ~/models/synarmo:/models/synarmo \
+  synarmo
 ```
 
 ## Security Considerations

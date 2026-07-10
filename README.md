@@ -10,6 +10,12 @@ personalized next-word and short-phrase predictions across messaging, chat, and
 assistive typing workflows. It combines context-aware local inference, service
 APIs, and llama.cpp/GGUF support for swappable local models.
 
+```bash
+# Install with llama.cpp and service support (See section Install - PyPI Package)
+pip install "synarmo[llama,service]"
+```
+This repo includes an [Interactive UI](#install---interactive-ui-git-clone) for testing and tuning API calls with context and parameters.
+
 > Local-first next-word and next-phrase suggestions tuned for short completions.
 
 <video src="https://github.com/user-attachments/assets/ad153346-7b2c-42e8-a747-d4325a45672d" controls muted playsinline width="100%"></video>
@@ -23,14 +29,13 @@ Synarmo is intended to be used as:
 - an interactive browser `/ui` for testing and tuning API calls with context and parameters
 - a llama.cpp/GGUF-backed engine that can test different local models through `.env`
 
-The primary path is local GGUF inference through llama.cpp. Synarmo also ships
-with a deterministic mock backend for development checks when you want to test
-the package, CLI, service, or UI without downloading a model. See
-[Mock Mode](#mock-mode) for what that does and does not test.
+The primary path uses a local GGUF model for inference through llama.cpp. For
+no-model checks of package install, CLI, service, or UI wiring, see
+[Mock Mode](#mock-mode).
 
 ---
 
-## Real Local Inference
+## Install - PyPI Package
 
 Install Synarmo with llama.cpp and service support:
 
@@ -49,13 +54,9 @@ SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF
 SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
 ```
 
-> Tip: For quick API or UI wiring checks without a model download, use
-> [Mock Mode](#mock-mode). Mock mode returns canned deterministic suggestions;
-> it is not a prediction-quality test.
-
 The first `--backend llama-cpp` command checks `LOCAL_MODELS_CACHE` and
-downloads `SYNARMO_MODEL` from `SYNARMO_MODEL_REPO_ID` if the GGUF file is
-missing. That download can take some time, so the first real request is slower
+downloads `SYNARMO_MODEL` from `SYNARMO_MODEL_REPO_ID` if the GGUF model file is
+missing. That **model download can take some time,** so the first real request is slower
 than later runs. In a source checkout, you can do that check before the first
 request with `make model-ensure`.
 
@@ -73,11 +74,11 @@ With that `.env`, the model is stored at:
 ~/models/synarmo/Llama-3.2-1B.Q4_K_M.gguf
 ```
 
-Later runs reuse the already downloaded file.
+***Later runs reuse the already downloaded file.***
 
 ---
 
-## Interactive `/ui`
+## Install - Interactive `/ui` (Git Clone)
 
 The browser `/ui` is for trying real local inference with context and
 autocomplete parameters. It requires the repository itself (not just the PyPI
@@ -149,7 +150,7 @@ client application can call directly.
 
 ---
 
-## Configure A Local Model
+### Configure A Local Model
 
 Real local inference needs two things:
 

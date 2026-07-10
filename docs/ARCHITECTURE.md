@@ -27,7 +27,7 @@ The public API should remain small:
 ```python
 from synarmo import SynarmoEngine
 
-engine = SynarmoEngine.load(profile="user")
+engine = SynarmoEngine.load(profile="user", backend="llama-cpp")
 engine.suggest(text=current_text, context=current_context)
 ```
 
@@ -71,6 +71,7 @@ class ModelBackend(Protocol):
 Runtime backend:
 
 - `llama-cpp`: GGUF backend through `llama_cpp.Llama`
+- `mock`: deterministic test backend for API, service, UI, and CI wiring checks
 
 Future backends:
 
@@ -82,48 +83,62 @@ Future backends:
 
 ### Backend
 
-**Core Python Package**
-- `SynarmoEngine`: Main engine API for loading models and generating suggestions
-- `ModelBackend`: Protocol for pluggable inference backends
-  - `LlamaCppBackend`: GGUF model inference via llama-cpp-python
-  - `MockBackend`: Deterministic test backend
-- `ContextAssembler`: Builds conversation context from user memory
-- `UserMemory`: Manages user profiles, preferences, and conversation history
-- `PromptBuilder`: Constructs prompts for the model
-- `SuggestionRanker`: Ranks and filters generated suggestions
-- `SynarmoConfig`: Configuration management with environment variable support
+| Component | Role |
+| --- | --- |
+| `SynarmoEngine` | Main engine API for loading models and generating suggestions |
+| `ModelBackend` | Protocol for pluggable inference backends |
+| `LlamaCppBackend` | GGUF model inference via llama-cpp-python |
+| `MockBackend` | Deterministic test backend for API, service, UI, and CI wiring checks |
+| `ContextAssembler` | Builds conversation context from user memory |
+| `UserMemory` | Manages user profiles, preferences, and conversation history |
+| `PromptBuilder` | Constructs prompts for the model |
+| `SuggestionRanker` | Ranks and filters generated suggestions |
+| `SynarmoConfig` | Configuration management with environment variable support |
 
-**Model Backends**
-- llama-cpp-python: Local GGUF model inference
-- huggingface-hub: Model downloading and caching
-- Future: Core ML (iOS), MLX (Apple Silicon)
+| Infrastructure Component | Role |
+| --- | --- |
+| llama-cpp-python | Local GGUF model inference runtime |
+| huggingface-hub | Model downloading and caching for configured Hugging Face repos |
+| Core ML | Future iOS model runtime option |
+| MLX | Future Apple Silicon experiment runtime option |
 
 ### Service Layer
 
-**FastAPI Application**
-- REST API endpoints
-- WebSocket support for real-time suggestions
-- Static file serving for web UI
-- Jinja2 templating for HTML responses
-- Pydantic models for request/response validation
+| Component | Role |
+| --- | --- |
+| FastAPI app | Local REST, WebSocket, and UI service |
+| Pydantic request/response models | Validate API payloads and shape responses |
+| Jinja2 templates | Render the browser UI |
+| Static file serving | Serve UI CSS and JavaScript |
+| Uvicorn | ASGI server used by `synarmo serve` |
 
-**API Endpoints**
-- `GET /health`: Service health and model status
-- `POST /suggest`: Generate suggestions (REST)
-- `POST /evaluate/autocomplete`: Evaluate autocomplete quality
-- `WebSocket /ws/suggest`: Real-time suggestion streaming
-- `GET /ui`: Browser-based UI
-- `GET /docs`: FastAPI auto-generated API documentation
+| Endpoint | Role |
+| --- | --- |
+| `GET /health` | Service health and model status |
+| `POST /suggest` | Generate suggestions over REST |
+| `POST /evaluate/autocomplete` | Evaluate autocomplete candidates |
+| `WebSocket /ws/suggest` | Real-time suggestion channel |
+| `GET /ui` | Browser-based UI |
+| `GET /docs` | FastAPI-generated API documentation |
 
 ### Frontend
 
-**Web UI**
-- HTML templates (Jinja2)
-- Static assets (CSS, JavaScript)
-- Browser-based interface for testing and demonstration
-- WebSocket client for real-time suggestions
+| Component | Role |
+| --- | --- |
+| HTML templates | Browser UI structure rendered by Jinja2 |
+| CSS assets | Local UI styling |
+| JavaScript assets | Browser-side API calls, parameter controls, and rendering |
+| `/ui` page | Interface for testing context and autocomplete parameters |
 
 ### Interfaces
+
+| Interface | Role |
+| --- | --- |
+| Python API | Embed suggestions in Python applications |
+| Local REST service | Call Synarmo from desktop, web, keyboard, or mobile clients |
+| WebSocket service | Keep a live local suggestion channel open while a user types |
+| CLI | Run one-off suggestions, compose loop, or local service |
+| Configuration | `.env`, profile settings, and runtime configuration updates |
 
 **Python API**
 ```python
@@ -133,22 +148,11 @@ engine = SynarmoEngine.load(backend="llama-cpp")
 suggestions = engine.suggest("I want to", context="At home")
 ```
 
-**Local Service**
-- REST API over HTTP
-- WebSocket for streaming
-- Configurable host and port
-- Background process support
-
-**Configuration**
-- Environment variables (.env file)
-- Profile-based user settings
-- Runtime configuration updates
-
 ## Performance Principles
 
 - Load the model once and keep it warm.
 - Keep the prompt short and purpose-built.
-- Return three to five short phrase continuations.
+- Return a small set of short phrase continuations; the default is three.
 - Prefer WebSocket for live typing.
 - Keep ranking cheap and deterministic.
 - Separate latency-sensitive suggestion logic from admin/config APIs.

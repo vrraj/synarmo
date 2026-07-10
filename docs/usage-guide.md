@@ -11,10 +11,37 @@ auto-suggest engine.
 
 ## Quick Start
 
-### Basic Prediction with Mock Backend
+### Prediction with Local GGUF Model
 
-The mock backend does not require a model and is useful for testing and
-development:
+For real predictions, use the llama-cpp backend with a configured GGUF model:
+
+```dotenv
+LOCAL_MODELS_CACHE=~/models/synarmo
+SYNARMO_MAX_SUGGESTIONS=3
+SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF
+SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
+```
+
+The first load checks `LOCAL_MODELS_CACHE` and downloads `SYNARMO_MODEL` from
+`SYNARMO_MODEL_REPO_ID` if the GGUF file is missing. That download can take
+some time.
+
+```python
+from synarmo import SynarmoEngine
+
+engine = SynarmoEngine.load(backend="llama-cpp")
+suggestions = engine.suggest(
+    text="I want to",
+    context="At home, asking for help",
+)
+print([s.text for s in suggestions])
+```
+
+### Mock Backend Check
+
+The mock backend does not require a model and is useful for testing package,
+CLI, service, or UI wiring. It returns canned deterministic suggestions, not
+real predictions:
 
 ```python
 from synarmo import SynarmoEngine
@@ -24,23 +51,30 @@ suggestions = engine.suggest("I want to")
 print([s.text for s in suggestions])
 ```
 
-### Prediction with Local GGUF Model
+## How Suggestions Work
 
-For real predictions, use the llama-cpp backend with a configured GGUF model:
+Synarmo uses the same basic flow from Python, the CLI, the local service, and
+the browser UI:
 
-```python
-from synarmo import SynarmoEngine
-
-engine = SynarmoEngine.load(
-    backend="llama-cpp",
-    model_path="~/models/synarmo/Llama-3.2-1B.Q4_K_M.gguf",
-)
-suggestions = engine.suggest(
-    text="I want to",
-    context="At home, asking for help",
-)
-print([s.text for s in suggestions])
+```text
+User types text
+  -> Synarmo API
+  -> Context assembly
+  -> Prompt building
+  -> Model generation
+  -> Suggestion ranking
+  -> Short suggestions
 ```
+
+The engine combines the current typed text, optional context, and profile
+memory when style adaptation is enabled. It builds a prompt for short
+continuations, sends that prompt to the selected backend, then cleans and ranks
+the returned candidates.
+
+The ranker removes duplicates, trims punctuation, limits suggestion length,
+filters instruction echoes, and returns up to the configured number of
+suggestions. The default is three suggestions, with each suggestion usually
+limited to one to four words.
 
 ## Context Usage
 
@@ -268,8 +302,8 @@ Configure models via `.env` file:
 # .env
 LOCAL_MODELS_CACHE=~/models/synarmo
 SYNARMO_MAX_SUGGESTIONS=3
-SYNARMO_MODEL_REPO_ID=hugging-quants/Llama-3.2-1B-Instruct-Q4_K_M-GGUF
-SYNARMO_MODEL=llama-3.2-1b-instruct-q4_k_m.gguf
+SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF
+SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
 ```
 
 Then load without specifying model path:
@@ -279,6 +313,9 @@ from synarmo import SynarmoEngine
 
 engine = SynarmoEngine.load(backend="llama-cpp")
 ```
+
+If the GGUF file is missing, the first load downloads it from Hugging Face and
+can take some time. Later loads reuse the cached file.
 
 ### Using Local Model Path
 
@@ -340,7 +377,9 @@ Start the local FastAPI service:
 synarmo serve --backend llama-cpp
 ```
 
-The service defaults to `http://127.0.0.1:8765`
+The service defaults to `http://127.0.0.1:8765`. If `SYNARMO_MODEL_REPO_ID` is
+configured and the GGUF file is missing, service startup downloads it before
+`/health` is ready. That first download can take some time.
 
 ### Check Health
 
@@ -402,6 +441,10 @@ From a source checkout, you can start the browser UX directly:
 ```bash
 make ux
 ```
+
+For real inference, run `make model-ensure` first if you want to download or
+verify the configured GGUF model before starting the UI. `make ux` performs the
+same model load when the service starts.
 
 For a no-model wiring check, start it with the mock backend:
 

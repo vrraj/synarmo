@@ -151,17 +151,22 @@ def load(
 ```python
 from synarmo import SynarmoEngine
 
-# Load with mock backend (no model required)
-engine = SynarmoEngine.load(backend="mock")
-
-# Load with llama-cpp backend
+# Load with llama-cpp backend using .env model configuration
 engine = SynarmoEngine.load(
     backend="llama-cpp",
     profile="default",
     max_suggestions=3,
     temperature=0.25,
 )
+
+# Load with mock backend for no-model wiring checks
+mock_engine = SynarmoEngine.load(backend="mock")
 ```
+
+When `SYNARMO_MODEL_REPO_ID` and `SYNARMO_MODEL` are configured in `.env`, the
+first llama.cpp load checks `LOCAL_MODELS_CACHE` and downloads the GGUF file if
+it is missing. That first download can take some time. If `model_path` is
+passed directly, that local GGUF file must already exist.
 
 ### `suggest()`
 
@@ -445,17 +450,32 @@ suggestions = synarmo.suggest(
 
 ## Common Usage Patterns
 
-### 1. Basic Prediction with Mock Backend
+### 1. Prediction with Configured GGUF Model
 
 ```python
 from synarmo import SynarmoEngine
 
-engine = SynarmoEngine.load(backend="mock")
-suggestions = engine.suggest("I want to")
+engine = SynarmoEngine.load(backend="llama-cpp")
+suggestions = engine.suggest(
+    text="I want to",
+    context="At home, asking for help",
+)
 print([s.text for s in suggestions])
 ```
 
-### 2. Prediction with Local GGUF Model
+This uses the model configured in `.env`:
+
+```dotenv
+LOCAL_MODELS_CACHE=~/models/synarmo
+SYNARMO_MAX_SUGGESTIONS=3
+SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF
+SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
+```
+
+If the GGUF file is missing, the first load downloads it and can take some
+time. Later loads reuse the cached file.
+
+### 2. Prediction with Direct Local GGUF Path
 
 ```python
 from synarmo import SynarmoEngine
@@ -470,7 +490,23 @@ suggestions = engine.suggest(
 )
 ```
 
-### 3. One-Shot Prediction
+When passing `model_path`, Synarmo expects that local file to already exist.
+
+### 3. Mock Backend Check
+
+```python
+from synarmo import SynarmoEngine
+
+engine = SynarmoEngine.load(backend="mock")
+suggestions = engine.suggest("I want to")
+print([s.text for s in suggestions])
+```
+
+The mock backend does not require a model. It returns canned deterministic
+suggestions for package, CLI, service, UI, and CI wiring checks; it does not
+test real prediction quality.
+
+### 4. One-Shot Prediction
 
 ```python
 import synarmo
@@ -484,7 +520,7 @@ suggestions = synarmo.predict(
 )
 ```
 
-### 4. Custom Configuration
+### 5. Custom Configuration
 
 ```python
 from synarmo import SynarmoEngine
@@ -499,7 +535,7 @@ engine = SynarmoEngine.load(
 )
 ```
 
-### 5. Runtime Configuration Update
+### 6. Runtime Configuration Update
 
 ```python
 from synarmo import SynarmoEngine
@@ -508,7 +544,7 @@ engine = SynarmoEngine.load(backend="llama-cpp")
 engine.configure(max_suggestions=5, temperature=0.3)
 ```
 
-### 6. User Profile and Memory
+### 7. User Profile and Memory
 
 ```python
 from synarmo import SynarmoEngine
@@ -526,7 +562,7 @@ engine.remember_phrase("see you later")
 suggestions = engine.suggest("I want to")
 ```
 
-### 7. Multiple Contexts Evaluation
+### 8. Multiple Contexts Evaluation
 
 ```python
 from synarmo import SynarmoEngine
@@ -545,7 +581,7 @@ for eval in evaluations:
         print(f"  {candidate.text} (logprob: {candidate.logprob})")
 ```
 
-### 8. Integration with FastAPI
+### 9. Integration with FastAPI
 
 ```python
 from fastapi import FastAPI
@@ -560,7 +596,7 @@ async def get_suggestions(text: str, context: str = None):
     return {"suggestions": [s.text for s in suggestions]}
 ```
 
-### 9. Integration with Flask
+### 10. Integration with Flask
 
 ```python
 from flask import Flask, request, jsonify
