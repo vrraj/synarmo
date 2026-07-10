@@ -334,9 +334,10 @@ Metal/CUDA buffer sizes, and model size. Leave it `0` for normal service use.
 ### Apple M2 Performance Note
 
 With the default 1B Q4_K_M GGUF model, Apple M2 Metal offload, and
-`SYNARMO_N_GPU_LAYERS=-1`, local autocomplete evaluation is expected to land
-around 100-110 tokens per second on a lightly loaded machine. Actual verbose
-logs may show lower per-call numbers when other apps are active, when the
+`SYNARMO_N_GPU_LAYERS=-1`, local autocomplete evaluation on this Apple M2
+setup commonly shows prefill/prompt evaluation around 50 tokens per second and
+short generation reaching around 95-100 tokens per second on a lightly loaded
+machine. Actual verbose logs may vary when other apps are active, when the
 request is mostly prompt evaluation, or when only a few tokens are generated.
 Use `SYNARMO_LLAMA_VERBOSE=1` to inspect the native `llama_perf_context_print`
 timings for your own machine.
