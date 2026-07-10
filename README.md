@@ -60,6 +60,11 @@ GPU:
 ```dotenv
 LOCAL_MODELS_CACHE=~/models/synarmo
 SYNARMO_MAX_SUGGESTIONS=3
+SYNARMO_MAX_TOKENS=5
+SYNARMO_MAX_SUGGESTION_WORDS=4
+SYNARMO_TEMPERATURE=0.25
+SYNARMO_TOP_P=0.95
+SYNARMO_LOGPROB_POOL=24
 SYNARMO_N_GPU_LAYERS=-1
 SYNARMO_LLAMA_VERBOSE=0
 SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF
@@ -195,6 +200,11 @@ For automatic download from Hugging Face:
 ```dotenv
 LOCAL_MODELS_CACHE=~/models/synarmo
 SYNARMO_MAX_SUGGESTIONS=3
+SYNARMO_MAX_TOKENS=5
+SYNARMO_MAX_SUGGESTION_WORDS=4
+SYNARMO_TEMPERATURE=0.25
+SYNARMO_TOP_P=0.95
+SYNARMO_LOGPROB_POOL=24
 SYNARMO_N_GPU_LAYERS=-1
 SYNARMO_LLAMA_VERBOSE=0
 SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF
@@ -377,6 +387,7 @@ engine = SynarmoEngine.load(
     temperature=0.25,
     top_p=0.95,
     max_tokens=5,
+    logprob_pool=24,
 )
 
 suggestions = engine.suggest(
@@ -401,6 +412,7 @@ suggestions = synarmo.predict(
     temperature=0.25,
     top_p=0.95,
     max_tokens=5,
+    logprob_pool=24,
 )
 ```
 
@@ -460,15 +472,28 @@ lets you:
 
 #### Compose Parameters
 
-| Parameter | Default | What it does |
+When testing an installed package or the browser UI, these startup defaults can
+come from `.env`. UI changes still apply to the current browser request; edit
+`.env` and restart `synarmo serve` or `make ux` to change the initial defaults.
+
+| Parameter | Built-in default | What it does |
 | --- | ---: | --- |
 | Choices | 3 | Number of suggestions to show. |
 | Tokens | 5 | Maximum generated tokens behind each suggestion. Higher values allow longer completions but can take longer. |
-| Words | 1 | Maximum words displayed for each suggestion. |
-| Temperature | 0.5 | Controls randomness. Lower is more predictable; higher is more varied. |
+| Words | 4 | Maximum words displayed for each suggestion. |
+| Temperature | 0.25 | Controls randomness. Lower is more predictable; higher is more varied. |
 | Top P | 0.95 | Nucleus sampling value passed to the one-token llama.cpp probe. |
 | Logprobs | 24 | Number of top next-token log probabilities to request from llama.cpp for starter selection. |
 | Auto - Suggest on Spacebar | On | Automatically asks for new suggestions after typing a space. |
+
+| `.env` setting | Applies to |
+| --- | --- |
+| `SYNARMO_MAX_SUGGESTIONS` | Choices |
+| `SYNARMO_MAX_TOKENS` | Tokens |
+| `SYNARMO_MAX_SUGGESTION_WORDS` | Words |
+| `SYNARMO_TEMPERATURE` | Temperature |
+| `SYNARMO_TOP_P` | Top P |
+| `SYNARMO_LOGPROB_POOL` | Logprobs |
 
 For auto-suggest, Synarmo uses `Logprobs` as the starter pool size. It asks
 llama.cpp for a one-token probe with `logprobs` enabled, sorts the returned
