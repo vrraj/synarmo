@@ -314,16 +314,19 @@ synarmo serve --backend mock
 curl http://localhost:8765/health
 ```
 
-Test with real model:
+Download or verify the real model:
+
+```bash
+synarmo model-ensure --backend llama-cpp
+```
+
+Then test with the real model:
 
 ```bash
 synarmo suggest "I want to" \
   --context "At home" \
   --backend llama-cpp
 ```
-
-If the configured model is missing and `SYNARMO_MODEL_REPO_ID` is set, this
-command downloads the model first and may take some time.
 
 ## Building the Package
 
@@ -378,8 +381,14 @@ If you have trouble installing `llama-cpp-python`:
 # Pre-built wheel (recommended)
 pip install llama-cpp-python
 
-# Or build from source
+# CPU build from source
 CMAKE_ARGS="-DGGML_BLAS=ON -DGGML_BLAS_VENDOR=OpenBLAS" pip install llama-cpp-python --no-cache-dir --force-reinstall
+
+# Apple Metal
+CMAKE_ARGS="-DGGML_METAL=on" pip install --upgrade --force-reinstall --no-cache-dir llama-cpp-python
+
+# NVIDIA CUDA
+CMAKE_ARGS="-DGGML_CUDA=on" pip install --upgrade --force-reinstall --no-cache-dir llama-cpp-python
 ```
 
 ### Service Won't Start
@@ -524,6 +533,8 @@ docker build -t synarmo .
 docker run -p 8765:8765 \
   -e SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF \
   -e SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf \
+  -e SYNARMO_N_GPU_LAYERS=0 \
+  -e SYNARMO_LLAMA_VERBOSE=0 \
   -v ~/models/synarmo:/models/synarmo \
   synarmo
 ```
