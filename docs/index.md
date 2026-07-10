@@ -52,14 +52,14 @@ This alone lets you exercise the package API with the deterministic mock backend
 python -c "from synarmo import SynarmoEngine; e=SynarmoEngine.load(); print([s.text for s in e.suggest('I want to')])"
 ```
 
-When working from a source checkout, you can also run the test suite:
+When working from a source checkout, you can also run the verification specs:
 
 ```bash
 pip install -e ".[dev]"
 PYTHONPATH=src pytest
 ```
 
-Tests use deterministic local test doubles and monkeypatched llama.cpp adapter checks, so the default suite validates package behavior without ever touching a real model.
+The verification specs use deterministic local doubles and monkeypatched llama.cpp adapter checks, so the default suite validates package behavior without ever touching a real model.
 
 ### Adding real inference
 
@@ -220,7 +220,7 @@ engine = SynarmoEngine.load(
     max_suggestion_words=4,
     temperature=0.25,
     top_p=0.95,
-    max_tokens=32,
+    max_tokens=5,
 )
 
 suggestions = engine.suggest(
@@ -244,7 +244,7 @@ suggestions = synarmo.predict(
     max_suggestion_words=4,
     temperature=0.25,
     top_p=0.95,
-    max_tokens=32,
+    max_tokens=5,
 )
 ```
 
@@ -443,7 +443,7 @@ src/synarmo/
   suggestions.py         # Suggestion ranking and filtering
   models/                # Model backends
   service/               # FastAPI app factory
-  ui/                    # Local test UI assets
+  ui/                    # Local UI assets
 docs/
   ARCHITECTURE.md
 ```

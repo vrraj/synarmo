@@ -39,7 +39,11 @@ class LlamaCppBackend:
             return
 
         if model_path is None:
-            raise ValueError("model_path is required for the llama-cpp backend")
+            raise ValueError(
+                "No llama.cpp model is configured. Set SYNARMO_MODEL_REPO_ID and "
+                "SYNARMO_MODEL in .env for an auto-download, set SYNARMO_MODEL to "
+                "a local GGUF filename/path, or pass model_path explicitly."
+            )
         if not model_path.exists():
             raise FileNotFoundError(f"GGUF model not found: {model_path}")
 

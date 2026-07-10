@@ -66,7 +66,7 @@ class SynarmoConfig:
     style_adaptation: bool = True
     temperature: float = 0.25
     top_p: float = 0.95
-    max_tokens: int = 32
+    max_tokens: int = 5
     max_suggestion_words: int = 4
     stop: list[str] = field(default_factory=lambda: ["\n\n"])
     profiles_dir: Path = Path("profiles")
@@ -88,7 +88,7 @@ class SynarmoConfig:
 | `style_adaptation` | `bool` | True | Whether to adapt to user style from memory |
 | `temperature` | `float` | 0.25 | Sampling temperature (0.0-2.0) |
 | `top_p` | `float` | 0.95 | Nucleus sampling threshold (greater than 0.0 and up to 1.0) |
-| `max_tokens` | `int` | 32 | Maximum tokens to generate (1-128) |
+| `max_tokens` | `int` | 5 | Maximum tokens to generate (1-128) |
 | `max_suggestion_words` | `int` | 4 | Maximum words per suggestion (1-20) |
 | `stop` | `list[str]` | ["\n\n"] | Stop sequences for generation |
 | `profiles_dir` | `Path` | "profiles" | Directory for user profiles |
@@ -226,7 +226,7 @@ def evaluate_autocomplete(
 | `text` | `str` | - | Current text to complete |
 | `contexts` | `list[str]` | - | List of context strings to evaluate |
 | `choices` | `int` | 3 | Number of suggestions to return |
-| `max_tokens` | `int` | 10 | Maximum tokens per suggestion |
+| `max_tokens` | `int` | 5 | Maximum tokens per suggestion |
 | `max_words` | `int` | 1 | Maximum words per suggestion |
 | `temperature` | `float` | 0.5 | Sampling temperature |
 | `top_p` | `float` | 0.95 | Nucleus sampling threshold |
@@ -504,7 +504,7 @@ print([s.text for s in suggestions])
 
 The mock backend does not require a model. It returns canned deterministic
 suggestions for package, CLI, service, UI, and CI wiring checks; it does not
-test real prediction quality.
+verify real prediction quality.
 
 ### 4. One-Shot Prediction
 

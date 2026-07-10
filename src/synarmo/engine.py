@@ -74,6 +74,36 @@ class SynarmoEngine:
             context=context,
             memory=self.memory if self.config.style_adaptation else UserMemory(profile=self.config.profile),
         )
+        evaluator = getattr(self.backend, "evaluate_autocomplete", None)
+        if evaluator is not None:
+            with self._generation_lock:
+                evaluation = evaluator(
+                    context=assembled_context,
+                    typed_text=text,
+                    choices=self.config.max_suggestions,
+                    max_tokens=self.config.max_tokens,
+                    max_words=self.config.max_suggestion_words,
+                    temperature=self.config.temperature,
+                    top_p=self.config.top_p,
+                    logprob_pool=24,
+                )
+            seen: set[str] = set()
+            suggestions: list[Suggestion] = []
+            for candidate in evaluation.candidates:
+                normalized = candidate.text.strip()
+                key = normalized.lower()
+                if not normalized or key in seen:
+                    continue
+                seen.add(key)
+                suggestions.append(
+                    Suggestion(
+                        text=normalized,
+                        score=candidate.logprob,
+                        source="autocomplete",
+                    )
+                )
+            return suggestions
+
         generation_count = min(self.config.max_suggestions * 3, 10)
         generation_max_tokens = max(self.config.max_tokens, generation_count * 8)
         prompt = self.prompt_builder.build(

@@ -543,7 +543,7 @@ async def async_suggest(text: str, context: str = None):
 suggestions = await async_suggest("I want to", "At home")
 ```
 
-## Testing Without a Model
+## Verification Without a Model
 
 ### Compile Check
 
@@ -553,18 +553,18 @@ Verify the package compiles without a model:
 python3 -m compileall src tests
 ```
 
-### Run Tests
+### Run Verification Specs
 
-Run the test suite (uses mock backend):
+Run the verification specs (uses mock backend):
 
 ```bash
 pip install -e ".[dev]"
 PYTHONPATH=src pytest
 ```
 
-### Mock Backend Testing
+### Mock Backend Verification
 
-Use the mock backend for development and testing:
+Use the mock backend for development and verification:
 
 ```python
 from synarmo import SynarmoEngine

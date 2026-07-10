@@ -212,7 +212,7 @@ description: &quot;Complete API documentation for SynarmoEngine, SynarmoConfig, 
     style_adaptation: <span class="hljs-built_in">bool</span> = <span class="hljs-literal">True</span>
     temperature: <span class="hljs-built_in">float</span> = <span class="hljs-number">0.25</span>
     top_p: <span class="hljs-built_in">float</span> = <span class="hljs-number">0.95</span>
-    max_tokens: <span class="hljs-built_in">int</span> = <span class="hljs-number">32</span>
+    max_tokens: <span class="hljs-built_in">int</span> = <span class="hljs-number">5</span>
     max_suggestion_words: <span class="hljs-built_in">int</span> = <span class="hljs-number">4</span>
     stop: <span class="hljs-built_in">list</span>[<span class="hljs-built_in">str</span>] = field(default_factory=<span class="hljs-keyword">lambda</span>: [<span class="hljs-string">&quot;\n\n&quot;</span>])
     profiles_dir: Path = Path(<span class="hljs-string">&quot;profiles&quot;</span>)
@@ -303,7 +303,7 @@ description: &quot;Complete API documentation for SynarmoEngine, SynarmoConfig, 
 <tr>
 <td><code>max_tokens</code></td>
 <td><code>int</code></td>
-<td>32</td>
+<td>5</td>
 <td>Maximum tokens to generate (1-128)</td>
 </tr>
 <tr>

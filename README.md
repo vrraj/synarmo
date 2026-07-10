@@ -33,7 +33,7 @@ Synarmo is intended to be used as:
 - a llama.cpp/GGUF-backed engine that can test different local models through `.env`
 
 The primary path uses a local GGUF model for inference through llama.cpp. For
-no-model checks of package install, CLI, service, or UI wiring, see
+no-model verification checks of package install, CLI, service, or UI wiring, see
 [Mock Mode](#mock-mode).
 
 ---
@@ -108,7 +108,8 @@ pip install -e ".[llama,service]"
 The editable install does not build a standalone app for the UI. It makes the
 source checkout importable inside the virtual environment, installs the
 `synarmo` command used by `make ux`, and adds the FastAPI/uvicorn service
-dependencies. The `[dev]` extra is only needed for running tests and linters.
+dependencies. The `[dev]` extra is only needed for running verification specs
+and linters.
 
 **Step 3 — Configure a local GGUF model:**
 
@@ -292,7 +293,7 @@ engine = SynarmoEngine.load(
     max_suggestion_words=4,
     temperature=0.25,
     top_p=0.95,
-    max_tokens=32,
+    max_tokens=5,
 )
 
 suggestions = engine.suggest(
@@ -316,7 +317,7 @@ suggestions = synarmo.predict(
     max_suggestion_words=4,
     temperature=0.25,
     top_p=0.95,
-    max_tokens=32,
+    max_tokens=5,
 )
 ```
 
@@ -410,6 +411,10 @@ apply its own Top P cutoff to the returned logprob table. The follow-up
 expansion for each selected starter is deterministic.
 
 #### How The Autocomplete Flow Works
+
+With the llama.cpp backend, this same autocomplete flow powers
+`synarmo.predict()`, `engine.suggest()`, REST `/suggest`, WebSocket
+`/ws/suggest`, and the browser `/ui`.
 
 Suppose the current text is:
 
@@ -537,7 +542,7 @@ Choose 1-3, enter custom text, or q to quit:
 
 ## Mock Mode
 
-Mock mode is a deterministic development backend for testing Synarmo without a
+Mock mode is a deterministic development backend for verifying Synarmo without a
 GGUF model, llama.cpp setup, or model download. It returns canned short
 suggestions and sends them through the same context, prompt, service, and
 ranking pipeline used by the real backend.
@@ -548,7 +553,7 @@ Use it to check:
 - CLI wiring for `suggest` and `compose`
 - FastAPI startup, `/health`, `/suggest`, and `/evaluate/autocomplete`
 - browser `/ui` request and rendering behavior
-- deterministic tests and CI runs
+- deterministic verification specs and CI runs
 - suggestion parsing, deduping, filtering, truncation, and max suggestion count
 
 Install the lightweight package and run a no-model API check:
@@ -558,12 +563,17 @@ pip install synarmo
 python -c "from synarmo import SynarmoEngine; e=SynarmoEngine.load(); print([s.text for s in e.suggest('I want to')])"
 ```
 
-From a source checkout, run tests without downloading a model:
+From a source checkout, run the verification specs without downloading a model:
 
 ```bash
 pip install -e ".[dev]"
 PYTHONPATH=src pytest
 ```
+
+The files under `tests/` are production behavior verification specs. For
+example, `test_engine.py` verifies prediction behavior, `test_config.py`
+verifies configuration contracts, and `test_service.py` verifies service/API
+contracts.
 
 Start the service or browser UI with the mock backend:
 
@@ -656,7 +666,7 @@ src/synarmo/
   suggestions.py         # Suggestion ranking and filtering
   models/                # Model backends
   service/               # FastAPI app factory
-  ui/                    # Local test UI assets
+  ui/                    # Local UI assets
 docs/
   ARCHITECTURE.md
 ```

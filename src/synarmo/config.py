@@ -89,7 +89,7 @@ class SynarmoConfig:
     style_adaptation: bool = True
     temperature: float = 0.25
     top_p: float = 0.95
-    max_tokens: int = 32
+    max_tokens: int = 5
     max_suggestion_words: int = 4
     stop: list[str] = field(default_factory=lambda: ["\n\n"])
     profiles_dir: Path = Path("profiles")

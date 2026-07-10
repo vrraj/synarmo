@@ -192,7 +192,7 @@ entry only maps the name to the server's real LAN IP; it should not point at
 - `GET /health` - Health check endpoint
 - `POST /suggest` - Basic suggestions endpoint
 - `POST /evaluate/autocomplete` - Autocomplete evaluation endpoint
-- `GET /ui` - Interactive test UI
+- `GET /ui` - Interactive verification UI
 - `WS /ws/suggest` - WebSocket endpoint for real-time suggestions
 
 ### Using as a Library

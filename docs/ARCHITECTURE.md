@@ -71,7 +71,7 @@ class ModelBackend(Protocol):
 Runtime backend:
 
 - `llama-cpp`: GGUF backend through `llama_cpp.Llama`
-- `mock`: deterministic test backend for API, service, UI, and CI wiring checks
+- `mock`: deterministic verification backend for API, service, UI, and CI wiring checks
 
 Future backends:
 
@@ -88,7 +88,7 @@ Future backends:
 | `SynarmoEngine` | Main engine API for loading models and generating suggestions |
 | `ModelBackend` | Protocol for pluggable inference backends |
 | `LlamaCppBackend` | GGUF model inference via llama-cpp-python |
-| `MockBackend` | Deterministic test backend for API, service, UI, and CI wiring checks |
+| `MockBackend` | Deterministic verification backend for API, service, UI, and CI wiring checks |
 | `ContextAssembler` | Builds conversation context from user memory |
 | `UserMemory` | Manages user profiles, preferences, and conversation history |
 | `PromptBuilder` | Constructs prompts for the model |

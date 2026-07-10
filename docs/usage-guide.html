@@ -146,7 +146,7 @@ description: &quot;Usage examples and patterns for synarmo package.&quot;</h2>
 <p>This guide provides practical usage examples and patterns for the Synarmo auto-suggest engine.</p>
 <h2 id="quick-start">Quick Start</h2>
 <h3 id="basic-prediction-with-mock-backend">Basic Prediction with Mock Backend</h3>
-<p>The mock backend doesn't require a model and is useful for testing and development:</p>
+<p>The mock backend doesn't require a model and is useful for development verification:</p>
 <pre><code class="language-python"><span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
 
 engine = SynarmoEngine.load(backend=<span class="hljs-string">&quot;mock&quot;</span>)
@@ -528,18 +528,18 @@ engine = SynarmoEngine.load(backend=<span class="hljs-string">&quot;llama-cpp&qu
 <span class="hljs-comment"># Usage</span>
 suggestions = <span class="hljs-keyword">await</span> async_suggest(<span class="hljs-string">&quot;I want to&quot;</span>, <span class="hljs-string">&quot;At home&quot;</span>)
 </code></pre>
-<h2 id="testing-without-a-model">Testing Without a Model</h2>
+<h2 id="verification-without-a-model">Verification Without a Model</h2>
 <h3 id="compile-check">Compile Check</h3>
 <p>Verify the package compiles without a model:</p>
 <pre><code class="language-bash">python3 -m compileall src tests
 </code></pre>
-<h3 id="run-tests">Run Tests</h3>
-<p>Run the test suite (uses mock backend):</p>
+<h3 id="run-verification-specs">Run Verification Specs</h3>
+<p>Run the verification specs (uses mock backend):</p>
 <pre><code class="language-bash">pip install -e <span class="hljs-string">&quot;.[dev]&quot;</span>
 PYTHONPATH=src pytest
 </code></pre>
-<h3 id="mock-backend-testing">Mock Backend Testing</h3>
-<p>Use the mock backend for development and testing:</p>
+<h3 id="mock-backend-verification">Mock Backend Verification</h3>
+<p>Use the mock backend for development and verification:</p>
 <pre><code class="language-python"><span class="hljs-keyword">from</span> synarmo <span class="hljs-keyword">import</span> SynarmoEngine
 
 engine = SynarmoEngine.load(backend=<span class="hljs-string">&quot;mock&quot;</span>)

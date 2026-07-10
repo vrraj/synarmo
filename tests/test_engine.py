@@ -1,4 +1,5 @@
 from synarmo import SynarmoEngine, predict
+from synarmo.autocomplete_eval import AutocompleteCandidate, AutocompleteEvaluation
 
 
 def test_engine_returns_short_suggestions() -> None:
@@ -49,3 +50,46 @@ def test_predict_reloads_when_generation_parameters_change() -> None:
 
     assert len(first) == 1
     assert len(second) == 2
+
+
+class AutocompleteBackend:
+    name = "autocomplete"
+
+    def __init__(self) -> None:
+        self.called = False
+
+    def generate(self, prompt, options):  # noqa: ANN001
+        raise AssertionError("suggest should use evaluate_autocomplete when available")
+
+    def evaluate_autocomplete(self, **kwargs):  # noqa: ANN003
+        self.called = True
+        return AutocompleteEvaluation(
+            context=kwargs["context"],
+            prompt="prompt",
+            candidates=[
+                AutocompleteCandidate(
+                    text="go outside",
+                    starter=" go",
+                    rest=" outside",
+                    logprob=-0.2,
+                )
+            ],
+        )
+
+
+def test_engine_suggest_uses_autocomplete_evaluator_when_available(tmp_path) -> None:
+    from synarmo.config import SynarmoConfig
+    from synarmo.memory import UserMemory
+
+    backend = AutocompleteBackend()
+    engine = SynarmoEngine(
+        config=SynarmoConfig(max_suggestions=1, max_suggestion_words=2, profiles_dir=tmp_path),
+        backend=backend,
+        memory=UserMemory(profile="test"),
+    )
+
+    suggestions = engine.suggest("I want to", context="At home")
+
+    assert backend.called
+    assert [item.text for item in suggestions] == ["go outside"]
+    assert suggestions[0].source == "autocomplete"

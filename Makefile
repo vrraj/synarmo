@@ -40,6 +40,7 @@ PID_FILE ?= .synarmo-service.pid
 LOG_FILE ?= .synarmo-service.log
 LOCAL_MODELS_CACHE ?= $(shell grep -E '^LOCAL_MODELS_CACHE=' .env 2>/dev/null | tail -1 | cut -d= -f2-)
 SYNARMO_MODEL ?= $(shell grep -E '^SYNARMO_MODEL=' .env 2>/dev/null | tail -1 | cut -d= -f2-)
+SYNARMO_MODEL_PATH ?= $(shell grep -E '^SYNARMO_MODEL_PATH=' .env 2>/dev/null | tail -1 | cut -d= -f2-)
 SYNARMO_MODEL_REPO_ID ?= $(shell grep -E '^SYNARMO_MODEL_REPO_ID=' .env 2>/dev/null | tail -1 | cut -d= -f2-)
 
 help:
@@ -213,12 +214,18 @@ model-current:
 	@echo "LOCAL_MODELS_CACHE=$(LOCAL_MODELS_CACHE)"
 	@echo "SYNARMO_MODEL_REPO_ID=$(SYNARMO_MODEL_REPO_ID)"
 	@echo "SYNARMO_MODEL=$(SYNARMO_MODEL)"
+	@echo "SYNARMO_MODEL_PATH=$(SYNARMO_MODEL_PATH)"
 
 # Load the configured backend once. For llama.cpp this checks the local cache
 # and downloads the configured Hugging Face GGUF model if it is missing.
 model-ensure:
 	@if [ "$(BACKEND)" = "mock" ]; then \
 		echo "mock backend does not need a local model"; \
+	elif [ -z "$(SYNARMO_MODEL)" ] && [ -z "$(SYNARMO_MODEL_PATH)" ]; then \
+		echo "No llama.cpp model is configured."; \
+		echo "Copy .env.example to .env, then set SYNARMO_MODEL_REPO_ID and SYNARMO_MODEL."; \
+		echo "For a local GGUF file, set SYNARMO_MODEL to the cache filename or absolute path."; \
+		exit 1; \
 	else \
 		$(PYTHON) -c "from synarmo.engine import SynarmoEngine; SynarmoEngine.load(backend='$(BACKEND)'); print('Model ready for $(BACKEND)')"; \
 	fi
