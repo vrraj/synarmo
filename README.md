@@ -105,11 +105,10 @@ source .venv/bin/activate
 pip install -e ".[llama,service]"
 ```
 
-The editable install does not build a standalone app for the UI. It makes the
-source checkout importable inside the virtual environment, installs the
-`synarmo` command used by `make ux`, and adds the FastAPI/uvicorn service
-dependencies. The `[dev]` extra is only needed for running verification specs
-and linters.
+The editable install makes the source checkout importable inside the virtual
+environment, installs the `synarmo` command used by `make ux`, and adds the
+FastAPI/uvicorn service dependencies for the browser UI. Add the `[dev]` extra
+when running verification specs and linters.
 
 **Step 3 — Configure a local GGUF model:**
 
@@ -327,17 +326,16 @@ file is missing, this first load downloads the model before returning
 suggestions, which can take some time.
 
 After changing code or prompt text, restart any running `synarmo serve`
-process so the service reloads the updated Python modules. The service keeps
-the model warm and does not hot-reload prompt construction while it is
-running.
+process so the service reloads the updated Python modules and prompt
+construction. The service keeps the model warm while it is running.
 
 ### Service Mode
 
-Service mode means running Synarmo as a local server instead of calling it
-directly from Python. Use it when another process needs suggestions, such as a
-desktop app, web app, keyboard, browser UI, or a client that wants REST or
-WebSocket access. The service loads the selected backend once, keeps the model
-warm, and exposes local endpoints from the same engine instance.
+Service mode runs Synarmo as a local server for clients outside the Python
+process. Use it when another process needs suggestions, such as a desktop app,
+web app, keyboard, browser UI, or a client that wants REST or WebSocket access.
+The service loads the selected backend once, keeps the model warm, and exposes
+local endpoints from the same engine instance.
 
 Start the local service with the configured `.env` model:
 
@@ -402,13 +400,12 @@ lets you:
 | Logprobs | 24 | Number of top next-token log probabilities to request from llama.cpp for starter selection. |
 | Auto - Suggest on Spacebar | On | Automatically asks for new suggestions after typing a space. |
 
-`Logprobs` does not directly mean "show this many suggestions." For the
-autocomplete evaluator, Synarmo asks llama.cpp for a one-token probe with
-`logprobs` enabled, sorts the returned next-token log probabilities, removes
-duplicate first-word starters, and expands up to `Choices` starters into short
-suggestions. `Top P` is passed to the probe sampling call, but Synarmo does not
-apply its own Top P cutoff to the returned logprob table. The follow-up
-expansion for each selected starter is deterministic.
+For autocomplete, Synarmo uses `Logprobs` as the starter pool size. It asks
+llama.cpp for a one-token probe with `logprobs` enabled, sorts the returned
+next-token probabilities, removes duplicate first-word starters, and expands up
+to `Choices` starters into short suggestions. `Top P` is passed to the probe
+sampling call; the follow-up expansion for each selected starter is
+deterministic.
 
 #### How The Autocomplete Flow Works
 
@@ -464,9 +461,8 @@ Words = 2  -> go outside
 Words = 3  -> go outside with
 ```
 
-> This is not beam search. Synarmo does not keep expanding and rescoring many
-paths. It uses logprobs to pick strong starter tokens, then makes one short
-deterministic expansion call for each starter.
+This autocomplete strategy uses logprobs to pick strong starter tokens, then
+makes one short deterministic expansion call for each starter.
 
 ### Use Service Endpoints
 
@@ -582,9 +578,8 @@ synarmo serve --backend mock
 make ux-mock
 ```
 
-Mock mode cannot validate real suggestion quality, real model latency, memory
-usage, token probabilities, or whether a specific GGUF model behaves well. Use
-`--backend llama-cpp` for those checks.
+Use `--backend llama-cpp` when checking real suggestion quality, model latency,
+memory usage, token probabilities, or how a specific GGUF model behaves.
 
 ---
 
@@ -592,7 +587,7 @@ usage, token probabilities, or whether a specific GGUF model behaves well. Use
 
 - messaging, email, or chat clients that need short completions inline
 - assistive typing workflows where each keystroke matters
-- local or air-gapped deployments that cannot send user text to remote APIs
+- local or air-gapped deployments that keep user text off remote APIs
 - desktop and browser clients that need a local prediction service
 - mobile keyboards or apps that need consistent suggestion behavior across
   contexts
@@ -618,7 +613,7 @@ The reusable package contains the prediction engine:
 
 The model layer is intentionally swappable at the GGUF level. If another
 model works with llama.cpp, Synarmo can test it by changing model
-configuration rather than changing application code.
+configuration while keeping application code stable.
 
 ## Extending Inference & Mobile Direction
 
@@ -636,9 +631,9 @@ class ModelBackend(Protocol):
 That means the prompt builder, context assembly, ranking, CLI, and service
 APIs can stay stable while a new runtime adapter implements `generate(...)`.
 Additional runtimes such as ONNX, MLX, Core ML, or a mobile-specific
-llama.cpp adapter would need their own backend implementation,
-tokenizer/model loading, decoding loop, sampling behavior, and tests. They are
-extension points rather than built-in runtime support today.
+llama.cpp adapter can plug in through the same boundary with their own backend
+implementation, tokenizer/model loading, decoding loop, sampling behavior, and
+tests.
 
 The next product step is a mobile app that uses the same prediction flow with
 an on-device model. Synarmo is also intended to serve as a portable reference
