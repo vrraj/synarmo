@@ -12,7 +12,7 @@ APIs, and llama.cpp/GGUF support for swappable local models.
 
 > Local-first next-word and next-phrase suggestions tuned for short completions.
 
-<video src="./assets/synarmo-auto-suggest.mp4" controls muted playsinline width="100%"></video>
+<video src="https://github.com/user-attachments/assets/ad153346-7b2c-42e8-a747-d4325a45672d" controls muted playsinline width="100%"></video>
 
 <p align="center"><em>Synarmo context-aware compose loop predicting short suggestions locally.</em></p>
 
