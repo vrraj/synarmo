@@ -1,7 +1,7 @@
 ---
 layout: default
-title: "Synarmo: Local-First Auto-Suggest Engine"
-description: "A local-first, low-latency auto-suggest engine for personalized next-word and short-phrase predictions across messaging, chat, and assistive typing workflows."
+title: "Synarmo: Local Inference Auto-Suggest Engine"
+description: "A local inference, low-latency auto-suggest engine for personalized next-word and short-phrase predictions across messaging, chat, and assistive typing workflows."
 ---
 
 # Synarmo
@@ -19,7 +19,7 @@ description: "A local-first, low-latency auto-suggest engine for personalized ne
 </p>
 
 Synarmo (derived from *synarmozo* — "to fit together, to join closely") is a
-local-first, low-latency auto-suggest engine and Python package for
+local inference, low-latency auto-suggest engine and Python package for
 personalized next-word and short-phrase predictions across messaging, chat, and
 assistive typing workflows.
 
@@ -27,7 +27,6 @@ Use it to embed short type-ahead suggestions in Python apps, run a local
 REST/WebSocket suggestion service, test auto-suggest behavior in a browser
 `/ui`, and evaluate different local GGUF models through llama.cpp.
 
-> Local-first next-word and next-phrase suggestions tuned for short completions.
 
 ![Synarmo context-aware auto-suggest UI](https://raw.githubusercontent.com/vrraj/synarmo/main/assets/synarmo-context-aware-auto-suggest.png)
 

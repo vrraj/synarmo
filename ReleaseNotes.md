@@ -2,7 +2,7 @@
 
 ## Synarmo Platform v1
 
-Synarmo Platform v1 establishes the project as a local-first auto-suggest
+Synarmo Platform v1 establishes the project as a local inference auto-suggest
 platform: a reusable Python engine, a local service layer, a browser-based
 interaction surface, and a documented GGUF model setup path for private
 type-ahead suggestions.
@@ -13,7 +13,7 @@ local llama.cpp inference.
 
 ### Highlights
 
-- **Local-first suggestion engine** with `SynarmoEngine.load(...)`,
+- **Local inference suggestion engine** with `SynarmoEngine.load(...)`,
   `engine.suggest(...)`, and convenience prediction APIs for embedding
   Synarmo in Python applications.
 - **Backend-swappable model layer** with a deterministic `mock` backend for

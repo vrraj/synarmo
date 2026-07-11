@@ -5,7 +5,7 @@
 [![GitHub Release](https://img.shields.io/github/v/release/vrraj/synarmo?label=github%20release&color=0f172a&logo=github)](https://github.com/vrraj/synarmo/releases)
 
 Synarmo (derived from *synarmozo* — "to fit together, to join closely") is a
-local-first, low-latency auto-suggest engine and Python package for
+local inference, low-latency auto-suggest engine and Python package for
 personalized next-word and short-phrase predictions across messaging, chat, and
 assistive typing workflows. It combines context-aware local inference, service
 APIs, and llama.cpp/GGUF support for swappable local models.
@@ -775,7 +775,7 @@ runtime:
 
 - on-device GGUF/Core ML/MLX-style model runtime where appropriate
 - shared prompt, memory, and ranking concepts
-- local-first prediction loop tuned for short suggestions
+- local inference prediction loop tuned for short suggestions
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for design notes and mobile
 direction.
