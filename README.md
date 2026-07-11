@@ -22,7 +22,6 @@ in `.env`, native llama.cpp logs include prefill/prompt evaluation and
 generation throughput in tokens/sec, plus KV cache details, Metal/CUDA buffer
 sizes, and other load diagnostics.
 
-> Local-first next-word and next-phrase suggestions tuned for short completions.
 
 ![Synarmo context-aware auto-suggest UI](https://raw.githubusercontent.com/vrraj/synarmo/main/assets/synarmo-context-aware-auto-suggest.png)
 

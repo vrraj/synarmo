@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "synarmo"
 version = "0.1.1"
-description = "Synarmo is a local-first, low-latency auto-suggest engine and Python package for personalized next-word and short-phrase prediction. Built for context-aware local inference, it provides service APIs, an extensible inference architecture, and llama.cpp/GGUF support for swappable local models"
+description = "Synarmo is a local-first, low-latency auto-suggest engine and Python package for personalized next-word and short-phrase prediction. Built for context-aware local inference, it provides service APIs, an extensible inference architecture, and llama.cpp/GGUF support for swappable local CPU or GPU-accelerated models"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
