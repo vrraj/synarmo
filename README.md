@@ -1,4 +1,4 @@
-# Synarmo
+# Synarmo - Context-Aware Edge Auto-Suggest Engine  
 
 [![CI](https://github.com/vrraj/synarmo/actions/workflows/ci.yml/badge.svg)](https://github.com/vrraj/synarmo/actions)
 [![PyPI - Version](https://img.shields.io/pypi/v/synarmo?color=blue&logo=pypi&logoColor=white)](https://pypi.org/project/synarmo/)
