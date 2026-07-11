@@ -2,7 +2,7 @@
         <html>
         <head>
             <meta charset="UTF-8">
-            <title>Synarmo Architecture</title>
+            <title>Architecture</title>
             <style>
 /* From extension vscode.github */
 /*---------------------------------------------------------------------------------------------
@@ -138,7 +138,27 @@
         
         </head>
         <body class="vscode-body vscode-light">
-            <h1 id="synarmo-architecture">Synarmo Architecture</h1>
+            <hr>
+<h2 id="layout-defaulttitle-architecture--synarmodescription-design-notes-and-architecture-for-synarmo-package">layout: default
+title: &quot;Architecture | Synarmo&quot;
+description: &quot;Design notes and architecture for synarmo package.&quot;</h2>
+<h1 id="architecture">Architecture</h1>
+<p>This document describes the architecture and design principles of the Synarmo auto-suggest engine.</p>
+<blockquote>
+<p><strong>New here?</strong> Start with the project overview on the home page: <strong><a href="https://vrraj.github.io/synarmo/">Synarmo docs home</a></strong>.</p>
+<p><strong>Source + releases:</strong> GitHub repo and PyPI package are linked from the home page.</p>
+</blockquote>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#product-vision">Product Vision</a></li>
+<li><a href="#two-layers">Two Layers</a></li>
+<li><a href="#runtime-flow">Runtime Flow</a></li>
+<li><a href="#model-backends">Model Backends</a></li>
+<li><a href="#technology-components">Technology Components</a></li>
+<li><a href="#performance-principles">Performance Principles</a></li>
+<li><a href="#iphone-plan">iPhone Plan</a></li>
+</ul>
+<hr>
 <h2 id="product-vision">Product Vision</h2>
 <p>Synarmo is an AI communication companion that learns a user's communication
 style, personality, long-term preferences, current conversation, context, and

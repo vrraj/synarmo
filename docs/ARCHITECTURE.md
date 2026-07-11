@@ -1,4 +1,28 @@
-# Synarmo Architecture
+---
+layout: default
+title: "Architecture | Synarmo"
+description: "Design notes and architecture for synarmo package."
+---
+
+# Architecture
+
+This document describes the architecture and design principles of the Synarmo auto-suggest engine.
+
+> **New here?** Start with the project overview on the home page: **[Synarmo docs home](https://vrraj.github.io/synarmo/)**.
+>
+> **Source + releases:** GitHub repo and PyPI package are linked from the home page.
+
+## Table of Contents
+
+- [Product Vision](#product-vision)
+- [Two Layers](#two-layers)
+- [Runtime Flow](#runtime-flow)
+- [Model Backends](#model-backends)
+- [Technology Components](#technology-components)
+- [Performance Principles](#performance-principles)
+- [iPhone Plan](#iphone-plan)
+
+---
 
 ## Product Vision
 

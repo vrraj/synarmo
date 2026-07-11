@@ -8,6 +8,26 @@ description: "Installation and deployment instructions for synarmo package."
 
 This guide explains how to deploy the Synarmo package on other machines.
 
+> **New here?** Start with the project overview on the home page: **[Synarmo docs home](https://vrraj.github.io/synarmo/)**.
+>
+> **Source + releases:** GitHub repo and PyPI package are linked from the home page.
+
+## Table of Contents
+
+- [Package Files](#package-files)
+- [Installation on Target Machine](#installation-on-target-machine)
+- [Model Configuration](#model-configuration)
+- [Running the Service](#running-the-service)
+- [System Requirements](#system-requirements)
+- [Verification](#verification)
+- [Building the Package](#building-the-package)
+- [Troubleshooting](#troubleshooting)
+- [Production Deployment](#production-deployment)
+- [Security Considerations](#security-considerations)
+- [Monitoring](#monitoring)
+
+---
+
 ## Package Files
 
 After building, the following distribution files are created in the `dist/` directory:

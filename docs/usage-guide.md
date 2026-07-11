@@ -9,6 +9,30 @@ description: "Usage examples and patterns for synarmo package."
 This guide provides practical usage examples and patterns for the Synarmo
 auto-suggest engine.
 
+> **New here?** Start with the project overview on the home page: **[Synarmo docs home](https://vrraj.github.io/synarmo/)**.
+>
+> **Source + releases:** GitHub repo and PyPI package are linked from the home page.
+
+## Table of Contents
+
+- [Quick Start](#quick-start)
+- [How Suggestions Work](#how-suggestions-work)
+- [Context Usage](#context-usage)
+- [Configuration Patterns](#configuration-patterns)
+- [User Profiles and Memory](#user-profiles-and-memory)
+- [Runtime Configuration](#runtime-configuration)
+- [One-Shot Prediction](#one-shot-prediction)
+- [Model Configuration](#model-configuration)
+- [CLI Usage](#cli-usage)
+- [Service Mode](#service-mode)
+- [Web UI](#web-ui)
+- [Integration Examples](#integration-examples)
+- [Verification Without a Model](#verification-without-a-model)
+- [Common Use Cases](#common-use-cases)
+- [Performance Tips](#performance-tips)
+
+---
+
 ## Quick Start
 
 ### Prediction with Local GGUF Model

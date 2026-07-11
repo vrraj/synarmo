@@ -8,6 +8,8 @@ class MockBackend:
 
     def generate(self, prompt: str, options: GenerationOptions) -> str:
         lower = prompt.lower()
+        if "my goals are" in lower:
+            return "to build strength\nto run upstairs\nto improve endurance\nwithout tiring"
         if "i want to" in lower:
             return "go outside\nhave some water\ntalk to you\nrest for now"
         if "can you" in lower:

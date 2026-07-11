@@ -48,11 +48,16 @@ pip install "synarmo[llama,service]"
 mkdir -p ~/models/synarmo
 ```
 
-**Step 2: Set up a `.env` file**
+**Step 2: Copy and review the `.env` file**
 
-Create a `.env` file in the directory where you will run `synarmo` or your
-Python app. This example assumes an Apple Silicon Mac with one integrated Metal
-GPU:
+Copy `.env.example` to `.env` in the directory where you will run `synarmo` or your
+Python app, then review the configuration:
+
+```bash
+cp .env.example .env
+```
+
+**Default config**
 
 ```dotenv
 LOCAL_MODELS_CACHE=~/models/synarmo
@@ -193,16 +198,19 @@ cp .env.example .env
 mkdir -p ~/models/synarmo
 ```
 
-For PyPI installs, create `.env` in the directory where you run `synarmo` or
+For PyPI installs, copy `.env.example` to `.env` in the directory where you run `synarmo` or
 start your Python app, then create the cache:
 
 ```bash
+cp .env.example .env
 mkdir -p ~/models/synarmo
 ```
 
 **Step 2 — Choose a model source**
 
 For automatic download from Hugging Face:
+
+**Default config**
 
 ```dotenv
 LOCAL_MODELS_CACHE=~/models/synarmo

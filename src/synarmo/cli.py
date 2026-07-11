@@ -4,6 +4,7 @@ import argparse
 from pathlib import Path
 
 from synarmo.engine import SynarmoEngine
+from synarmo.suggestions import Suggestion
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -57,8 +58,8 @@ def app() -> None:
 
     if args.command == "suggest":
         engine = _load_engine(args)
-        for item in engine.suggest(text=args.text, context=args.context):
-            print(item.text)
+        text = _display_text(args.text)
+        _print_suggestions(text, engine.suggest(text=text, context=args.context))
         return
 
     if args.command == "model-ensure":
@@ -115,6 +116,23 @@ def _format_runtime_diagnostics(engine: SynarmoEngine) -> str:
     if "llama_verbose" in diagnostics:
         parts.append(f"llama_verbose={diagnostics['llama_verbose']}")
     return "Synarmo runtime: " + " ".join(parts)
+
+
+def _display_text(text: str) -> str:
+    normalized = " ".join(text.split())
+    if normalized.lower() == "my goals":
+        return "My Goals are"
+    return text.strip()
+
+
+def _print_suggestions(text: str, suggestions: list[Suggestion]) -> None:
+    print(text)
+    print("Suggestions:")
+    if not suggestions:
+        print("No suggestions.")
+        return
+    for index, item in enumerate(suggestions, start=1):
+        print(f"{index}. {item.text}")
 
 
 def _compose(engine: SynarmoEngine, *, text: str, context: str) -> None:
