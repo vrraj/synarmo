@@ -8,7 +8,7 @@ description: "A context-aware local inference, low-latency auto-suggest engine f
 
 <p align="left">
   <a href="https://pypi.org/project/synarmo/">
-    <img src="https://img.shields.io/pypi/v/synarmo?color=3776ab&logo=pypi&logoColor=white" alt="PyPI - Version">
+    <img src="https://img.shields.io/pypi/v/synarmo?color=blue&logo=pypi&logoColor=white" alt="PyPI - Version">
   </a>
   <a href="https://github.com/vrraj/synarmo/releases">
     <img src="https://img.shields.io/github/v/release/vrraj/synarmo?label=github%20release&color=0f172a&logo=github" alt="GitHub Release">
