@@ -1,7 +1,7 @@
 # Synarmo
 
 [![CI](https://github.com/vrraj/synarmo/actions/workflows/ci.yml/badge.svg)](https://github.com/vrraj/synarmo/actions)
-[![PyPI - Version](https://img.shields.io/pypi/v/synarmo?color=3776ab&logo=pypi&logoColor=white)](https://pypi.org/project/synarmo/)
+[![PyPI - Version](https://img.shields.io/pypi/v/synarmo?color=blue&logo=pypi&logoColor=white)](https://pypi.org/project/synarmo/)
 [![GitHub Release](https://img.shields.io/github/v/release/vrraj/synarmo?label=github%20release&color=0f172a&logo=github)](https://github.com/vrraj/synarmo/releases)
 
 Synarmo (derived from *synarmozo* — "to fit together, to join closely") is a
