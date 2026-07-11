@@ -18,9 +18,8 @@ pip install "synarmo[llama,service]"
 The repository includes an
 [Interactive UI](#install---interactive-ui-git-clone) for evaluations and tuning
 API calls with context and parameters. When `SYNARMO_LLAMA_VERBOSE=1` is enabled
-in `.env`, native llama.cpp logs include prefill/prompt evaluation and
-generation throughput in tokens/sec, plus KV cache details, Metal/CUDA buffer
-sizes, and other load diagnostics.
+in `.env`, native llama.cpp logs include generation throughput in tokens/sec,
+plus KV cache details, Metal/CUDA buffer sizes, and other load diagnostics.
 
 
 ![Synarmo context-aware auto-suggest UI](https://raw.githubusercontent.com/vrraj/synarmo/main/assets/synarmo-context-aware-auto-suggest.png)
@@ -321,10 +320,10 @@ Temporarily enable native llama.cpp logs:
 SYNARMO_LLAMA_VERBOSE=1
 ```
 
-Verbose logs include prefill/prompt evaluation tokens/sec, generation
-tokens/sec, KV cache details, and Metal/CUDA buffer sizes. Leave it `0` during normal service use.
+Verbose logs include generation tokens/sec, KV cache details, and Metal/CUDA
+buffer sizes. Leave it `0` during normal service use.
 
-> On this Apple M2 setup, the default 1B Q4_K_M model with Metal offload commonly shows about 50 prompt-evaluation tokens/sec and 95-100 generation tokens/sec on a lightly loaded machine.
+> On this Apple M2 setup, the default 1B Q4_K_M model with Metal offload commonly shows about 70 - 95 generation tokens/sec on a lightly loaded machine.
 
 ### CPU, Metal, CUDA
 

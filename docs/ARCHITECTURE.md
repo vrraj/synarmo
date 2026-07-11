@@ -135,7 +135,7 @@ Future backends:
 | `SYNARMO_MODEL` | GGUF filename in the repo/cache, or a local model path |
 | `LOCAL_MODELS_CACHE` | Local model cache directory |
 | `SYNARMO_N_GPU_LAYERS` | Number of model layers to offload; `0` is CPU-only, `-1` asks llama.cpp to offload all possible layers |
-| `SYNARMO_LLAMA_VERBOSE` | Enables native llama.cpp load/performance logs, including prefill and generation tokens/sec |
+| `SYNARMO_LLAMA_VERBOSE` | Enables native llama.cpp load/performance logs, including generation tokens/sec |
 
 ### Service Layer
 

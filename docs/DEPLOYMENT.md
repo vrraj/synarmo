@@ -309,8 +309,8 @@ For temporary native llama.cpp diagnostics, set:
 SYNARMO_LLAMA_VERBOSE=1
 ```
 
-Verbose logs include prefill and generation tokens/sec, KV cache details, and
-Metal/CUDA buffer sizes.
+Verbose logs include generation tokens/sec, KV cache details, and Metal/CUDA
+buffer sizes.
 
 ## Verification
 

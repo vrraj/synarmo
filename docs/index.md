@@ -158,10 +158,9 @@ number of GPUs. Apple M2 has one integrated Metal GPU; `-1` tells llama.cpp to
 use it for all possible layers.
 
 On the Apple M2 development setup with the default 1B Q4_K_M model and Metal
-offload, local auto-suggest evaluation commonly shows prefill/prompt evaluation
-around 50 tokens per second and short generation reaching around 95-100 tokens
-per second on a lightly loaded machine. Real logs can vary when other apps are
-active or when requests generate only a few tokens.
+offload, local auto-suggest evaluation commonly shows short generation reaching
+around 70 - 95 tokens per second on a lightly loaded machine. Real logs can vary
+when other apps are active or when requests generate only a few tokens.
 
 ## Quick example
 
