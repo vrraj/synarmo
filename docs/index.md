@@ -1,10 +1,10 @@
 ---
 layout: default
-title: "Synarmo: Local Inference Auto-Suggest Engine"
-description: "A local inference, low-latency auto-suggest engine for personalized next-word and short-phrase predictions across messaging, chat, and assistive typing workflows."
+title: "Synarmo: Context-Aware Local Inference Auto-Suggest Engine"
+description: "A context-aware local inference, low-latency auto-suggest engine for personalized next-word and short-phrase predictions across messaging, chat, and assistive typing workflows."
 ---
 
-# Synarmo
+# Synarmo - Context-Aware Local Inference Auto-Suggest
 
 <p align="left">
   <a href="https://pypi.org/project/synarmo/">
@@ -33,14 +33,13 @@ REST/WebSocket suggestion service, test auto-suggest behavior in a browser
 ## Why this exists
 
 People who type to communicate benefit from suggestions that are fast, short,
-context-aware, and personal. Generic completion systems often optimize for long
-answers, remote inference, or broad chat behavior. Synarmo focuses on a narrower
-loop: the user has typed a partial thought, and the engine should return a few
-natural continuations that can be inserted immediately.
+context-aware, and personal. Synarmo focuses on a narrow local inference loop:
+the user has typed a partial thought, and the engine should return a few natural
+continuations that can be inserted immediately.
 
-The package keeps that loop local where possible. It loads the model once,
-keeps it warm, combines the current text with optional context and profile
-memory, then ranks and filters candidates into short suggestions.
+The package loads the model once, keeps it warm, combines the current text with
+optional context and profile memory, then ranks and filters candidates into
+short suggestions.
 
 ## Primary use case: local type-ahead suggestions
 
@@ -256,8 +255,8 @@ make stop
 
 Synarmo is a reusable local suggestion layer for short, personalized
 type-ahead. It is intentionally narrower than a general chatbot: it accepts
-current text and context, keeps inference local when configured with a GGUF
-model, and returns a few immediately insertable suggestions.
+current text and context, uses local inference with a GGUF model, and returns a
+few immediately insertable suggestions.
 
 The Python implementation is also the reference shape for future applications,
 including desktop clients, browser integrations, keyboards, and mobile apps
