@@ -47,22 +47,17 @@ pip install "synarmo[llama,service]"
 mkdir -p ~/models/synarmo
 ```
 
-**Step 2: Copy and review the `.env` file**
+**Step 2: Create a `.env` file**
 
-Copy `.env.example` to `.env` in the directory where you will run `synarmo` or your
-Python app, then review the configuration:
+Create a `.env` file in the directory where you will run `synarmo` or your
+Python app with the following configuration:
 
 ```bash
-cp .env.example .env
-```
-
-**Default config**
-
-```dotenv
+cat > .env << 'EOF'
 LOCAL_MODELS_CACHE=~/models/synarmo
 SYNARMO_MAX_SUGGESTIONS=3
 SYNARMO_MAX_TOKENS=5
-SYNARMO_MAX_SUGGESTION_WORDS=4
+SYNARMO_MAX_SUGGESTION_WORDS=1
 SYNARMO_TEMPERATURE=0.25
 SYNARMO_TOP_P=0.95
 SYNARMO_LOGPROB_POOL=24
@@ -70,6 +65,7 @@ SYNARMO_N_GPU_LAYERS=-1
 SYNARMO_LLAMA_VERBOSE=0
 SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF
 SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
+EOF
 ```
 
 **Step 3: Download or verify the local inference model**
@@ -197,11 +193,23 @@ cp .env.example .env
 mkdir -p ~/models/synarmo
 ```
 
-For PyPI installs, copy `.env.example` to `.env` in the directory where you run `synarmo` or
-start your Python app, then create the cache:
+For PyPI installs, create a `.env` file in the directory where you run `synarmo` or
+start your Python app with the following configuration, then create the cache:
 
 ```bash
-cp .env.example .env
+cat > .env << 'EOF'
+LOCAL_MODELS_CACHE=~/models/synarmo
+SYNARMO_MAX_SUGGESTIONS=3
+SYNARMO_MAX_TOKENS=5
+SYNARMO_MAX_SUGGESTION_WORDS=4
+SYNARMO_TEMPERATURE=0.25
+SYNARMO_TOP_P=0.95
+SYNARMO_LOGPROB_POOL=24
+SYNARMO_N_GPU_LAYERS=-1
+SYNARMO_LLAMA_VERBOSE=0
+SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF
+SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
+EOF
 mkdir -p ~/models/synarmo
 ```
 
@@ -295,8 +303,8 @@ then choose how many layers llama.cpp should offload:
 SYNARMO_N_GPU_LAYERS=-1
 ```
 
-`SYNARMO_N_GPU_LAYERS` is a layer count, not a GPU count. The included
-`.env.example` uses `-1` for Apple Silicon/Metal. If the variable is unset,
+`SYNARMO_N_GPU_LAYERS` is a layer count, not a GPU count. The default
+configuration uses `-1` for Apple Silicon/Metal. If the variable is unset,
 Synarmo falls back to CPU-only (`0`) for portability.
 
 Older Intel Macs with discrete low-memory GPUs may report Metal support but
