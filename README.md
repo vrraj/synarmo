@@ -642,8 +642,9 @@ The llama.cpp auto-suggest path has two phases:
 
 Candidate percentages are based on the tokens that remain visible after the
 `Words` limit is applied. Synarmo averages the visible token logprobs and the
-browser displays `exp(average_logprob) * 100`. Pure formatting punctuation such
-as commas, quotes, brackets, and dashes is excluded from that average; meaningful
+browser displays `exp(average_logprob) * 100`; equivalently, the phrase score is
+`exp((log p1 + log p2 + ... + log pn) / n)`. Pure formatting punctuation such as
+commas, quotes, brackets, and dashes is excluded from that average; meaningful
 `!` and `?` tokens remain part of the score.
 
 ### Use Service Endpoints
