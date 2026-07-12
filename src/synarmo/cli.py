@@ -105,8 +105,11 @@ def _format_runtime_diagnostics(engine: SynarmoEngine) -> str:
     parts = [
         f"backend={diagnostics.get('backend', '')}",
         f"model={diagnostics.get('model', '')}",
+        f"context_window={diagnostics.get('context_window', '')}",
         f"n_gpu_layers={diagnostics.get('n_gpu_layers', '')}",
     ]
+    if "actual_context_window" in diagnostics:
+        parts.append(f"actual_context_window={diagnostics['actual_context_window']}")
     if "requested_gpu_layers" in diagnostics:
         parts.append(f"requested_gpu_layers={diagnostics['requested_gpu_layers']}")
     if "model_layers" in diagnostics:

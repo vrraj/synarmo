@@ -126,7 +126,7 @@ body {
 
 .compose-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 260px;
+  grid-template-columns: minmax(0, 1fr) 286px;
   gap: 24px;
   align-items: start;
 }
@@ -148,6 +148,15 @@ body {
 h2 {
   font-size: 16px;
   margin: 0 0 12px;
+}
+
+.parameter-grid h3 {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 16px 0 8px;
+  color: #111111;
+  border-bottom: 1px solid #eeeeee;
+  padding-bottom: 4px;
 }
 
 label {

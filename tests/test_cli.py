@@ -49,7 +49,7 @@ def test_suggest_display_text_completes_my_goals_heading() -> None:
 
 
 def test_compose_appends_selected_suggestion_and_predicts_again(monkeypatch, capsys) -> None:
-    engine = SynarmoEngine.load(profile="compose-test", max_suggestions=3)
+    engine = SynarmoEngine.load(profile="compose-test", max_suggestions=3, max_suggestion_words=4)
     choices = iter(["1", "q"])
     monkeypatch.setattr("builtins.input", lambda _prompt: next(choices))
 

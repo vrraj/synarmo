@@ -115,6 +115,9 @@ def test_llama_cpp_backend_passes_gpu_layers_to_local_model(tmp_path, monkeypatc
         def __init__(self, **kwargs):
             calls.update(kwargs)
 
+        def n_ctx(self):
+            return 1024
+
         def __call__(self, *args, **kwargs):
             return {"choices": [{"text": "hello"}]}
 
@@ -135,4 +138,5 @@ def test_llama_cpp_backend_passes_gpu_layers_to_local_model(tmp_path, monkeypatc
         "requested_gpu_layers": "all",
         "gpu_offload_supported": True,
         "llama_verbose": True,
+        "actual_context_window": 1024,
     }

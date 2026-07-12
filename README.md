@@ -24,12 +24,13 @@ plus KV cache details, Metal/CUDA buffer sizes, and other load diagnostics.
 
 ![Synarmo context-aware auto-suggest UI](https://raw.githubusercontent.com/vrraj/synarmo/main/assets/synarmo-context-aware-auto-suggest.png)
 
-Synarmo is intended to be used as:
+Synarmo Key Features:
 
 - a PyPI package for predicting suggestions
 - integration surfaces for other applications through REST and WebSocket
 - an interactive browser `/ui` for testing and tuning API calls with context and parameters
 - a llama.cpp/GGUF-backed engine that can run on CPU or supported GPUs such as Apple Metal, with model and GPU-layer settings controlled through `.env`
+- configurable starter-token generation and autoregressive continuation tokens for multi-word suggestions
 
 The primary path uses a local GGUF model for inference through llama.cpp. For no-model verification checks of package install, CLI, service, or UI wiring, see
 [Mock Mode](#mock-mode).
@@ -60,6 +61,9 @@ SYNARMO_MAX_TOKENS=5
 SYNARMO_MAX_SUGGESTION_WORDS=1
 SYNARMO_TEMPERATURE=0.25
 SYNARMO_TOP_P=0.95
+SYNARMO_CONTINUATION_TEMPERATURE=0.5
+SYNARMO_CONTINUATION_TOP_P=0.9
+SYNARMO_CONTINUATION_TOP_K=20
 SYNARMO_LOGPROB_POOL=24
 SYNARMO_N_GPU_LAYERS=-1
 SYNARMO_LLAMA_VERBOSE=0
@@ -291,7 +295,26 @@ synarmo suggest "My goals" \
 ## Infrastructure - llama.cpp Configuration
 
 Synarmo uses `llama-cpp-python` for GGUF inference. Install with `[llama]`,
-then choose how many layers llama.cpp should offload:
+then choose the context window and how many layers llama.cpp should offload.
+For the local type-ahead path, `SYNARMO_CONTEXT_WINDOW` is passed to
+`llama-cpp-python` as `n_ctx`:
+
+```dotenv
+SYNARMO_CONTEXT_WINDOW=4096
+```
+
+The autocomplete prompt keeps fixed instructions first, stable context next,
+and the typed message last. That shape lets embedded `llama-cpp-python` reuse
+the longest matching KV prefix across repeated type-ahead calls when the
+context stays stable and only the typed suffix grows.
+
+`cache_prompt`, `--cache-ram`, and `--cache-reuse` are `llama-server` settings,
+not settings used by Synarmo's current embedded `llama-cpp-python` backend. If
+Synarmo adds a separate HTTP `llama-server` backend later, `cache_prompt: true`
+should be sent on every completion request; `--cache-ram 0` should be treated
+as disabled, not as a boolean false value.
+
+Choose how many layers llama.cpp should offload:
 
 | Value | Behavior | When to use |
 | ---: | --- | --- |
@@ -421,6 +444,9 @@ engine = SynarmoEngine.load(
     max_suggestion_words=4,
     temperature=0.25,
     top_p=0.95,
+    continuation_temperature=0.5,
+    continuation_top_p=0.9,
+    continuation_top_k=20,
     max_tokens=5,
     logprob_pool=24,
 )
@@ -446,6 +472,9 @@ suggestions = synarmo.predict(
     max_suggestion_words=4,
     temperature=0.25,
     top_p=0.95,
+    continuation_temperature=0.5,
+    continuation_top_p=0.9,
+    continuation_top_k=20,
     max_tokens=5,
     logprob_pool=24,
 )
@@ -516,8 +545,10 @@ come from `.env`. UI changes still apply to the current browser request; edit
 | Choices | 3 | Number of suggestions to show. |
 | Tokens | 5 | Maximum generated tokens behind each suggestion. Higher values allow longer completions but can take longer. |
 | Words | 4 | Maximum words displayed for each suggestion. |
-| Temperature | 0.25 | Controls randomness. Lower is more predictable; higher is more varied. |
-| Top P | 0.95 | Nucleus sampling value passed to the one-token llama.cpp probe. |
+| First Word Temp | 0.25 | Controls randomness for the one-token first-word probe. Lower is more predictable; higher is more varied. |
+| First Word Top P | 0.95 | Nucleus sampling value passed to the one-token llama.cpp probe. |
+| Phrase Temp | 0.5 | Controls randomness while expanding each selected first word into a phrase. |
+| Phrase Top P | 0.9 | Nucleus sampling value used during phrase continuation. |
 | Logprobs | 24 | Number of top next-token log probabilities to request from llama.cpp for starter selection. |
 | Auto - Suggest on Spacebar | On | Automatically asks for new suggestions after typing a space. |
 
@@ -526,16 +557,21 @@ come from `.env`. UI changes still apply to the current browser request; edit
 | `SYNARMO_MAX_SUGGESTIONS` | Choices |
 | `SYNARMO_MAX_TOKENS` | Tokens |
 | `SYNARMO_MAX_SUGGESTION_WORDS` | Words |
-| `SYNARMO_TEMPERATURE` | Temperature |
-| `SYNARMO_TOP_P` | Top P |
+| `SYNARMO_TEMPERATURE` | First Word Temp |
+| `SYNARMO_TOP_P` | First Word Top P |
+| `SYNARMO_CONTINUATION_TEMPERATURE` | Phrase Temp |
+| `SYNARMO_CONTINUATION_TOP_P` | Phrase Top P |
+| `SYNARMO_CONTINUATION_TOP_K` | Advanced continuation top-k guardrail |
 | `SYNARMO_LOGPROB_POOL` | Logprobs |
+| `SYNARMO_CONTEXT_WINDOW` | llama.cpp `n_ctx` |
 
 For auto-suggest, Synarmo uses `Logprobs` as the starter pool size. It asks
 llama.cpp for a one-token probe with `logprobs` enabled, sorts the returned
 next-token probabilities, removes duplicate first-word starters, and expands up
-to `Choices` starters into short suggestions. `Top P` is passed to the probe
-sampling call; the follow-up expansion for each selected starter is
-deterministic.
+to `Choices` starters into short suggestions. Starter sampling controls only
+the probe. Continuation sampling controls the autoregressive expansion after a
+starter has been selected, so multi-word suggestions do not have to use purely
+greedy decoding.
 
 #### How The Auto-suggest Flow Works
 
@@ -591,8 +627,24 @@ Words = 2  -> go outside
 Words = 3  -> go outside with
 ```
 
-This auto-suggest strategy uses logprobs to pick strong starter tokens, then
-makes one short deterministic expansion call for each starter.
+#### Starter, Continuation, And Probability Flow
+
+The llama.cpp auto-suggest path has two phases:
+
+1. Starter probe: Synarmo asks for one generated token and a `Logprobs`-sized
+   table of likely next-token alternatives. It sorts that table, removes
+   duplicate first-word starters, and keeps up to `Choices` starters.
+2. Autoregressive continuation: Synarmo appends each starter to the prompt and
+   generates up to `Tokens - 1` future tokens using `Phrase Temp` and
+   `Phrase Top P`. Setting `Phrase Temp` to `0` makes this phase greedy;
+   higher values make the multi-word continuation more varied. Advanced users
+   can also set `SYNARMO_CONTINUATION_TOP_K` as a hard sampling guardrail.
+
+Candidate percentages are based on the tokens that remain visible after the
+`Words` limit is applied. Synarmo averages the visible token logprobs and the
+browser displays `exp(average_logprob) * 100`. Pure formatting punctuation such
+as commas, quotes, brackets, and dashes is excluded from that average; meaningful
+`!` and `?` tokens remain part of the score.
 
 ### Use Service Endpoints
 
@@ -617,6 +669,9 @@ curl -X POST http://127.0.0.1:8765/evaluate/autocomplete \
     "candidate_words": 2,
     "temperature": 0.5,
     "top_p": 0.95,
+    "continuation_temperature": 0.5,
+    "continuation_top_p": 0.9,
+    "continuation_top_k": 20,
     "logprob_pool": 24
   }'
 ```

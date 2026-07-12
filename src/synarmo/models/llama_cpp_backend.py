@@ -82,10 +82,19 @@ class LlamaCppBackend:
             "gpu_offload_supported": self.gpu_offload_supported,
             "llama_verbose": self.verbose,
         }
+        actual_context_window = self._actual_context_window()
+        if actual_context_window is not None:
+            diagnostics["actual_context_window"] = actual_context_window
         total_layers = self._model_layer_count()
         if total_layers is not None:
             diagnostics["model_layers"] = total_layers
         return diagnostics
+
+    def _actual_context_window(self) -> int | None:
+        try:
+            return int(self._llm.n_ctx())
+        except Exception:
+            return None
 
     def _model_layer_count(self) -> int | None:
         try:
@@ -115,6 +124,9 @@ class LlamaCppBackend:
         max_words: int = 1,
         temperature: float = 0.5,
         top_p: float = 0.95,
+        continuation_temperature: float = 0.5,
+        continuation_top_p: float = 0.9,
+        continuation_top_k: int = 20,
         logprob_pool: int = 24,
     ) -> AutocompleteEvaluation:
         return evaluate_with_llama(
@@ -126,5 +138,8 @@ class LlamaCppBackend:
             max_words=max_words,
             temperature=temperature,
             top_p=top_p,
+            continuation_temperature=continuation_temperature,
+            continuation_top_p=continuation_top_p,
+            continuation_top_k=continuation_top_k,
             logprob_pool=logprob_pool,
         )

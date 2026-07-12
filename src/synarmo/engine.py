@@ -77,6 +77,7 @@ class SynarmoEngine:
         diagnostics: dict[str, object] = {
             "backend": self.backend.name,
             "model": self.model_label(),
+            "context_window": self.config.context_window,
             "n_gpu_layers": self.config.n_gpu_layers,
             "llama_verbose": self.config.llama_verbose,
         }
@@ -106,6 +107,9 @@ class SynarmoEngine:
                     max_words=self.config.max_suggestion_words,
                     temperature=self.config.temperature,
                     top_p=self.config.top_p,
+                    continuation_temperature=self.config.continuation_temperature,
+                    continuation_top_p=self.config.continuation_top_p,
+                    continuation_top_k=self.config.continuation_top_k,
                     logprob_pool=self.config.logprob_pool,
                 )
             ranked = self.ranker.rank(
@@ -185,6 +189,9 @@ class SynarmoEngine:
         max_words: int = 1,
         temperature: float = 0.5,
         top_p: float = 0.95,
+        continuation_temperature: float | None = None,
+        continuation_top_p: float | None = None,
+        continuation_top_k: int | None = None,
         logprob_pool: int = 24,
     ) -> list[AutocompleteEvaluation]:
         evaluator = getattr(self.backend, "evaluate_autocomplete", None)
@@ -220,6 +227,17 @@ class SynarmoEngine:
                     max_words=max_words,
                     temperature=temperature,
                     top_p=top_p,
+                    continuation_temperature=(
+                        self.config.continuation_temperature
+                        if continuation_temperature is None
+                        else continuation_temperature
+                    ),
+                    continuation_top_p=(
+                        self.config.continuation_top_p if continuation_top_p is None else continuation_top_p
+                    ),
+                    continuation_top_k=(
+                        self.config.continuation_top_k if continuation_top_k is None else continuation_top_k
+                    ),
                     logprob_pool=logprob_pool,
                 )
                 for context in contexts

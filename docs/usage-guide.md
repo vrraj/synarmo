@@ -42,6 +42,11 @@ For real predictions, use the llama-cpp backend with a configured GGUF model:
 ```dotenv
 LOCAL_MODELS_CACHE=~/models/synarmo
 SYNARMO_MAX_SUGGESTIONS=3
+SYNARMO_TEMPERATURE=0.25
+SYNARMO_TOP_P=0.95
+SYNARMO_CONTINUATION_TEMPERATURE=0.5
+SYNARMO_CONTINUATION_TOP_P=0.9
+SYNARMO_CONTINUATION_TOP_K=20
 SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF
 SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
 ```
@@ -100,6 +105,21 @@ filters instruction echoes, and returns up to the configured number of
 suggestions. The default is three suggestions, with each suggestion usually
 limited to one to four words.
 
+With the llama.cpp backend, autocomplete uses two sampling phases. First,
+Synarmo runs a one-token starter probe with `logprobs` enabled, ranks likely
+next-token starters, and removes duplicate first-word starters. Then it expands
+each selected starter with an autoregressive continuation pass for multi-word
+suggestions. `temperature` and `top_p` tune the starter probe;
+`continuation_temperature` and `continuation_top_p` tune the future tokens in
+the continuation. Setting `continuation_temperature=0` makes continuation
+greedy, while higher values make suggestions more varied. Advanced users can
+also set `continuation_top_k` or `SYNARMO_CONTINUATION_TOP_K`; the default is
+`20`.
+
+Candidate percentages are phrase-level scores. Synarmo averages the logprobs
+for the tokens that remain visible after the word limit is applied, excluding
+pure formatting punctuation while keeping meaningful `!` and `?` tokens.
+
 ## Context Usage
 
 ### Simple Context
@@ -138,6 +158,9 @@ evaluations = engine.evaluate_autocomplete(
     contexts=["At home", "At work", "With friends"],
     choices=3,
     temperature=0.5,
+    top_p=0.95,
+    continuation_temperature=0.5,
+    continuation_top_p=0.9,
 )
 
 for eval in evaluations:
@@ -148,27 +171,36 @@ for eval in evaluations:
 
 ## Configuration Patterns
 
-### Custom Temperature and Top-P
+### Custom Starter And Continuation Sampling
 
-Adjust randomness and focus of suggestions:
+Adjust randomness and focus separately for starter-token selection and
+autoregressive continuation:
 
 ```python
 from synarmo import SynarmoEngine
 
-# More predictable suggestions
+# More predictable suggestions: focused starters and near-greedy continuation
 engine = SynarmoEngine.load(
     backend="llama-cpp",
-    temperature=0.1,  # Lower = more predictable
+    temperature=0.1,
     top_p=0.90,
+    continuation_temperature=0.0,
+    continuation_top_p=0.9,
 )
 
-# More varied suggestions
+# More varied suggestions: diverse starters and more natural multi-word phrases
 engine = SynarmoEngine.load(
     backend="llama-cpp",
-    temperature=0.7,  # Higher = more varied
+    temperature=0.5,
     top_p=0.95,
+    continuation_temperature=0.6,
+    continuation_top_p=0.9,
 )
 ```
+
+For advanced tuning, `continuation_top_k` defaults to `20` and acts as a hard
+sampling guardrail during continuation. Use `0` to leave llama.cpp unconstrained
+by top-k.
 
 ### Adjust Suggestion Length
 
@@ -450,6 +482,9 @@ curl -X POST http://127.0.0.1:8765/evaluate/autocomplete \
     "candidate_words": 2,
     "temperature": 0.5,
     "top_p": 0.95,
+    "continuation_temperature": 0.5,
+    "continuation_top_p": 0.9,
+    "continuation_top_k": 20,
     "logprob_pool": 24
   }'
 ```
@@ -501,7 +536,7 @@ make stop
 The UI lets you:
 - Type the current message
 - Provide conversation or scene context
-- Change auto-suggest parameters (choices, tokens, words, temperature, top-p, logprob pool)
+- Change auto-suggest parameters (choices, tokens, words, first-word temperature/top-p, phrase temperature/top-p, logprob pool)
 - Inspect how the service responds
 
 ### UI Parameters
@@ -511,10 +546,16 @@ The UI lets you:
 | Choices | 3 | Number of suggestions to show |
 | Tokens | 5 | Maximum generated tokens per suggestion |
 | Words | 1 | Maximum words displayed per suggestion |
-| Temperature | 0.5 | Controls randomness (lower = more predictable) |
-| Top P | 0.95 | Nucleus sampling value passed to the one-token llama.cpp probe. |
+| First Word Temp | 0.25 | Controls randomness for the one-token first-word probe |
+| First Word Top P | 0.95 | Nucleus sampling value passed to the one-token llama.cpp probe |
+| Phrase Temp | 0.5 | Controls randomness during autoregressive phrase continuation |
+| Phrase Top P | 0.9 | Nucleus sampling value used while expanding selected first words |
 | Logprobs | 24 | Number of top next-token log probabilities to request from llama.cpp for starter selection. |
 | Auto - Suggest on Spacebar | On | Automatically request suggestions after typing a space |
+
+`SYNARMO_CONTINUATION_TOP_K` remains available as an advanced `.env`, Python,
+and API setting, but it is intentionally hidden from the browser UI. Its default
+is `20`.
 
 ## Integration Examples
 
@@ -642,7 +683,8 @@ from synarmo import SynarmoEngine
 engine = SynarmoEngine.load(
     backend="llama-cpp",
     max_suggestion_words=2,
-    temperature=0.1,  # More predictable
+    temperature=0.1,
+    continuation_temperature=0.0,  # Greedy continuation for steadier assistive typing
 )
 
 def get_typing_suggestions(current_text: str):

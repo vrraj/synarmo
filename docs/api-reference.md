@@ -62,7 +62,7 @@ class SynarmoConfig:
     profile: str = "default"
     max_suggestions: int = field(default_factory=configured_max_suggestions)
     max_latency_ms: int = 100
-    context_window: int = 2048
+    context_window: int = field(default_factory=configured_context_window)
     style_adaptation: bool = True
     temperature: float = 0.25
     top_p: float = 0.95
@@ -84,7 +84,7 @@ class SynarmoConfig:
 | `profile` | `str` | "default" | User profile name |
 | `max_suggestions` | `int` | 3 | Maximum number of suggestions to return (1-10) |
 | `max_latency_ms` | `int` | 100 | Target maximum latency in milliseconds |
-| `context_window` | `int` | 2048 | Context window size in tokens (min 128) |
+| `context_window` | `int` | 2048 unless `SYNARMO_CONTEXT_WINDOW` is set | Context window size in tokens (min 128). Local tuning uses `4096`. |
 | `style_adaptation` | `bool` | True | Whether to adapt to user style from memory |
 | `temperature` | `float` | 0.25 | Sampling temperature (0.0-2.0) |
 | `top_p` | `float` | 0.95 | Nucleus sampling threshold (greater than 0.0 and up to 1.0) |

@@ -101,13 +101,16 @@
                   <input id="candidate-words" type="number" min="1" max="8" step="1" value="{{ compose_defaults.candidate_words }}" />
                   <div id="token-recommendation" class="parameter-note" aria-live="polite"></div>
                 </div>
+                <div class="field-row field-row-wide">
+                  <h3>First Word Selection</h3>
+                </div>
                 <div class="field-row">
                   <label class="parameter-label" for="temperature">
-                    Temperature
+                    First Word Temp
                     <span
                       class="parameter-help"
-                      title="Controls randomness when probing likely next tokens. Lower is steadier; higher is more varied."
-                      aria-label="Controls randomness when probing likely next tokens. Lower is steadier; higher is more varied."
+                      title="Controls randomness when probing likely starter tokens. Lower is steadier; higher is more varied."
+                      aria-label="Controls randomness when probing likely starter tokens. Lower is steadier; higher is more varied."
                       tabindex="0"
                     >?</span>
                   </label>
@@ -115,7 +118,7 @@
                 </div>
                 <div class="field-row">
                   <label class="parameter-label" for="top-p">
-                    Top P
+                    First Word Top P
                     <span
                       class="parameter-help"
                       title="Nucleus sampling value passed to the one-token probe. Synarmo ranks starters from the returned logprob table; it does not apply a separate Top P cutoff to that table."
@@ -124,6 +127,33 @@
                     >?</span>
                   </label>
                   <input id="top-p" type="number" min="0" max="1" step="0.05" value="{{ compose_defaults.top_p }}" />
+                </div>
+                <div class="field-row field-row-wide">
+                  <h3>Phrase Completion</h3>
+                </div>
+                <div class="field-row">
+                  <label class="parameter-label" for="continuation-temperature">
+                    Phrase Temp
+                    <span
+                      class="parameter-help"
+                      title="Controls randomness when expanding each selected starter into a short phrase."
+                      aria-label="Controls randomness when expanding each selected starter into a short phrase."
+                      tabindex="0"
+                    >?</span>
+                  </label>
+                  <input id="continuation-temperature" type="number" min="0" max="2" step="0.1" value="{{ compose_defaults.continuation_temperature }}" />
+                </div>
+                <div class="field-row">
+                  <label class="parameter-label" for="continuation-top-p">
+                    Phrase Top P
+                    <span
+                      class="parameter-help"
+                      title="Nucleus sampling value used while expanding selected starter tokens."
+                      aria-label="Nucleus sampling value used while expanding selected starter tokens."
+                      tabindex="0"
+                    >?</span>
+                  </label>
+                  <input id="continuation-top-p" type="number" min="0" max="1" step="0.05" value="{{ compose_defaults.continuation_top_p }}" />
                 </div>
                 <div class="field-row">
                   <label class="parameter-label" for="logprob-pool">

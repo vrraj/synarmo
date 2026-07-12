@@ -36,6 +36,9 @@ def create_app(engine: SynarmoEngine):
         candidate_words: int = compose_defaults["candidate_words"]
         temperature: float = compose_defaults["temperature"]
         top_p: float = compose_defaults["top_p"]
+        continuation_temperature: float = compose_defaults["continuation_temperature"]
+        continuation_top_p: float = compose_defaults["continuation_top_p"]
+        continuation_top_k: int = compose_defaults["continuation_top_k"]
         logprob_pool: int = compose_defaults["logprob_pool"]
 
     class AutocompleteCandidateResponse(BaseModel):
@@ -91,6 +94,9 @@ def create_app(engine: SynarmoEngine):
             max_words=request.candidate_words,
             temperature=request.temperature,
             top_p=request.top_p,
+            continuation_temperature=request.continuation_temperature,
+            continuation_top_p=request.continuation_top_p,
+            continuation_top_k=request.continuation_top_k,
             logprob_pool=request.logprob_pool,
         )
         return AutocompleteEvalResponse(
@@ -171,5 +177,8 @@ def _compose_defaults(engine: SynarmoEngine) -> dict[str, int | float]:
         "candidate_words": engine.config.max_suggestion_words,
         "temperature": engine.config.temperature,
         "top_p": engine.config.top_p,
+        "continuation_temperature": engine.config.continuation_temperature,
+        "continuation_top_p": engine.config.continuation_top_p,
+        "continuation_top_k": engine.config.continuation_top_k,
         "logprob_pool": engine.config.logprob_pool,
     }

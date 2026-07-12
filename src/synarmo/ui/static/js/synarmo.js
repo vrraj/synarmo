@@ -16,6 +16,8 @@ const candidateWordsInput = document.getElementById("candidate-words");
 const tokenRecommendation = document.getElementById("token-recommendation");
 const temperatureInput = document.getElementById("temperature");
 const topPInput = document.getElementById("top-p");
+const continuationTemperatureInput = document.getElementById("continuation-temperature");
+const continuationTopPInput = document.getElementById("continuation-top-p");
 const logprobPoolInput = document.getElementById("logprob-pool");
 const suggestOnSpacebarInput = document.getElementById("suggest-on-spacebar");
 let requestId = 0;
@@ -117,6 +119,8 @@ async function fetchSuggestions(textOverride) {
         candidate_words: numberValue(candidateWordsInput, 1),
         temperature: numberValue(temperatureInput, 0.5),
         top_p: numberValue(topPInput, 0.95),
+        continuation_temperature: numberValue(continuationTemperatureInput, 0.5),
+        continuation_top_p: numberValue(continuationTopPInput, 0.9),
         logprob_pool: numberValue(logprobPoolInput, 24),
       }),
     });

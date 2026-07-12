@@ -134,8 +134,39 @@ Future backends:
 | `SYNARMO_MODEL_REPO_ID` | Hugging Face repo used for automatic GGUF download |
 | `SYNARMO_MODEL` | GGUF filename in the repo/cache, or a local model path |
 | `LOCAL_MODELS_CACHE` | Local model cache directory |
+| `SYNARMO_CONTEXT_WINDOW` | Context window passed to llama.cpp as `n_ctx`; the local tuning default is `4096` |
 | `SYNARMO_N_GPU_LAYERS` | Number of model layers to offload; `0` is CPU-only, `-1` asks llama.cpp to offload all possible layers |
 | `SYNARMO_LLAMA_VERBOSE` | Enables native llama.cpp load/performance logs, including generation tokens/sec |
+| `SYNARMO_TEMPERATURE` | Starter-token sampling temperature for the one-token autocomplete probe |
+| `SYNARMO_TOP_P` | Starter-token nucleus sampling value for the one-token autocomplete probe |
+| `SYNARMO_CONTINUATION_TEMPERATURE` | Autoregressive continuation sampling temperature for multi-word suggestions |
+| `SYNARMO_CONTINUATION_TOP_P` | Autoregressive continuation nucleus sampling value |
+| `SYNARMO_CONTINUATION_TOP_K` | Advanced continuation top-k guardrail; default is `20`, and `0` disables the hard top-k cap |
+| `SYNARMO_LOGPROB_POOL` | Number of top next-token log probabilities requested for starter selection |
+
+The autocomplete prompt is structured for prefix reuse: fixed instructions
+first, stable context second, and the changing typed message last. In the
+current embedded `llama-cpp-python` backend there is no per-request
+`cache_prompt` field; prefix-match reuse is handled inside the Python binding
+when consecutive prompts share leading tokens.
+
+### Autocomplete Generation Flow
+
+The llama.cpp autocomplete path uses two sampling phases:
+
+1. Starter probe: Synarmo asks llama.cpp for one generated token with
+   `logprobs` enabled. It sorts the returned next-token alternatives, removes
+   duplicate first-word starters, and keeps up to the configured suggestion
+   count.
+2. Autoregressive continuation: Synarmo appends each selected starter token to
+   the prompt and generates future tokens for the multi-word candidate using
+   continuation temperature/top-p and the advanced continuation top-k guardrail.
+   Setting continuation temperature to `0` makes this phase greedy.
+
+Displayed probabilities are phrase-level scores, not just starter-token scores.
+Synarmo averages the logprobs for the tokens that remain visible after the word
+limit is applied, excluding pure formatting punctuation while keeping meaningful
+`!` and `?` tokens in the score.
 
 ### Service Layer
 

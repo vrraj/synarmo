@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import math
 from typing import Any
+
+PURE_FORMATTING_PUNCTUATION = set(",.;:()[]{}\"'-")
+PURE_FORMATTING_PUNCTUATION.update({"-", "–", "—"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -34,10 +38,12 @@ def build_autocomplete_prompt(context: str, typed_text: str) -> str:
     ]
     context_block = "\n".join(context_lines).strip()
     if context_block:
-        context_block = f"Context:\n{context_block}\n\n"
+        context_block = f"\n\nContext:\n{context_block}"
 
-    return f"""{context_block}Continue the message with only the next few words.
+    return f"""Continue the message with only the next few words.
 Do not repeat labels or earlier text.
+Keep the context and message structure intact.{context_block}
+
 Message:
 {typed_text}"""
 
@@ -50,6 +56,66 @@ def normalize_candidate(text: str, *, max_words: int) -> str:
     if max_words > 0:
         words = words[:max_words]
     return " ".join(words).strip(" ,;:")
+
+
+def is_pure_formatting_token(token_text: str) -> bool:
+    stripped = token_text.strip()
+    return stripped != "" and all(char in PURE_FORMATTING_PUNCTUATION for char in stripped)
+
+
+def extract_generated_token_logprob_pairs(response: dict[str, Any]) -> list[tuple[str, float]]:
+    choices = response.get("choices")
+    if not choices:
+        return []
+
+    logprobs = choices[0].get("logprobs")
+    if not logprobs:
+        return []
+
+    raw_token_logprobs = logprobs.get("token_logprobs")
+    if not isinstance(raw_token_logprobs, list):
+        return []
+
+    raw_tokens = logprobs.get("tokens")
+    if not isinstance(raw_tokens, list):
+        return []
+
+    pairs: list[tuple[str, float]] = []
+    for token, logprob in zip(raw_tokens, raw_token_logprobs):
+        if isinstance(logprob, (int, float)) and math.isfinite(float(logprob)):
+            pairs.append((str(token), float(logprob)))
+    return pairs
+
+
+def trim_candidate_with_logprobs(
+    token_texts: list[str],
+    token_logprobs: list[float],
+    *,
+    max_words: int,
+) -> tuple[str, float]:
+    consumed_texts: list[str] = []
+    consumed_logprobs: list[float] = []
+
+    for token_text, token_logprob in zip(token_texts, token_logprobs):
+        previous_candidate = normalize_candidate("".join(consumed_texts), max_words=max_words)
+        next_texts = [*consumed_texts, token_text]
+        next_candidate = normalize_candidate("".join(next_texts), max_words=max_words)
+        if next_candidate == previous_candidate and not is_pure_formatting_token(token_text):
+            break
+        consumed_texts = next_texts
+        consumed_logprobs.append(token_logprob)
+
+    candidate = normalize_candidate("".join(consumed_texts), max_words=max_words)
+    scored_logprobs = [
+        logprob
+        for token_text, logprob in zip(consumed_texts, consumed_logprobs)
+        if not is_pure_formatting_token(token_text)
+    ]
+    if not scored_logprobs:
+        scored_logprobs = consumed_logprobs
+    if not scored_logprobs:
+        return candidate, 0.0
+    return candidate, sum(scored_logprobs) / len(scored_logprobs)
 
 
 def extract_top_logprobs(probe: dict[str, Any]) -> dict[str, float]:
@@ -82,6 +148,9 @@ def evaluate_with_llama(
     max_words: int = 1,
     temperature: float = 0.5,
     top_p: float = 0.95,
+    continuation_temperature: float = 0.5,
+    continuation_top_p: float = 0.9,
+    continuation_top_k: int = 20,
     logprob_pool: int = 24,
 ) -> AutocompleteEvaluation:
     prompt = build_autocomplete_prompt(context, typed_text)
@@ -116,19 +185,34 @@ def evaluate_with_llama(
         response = llm(
             prompt=prompt + starter.text,
             max_tokens=max(max_tokens - 1, 1),
-            temperature=0.0,
-            top_p=1.0,
-            stop=["\n", ".", "!", "?"],
+            temperature=continuation_temperature,
+            top_p=continuation_top_p,
+            top_k=continuation_top_k,
+            logprobs=1,
+            stop=["\n"],
             echo=False,
         )
         rest = str(response["choices"][0]["text"])
-        candidate = normalize_candidate(starter.text + rest, max_words=max_words)
+        continuation_pairs = extract_generated_token_logprob_pairs(response)
+        token_texts = [starter.text]
+        token_logprobs = [starter.logprob]
+        if continuation_pairs:
+            token_texts.extend(token_text for token_text, _ in continuation_pairs)
+            token_logprobs.extend(logprob for _, logprob in continuation_pairs)
+        else:
+            token_texts.append(rest)
+            token_logprobs.append(starter.logprob)
+        candidate, logprob = trim_candidate_with_logprobs(
+            token_texts,
+            token_logprobs,
+            max_words=max_words,
+        )
         candidates.append(
             AutocompleteCandidate(
                 text=candidate,
                 starter=starter.text,
                 rest=rest,
-                logprob=starter.logprob,
+                logprob=logprob,
             )
         )
 
