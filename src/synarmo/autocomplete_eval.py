@@ -151,6 +151,7 @@ def evaluate_with_llama(
     continuation_temperature: float = 0.5,
     continuation_top_p: float = 0.9,
     continuation_top_k: int = 20,
+    phrase_logprobs: bool = False,
     logprob_pool: int = 24,
 ) -> AutocompleteEvaluation:
     prompt = build_autocomplete_prompt(context, typed_text)
@@ -182,31 +183,37 @@ def evaluate_with_llama(
 
     candidates: list[AutocompleteCandidate] = []
     for starter in starters:
-        response = llm(
-            prompt=prompt + starter.text,
-            max_tokens=max(max_tokens - 1, 1),
-            temperature=continuation_temperature,
-            top_p=continuation_top_p,
-            top_k=continuation_top_k,
-            logprobs=1,
-            stop=["\n"],
-            echo=False,
-        )
+        continuation_options: dict[str, Any] = {
+            "prompt": prompt + starter.text,
+            "max_tokens": max(max_tokens - 1, 1),
+            "temperature": continuation_temperature,
+            "top_p": continuation_top_p,
+            "top_k": continuation_top_k,
+            "stop": ["\n"],
+            "echo": False,
+        }
+        if phrase_logprobs:
+            continuation_options["logprobs"] = 1
+        response = llm(**continuation_options)
         rest = str(response["choices"][0]["text"])
-        continuation_pairs = extract_generated_token_logprob_pairs(response)
-        token_texts = [starter.text]
-        token_logprobs = [starter.logprob]
-        if continuation_pairs:
-            token_texts.extend(token_text for token_text, _ in continuation_pairs)
-            token_logprobs.extend(logprob for _, logprob in continuation_pairs)
+        if phrase_logprobs:
+            continuation_pairs = extract_generated_token_logprob_pairs(response)
+            token_texts = [starter.text]
+            token_logprobs = [starter.logprob]
+            if continuation_pairs:
+                token_texts.extend(token_text for token_text, _ in continuation_pairs)
+                token_logprobs.extend(logprob for _, logprob in continuation_pairs)
+                candidate, logprob = trim_candidate_with_logprobs(
+                    token_texts,
+                    token_logprobs,
+                    max_words=max_words,
+                )
+            else:
+                candidate = normalize_candidate(starter.text + rest, max_words=max_words)
+                logprob = starter.logprob
         else:
-            token_texts.append(rest)
-            token_logprobs.append(starter.logprob)
-        candidate, logprob = trim_candidate_with_logprobs(
-            token_texts,
-            token_logprobs,
-            max_words=max_words,
-        )
+            candidate = normalize_candidate(starter.text + rest, max_words=max_words)
+            logprob = starter.logprob
         candidates.append(
             AutocompleteCandidate(
                 text=candidate,

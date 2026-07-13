@@ -93,12 +93,52 @@ def test_evaluate_with_llama_uses_ranked_logprob_starters() -> None:
     )
 
     assert [candidate.text for candidate in result.candidates] == ["help soon", "heal soon"]
+    assert [candidate.logprob for candidate in result.candidates] == [-0.2, -0.5]
     assert [token.text for token in result.top_tokens] == [" help", " heal", " eat"]
     assert calls[1]["temperature"] == 0.5
     assert calls[1]["top_p"] == 0.9
     assert calls[1]["top_k"] == 20
-    assert calls[1]["logprobs"] == 1
+    assert "logprobs" not in calls[1]
     assert len(calls) == 3
+
+
+def test_evaluate_with_llama_can_score_with_phrase_logprobs() -> None:
+    calls = []
+
+    def fake_llama(**kwargs):
+        calls.append(kwargs)
+        if kwargs["max_tokens"] == 1:
+            return {
+                "choices": [
+                    {
+                        "text": "",
+                        "logprobs": {"top_logprobs": [{" help": -0.2}]},
+                    }
+                ]
+            }
+        return {
+            "choices": [
+                {
+                    "text": " soon",
+                    "logprobs": {
+                        "tokens": [" soon"],
+                        "token_logprobs": [-0.6],
+                    },
+                }
+            ]
+        }
+
+    result = evaluate_with_llama(
+        fake_llama,
+        context="At home",
+        typed_text="I want to",
+        max_words=2,
+        phrase_logprobs=True,
+    )
+
+    assert calls[1]["logprobs"] == 1
+    assert result.candidates[0].text == "help soon"
+    assert result.candidates[0].logprob == pytest.approx((-0.2 - 0.6) / 2)
 
 
 def test_evaluate_with_llama_accepts_continuation_sampling_options() -> None:

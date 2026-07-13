@@ -82,11 +82,14 @@ def test_ui_defaults_render_from_env(monkeypatch) -> None:
     monkeypatch.setenv("SYNARMO_TOP_P", "0.85")
     monkeypatch.setenv("SYNARMO_CONTINUATION_TEMPERATURE", "0.5")
     monkeypatch.setenv("SYNARMO_CONTINUATION_TOP_P", "0.9")
+    monkeypatch.setenv("SYNARMO_PHRASE_LOGPROBS", "1")
     monkeypatch.setenv("SYNARMO_LOGPROB_POOL", "18")
 
-    app = create_app(SynarmoEngine.load(profile="service-ui-env-test"))
+    engine = SynarmoEngine.load(profile="service-ui-env-test")
+    app = create_app(engine)
     response = TestClient(app).get("/ui")
 
+    assert engine.config.phrase_logprobs is True
     assert response.status_code == 200
     assert 'id="choices" type="number" min="1" max="10" step="1" value="4"' in response.text
     assert 'id="candidate-tokens" type="number" min="1" max="64" step="1" value="7"' in response.text

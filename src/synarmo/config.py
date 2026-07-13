@@ -21,6 +21,7 @@ TOP_P_ENV = "SYNARMO_TOP_P"
 CONTINUATION_TEMPERATURE_ENV = "SYNARMO_CONTINUATION_TEMPERATURE"
 CONTINUATION_TOP_P_ENV = "SYNARMO_CONTINUATION_TOP_P"
 CONTINUATION_TOP_K_ENV = "SYNARMO_CONTINUATION_TOP_K"
+PHRASE_LOGPROBS_ENV = "SYNARMO_PHRASE_LOGPROBS"
 LOGPROB_POOL_ENV = "SYNARMO_LOGPROB_POOL"
 CONTEXT_WINDOW_ENV = "SYNARMO_CONTEXT_WINDOW"
 N_GPU_LAYERS_ENV = "SYNARMO_N_GPU_LAYERS"
@@ -139,6 +140,11 @@ def configured_continuation_top_k() -> int:
     return int(value) if value else 20
 
 
+def configured_phrase_logprobs() -> bool:
+    value = os.getenv(PHRASE_LOGPROBS_ENV)
+    return value is not None and value.strip().lower() in {"1", "true", "yes", "on"}
+
+
 def configured_logprob_pool() -> int:
     value = os.getenv(LOGPROB_POOL_ENV)
     return int(value) if value else 24
@@ -176,6 +182,7 @@ class SynarmoConfig:
     continuation_temperature: float = field(default_factory=configured_continuation_temperature)
     continuation_top_p: float = field(default_factory=configured_continuation_top_p)
     continuation_top_k: int = field(default_factory=configured_continuation_top_k)
+    phrase_logprobs: bool = field(default_factory=configured_phrase_logprobs)
     max_tokens: int = field(default_factory=configured_max_tokens)
     max_suggestion_words: int = field(default_factory=configured_max_suggestion_words)
     logprob_pool: int = field(default_factory=configured_logprob_pool)

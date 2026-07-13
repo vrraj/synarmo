@@ -142,6 +142,7 @@ Future backends:
 | `SYNARMO_CONTINUATION_TEMPERATURE` | Autoregressive continuation sampling temperature for multi-word suggestions |
 | `SYNARMO_CONTINUATION_TOP_P` | Autoregressive continuation nucleus sampling value |
 | `SYNARMO_CONTINUATION_TOP_K` | Advanced continuation top-k guardrail; default is `20`, and `0` disables the hard top-k cap |
+| `SYNARMO_PHRASE_LOGPROBS` | `0` for faster starter-token scoring; `1` to request continuation logprobs and compute phrase-level scores with extra latency |
 | `SYNARMO_LOGPROB_POOL` | Number of top next-token log probabilities requested for starter selection |
 
 The autocomplete prompt is structured for prefix reuse: fixed instructions
@@ -163,10 +164,11 @@ The llama.cpp autocomplete path uses two sampling phases:
    continuation temperature/top-p and the advanced continuation top-k guardrail.
    Setting continuation temperature to `0` makes this phase greedy.
 
-Displayed probabilities are phrase-level scores, not just starter-token scores.
-Synarmo averages the logprobs for the tokens that remain visible after the word
-limit is applied, excluding pure formatting punctuation while keeping meaningful
-`!` and `?` tokens in the score.
+Displayed probabilities default to starter-token scores for live typing speed.
+When `SYNARMO_PHRASE_LOGPROBS=1`, Synarmo requests continuation logprobs and
+computes phrase-level scores by averaging the logprobs for the tokens that
+remain visible after the word limit is applied, excluding pure formatting
+punctuation while keeping meaningful `!` and `?` tokens in the score.
 
 ### Service Layer
 

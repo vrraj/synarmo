@@ -110,6 +110,7 @@ class SynarmoEngine:
                     continuation_temperature=self.config.continuation_temperature,
                     continuation_top_p=self.config.continuation_top_p,
                     continuation_top_k=self.config.continuation_top_k,
+                    phrase_logprobs=self.config.phrase_logprobs,
                     logprob_pool=self.config.logprob_pool,
                 )
             ranked = self.ranker.rank(
@@ -192,6 +193,7 @@ class SynarmoEngine:
         continuation_temperature: float | None = None,
         continuation_top_p: float | None = None,
         continuation_top_k: int | None = None,
+        phrase_logprobs: bool | None = None,
         logprob_pool: int = 24,
     ) -> list[AutocompleteEvaluation]:
         evaluator = getattr(self.backend, "evaluate_autocomplete", None)
@@ -237,6 +239,9 @@ class SynarmoEngine:
                     ),
                     continuation_top_k=(
                         self.config.continuation_top_k if continuation_top_k is None else continuation_top_k
+                    ),
+                    phrase_logprobs=(
+                        self.config.phrase_logprobs if phrase_logprobs is None else phrase_logprobs
                     ),
                     logprob_pool=logprob_pool,
                 )

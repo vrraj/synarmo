@@ -30,6 +30,7 @@ def test_predict_accepts_generation_parameters() -> None:
         continuation_temperature=0.6,
         continuation_top_p=0.85,
         continuation_top_k=32,
+        phrase_logprobs=True,
         max_tokens=16,
     )
 
@@ -105,6 +106,7 @@ def test_engine_suggest_uses_autocomplete_evaluator_when_available(tmp_path) -> 
     assert backend.kwargs["continuation_temperature"] == 0.5
     assert backend.kwargs["continuation_top_p"] == 0.9
     assert backend.kwargs["continuation_top_k"] == 20
+    assert backend.kwargs["phrase_logprobs"] is False
     assert [item.text for item in suggestions] == ["go outside"]
     assert suggestions[0].source == "autocomplete"
 
@@ -135,6 +137,7 @@ def test_engine_suggest_passes_continuation_config_to_autocomplete_backend(tmp_p
             continuation_temperature=0.7,
             continuation_top_p=0.85,
             continuation_top_k=24,
+            phrase_logprobs=True,
             profiles_dir=tmp_path,
         ),
         backend=backend,
@@ -146,3 +149,4 @@ def test_engine_suggest_passes_continuation_config_to_autocomplete_backend(tmp_p
     assert backend.kwargs["continuation_temperature"] == 0.7
     assert backend.kwargs["continuation_top_p"] == 0.85
     assert backend.kwargs["continuation_top_k"] == 24
+    assert backend.kwargs["phrase_logprobs"] is True

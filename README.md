@@ -64,6 +64,7 @@ SYNARMO_TOP_P=0.95
 SYNARMO_CONTINUATION_TEMPERATURE=0.5
 SYNARMO_CONTINUATION_TOP_P=0.9
 SYNARMO_CONTINUATION_TOP_K=20
+SYNARMO_PHRASE_LOGPROBS=0
 SYNARMO_LOGPROB_POOL=24
 SYNARMO_N_GPU_LAYERS=-1
 SYNARMO_LLAMA_VERBOSE=0
@@ -562,6 +563,7 @@ come from `.env`. UI changes still apply to the current browser request; edit
 | `SYNARMO_CONTINUATION_TEMPERATURE` | Phrase Temp |
 | `SYNARMO_CONTINUATION_TOP_P` | Phrase Top P |
 | `SYNARMO_CONTINUATION_TOP_K` | Advanced continuation top-k guardrail |
+| `SYNARMO_PHRASE_LOGPROBS` | `0` for faster starter-token scoring; `1` for phrase-level logprob scoring with extra latency |
 | `SYNARMO_LOGPROB_POOL` | Logprobs |
 | `SYNARMO_CONTEXT_WINDOW` | llama.cpp `n_ctx` |
 
@@ -640,12 +642,14 @@ The llama.cpp auto-suggest path has two phases:
    higher values make the multi-word continuation more varied. Advanced users
    can also set `SYNARMO_CONTINUATION_TOP_K` as a hard sampling guardrail.
 
-Candidate percentages are based on the tokens that remain visible after the
-`Words` limit is applied. Synarmo averages the visible token logprobs and the
-browser displays `exp(average_logprob) * 100`; equivalently, the phrase score is
-`exp((log p1 + log p2 + ... + log pn) / n)`. Pure formatting punctuation such as
-commas, quotes, brackets, and dashes is excluded from that average; meaningful
-`!` and `?` tokens remain part of the score.
+By default, candidate percentages use the first-word logprob for lower latency.
+When `SYNARMO_PHRASE_LOGPROBS=1`, percentages are based on the tokens that
+remain visible after the `Words` limit is applied. Synarmo averages the visible
+token logprobs and the browser displays `exp(average_logprob) * 100`;
+equivalently, the phrase score is `exp((log p1 + log p2 + ... + log pn) / n)`.
+Pure formatting punctuation such as commas, quotes, brackets, and dashes is
+excluded from that average; meaningful `!` and `?` tokens remain part of the
+score.
 
 ### Use Service Endpoints
 
@@ -673,6 +677,7 @@ curl -X POST http://127.0.0.1:8765/evaluate/autocomplete \
     "continuation_temperature": 0.5,
     "continuation_top_p": 0.9,
     "continuation_top_k": 20,
+    "phrase_logprobs": false,
     "logprob_pool": 24
   }'
 ```

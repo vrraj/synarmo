@@ -5,6 +5,7 @@ from synarmo.config import (
     configured_continuation_temperature,
     configured_continuation_top_k,
     configured_continuation_top_p,
+    configured_phrase_logprobs,
     configured_logprob_pool,
     configured_context_window,
     configured_max_suggestions,
@@ -126,6 +127,7 @@ def test_configured_compose_generation_defaults_read_env(monkeypatch) -> None:
     monkeypatch.setenv("SYNARMO_CONTINUATION_TEMPERATURE", "0.6")
     monkeypatch.setenv("SYNARMO_CONTINUATION_TOP_P", "0.85")
     monkeypatch.setenv("SYNARMO_CONTINUATION_TOP_K", "32")
+    monkeypatch.setenv("SYNARMO_PHRASE_LOGPROBS", "1")
     monkeypatch.setenv("SYNARMO_LOGPROB_POOL", "16")
 
     assert configured_max_tokens() == 7
@@ -135,7 +137,14 @@ def test_configured_compose_generation_defaults_read_env(monkeypatch) -> None:
     assert configured_continuation_temperature() == 0.6
     assert configured_continuation_top_p() == 0.85
     assert configured_continuation_top_k() == 32
+    assert configured_phrase_logprobs() is True
     assert configured_logprob_pool() == 16
+
+
+def test_configured_phrase_logprobs_defaults_to_false(monkeypatch) -> None:
+    monkeypatch.delenv("SYNARMO_PHRASE_LOGPROBS", raising=False)
+
+    assert configured_phrase_logprobs() is False
 
 
 def test_configured_context_window_defaults_to_2048(monkeypatch) -> None:

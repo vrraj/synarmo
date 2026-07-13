@@ -127,6 +127,7 @@ class LlamaCppBackend:
         continuation_temperature: float = 0.5,
         continuation_top_p: float = 0.9,
         continuation_top_k: int = 20,
+        phrase_logprobs: bool = False,
         logprob_pool: int = 24,
     ) -> AutocompleteEvaluation:
         return evaluate_with_llama(
@@ -141,5 +142,6 @@ class LlamaCppBackend:
             continuation_temperature=continuation_temperature,
             continuation_top_p=continuation_top_p,
             continuation_top_k=continuation_top_k,
+            phrase_logprobs=phrase_logprobs,
             logprob_pool=logprob_pool,
         )

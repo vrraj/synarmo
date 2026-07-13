@@ -47,6 +47,7 @@ SYNARMO_TOP_P=0.95
 SYNARMO_CONTINUATION_TEMPERATURE=0.5
 SYNARMO_CONTINUATION_TOP_P=0.9
 SYNARMO_CONTINUATION_TOP_K=20
+SYNARMO_PHRASE_LOGPROBS=0
 SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF
 SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
 ```
@@ -116,9 +117,11 @@ greedy, while higher values make suggestions more varied. Advanced users can
 also set `continuation_top_k` or `SYNARMO_CONTINUATION_TOP_K`; the default is
 `20`.
 
-Candidate percentages are phrase-level scores. Synarmo averages the logprobs
-for the tokens that remain visible after the word limit is applied, excluding
-pure formatting punctuation while keeping meaningful `!` and `?` tokens.
+Candidate percentages default to first-word scores for lower latency. Set
+`SYNARMO_PHRASE_LOGPROBS=1` to request continuation logprobs and score the
+visible phrase with the geometric mean token probability. That mode is more
+informative but adds latency. Pure formatting punctuation is excluded while
+meaningful `!` and `?` tokens still count.
 
 ## Context Usage
 
@@ -485,6 +488,7 @@ curl -X POST http://127.0.0.1:8765/evaluate/autocomplete \
     "continuation_temperature": 0.5,
     "continuation_top_p": 0.9,
     "continuation_top_k": 20,
+    "phrase_logprobs": false,
     "logprob_pool": 24
   }'
 ```
@@ -556,6 +560,10 @@ The UI lets you:
 `SYNARMO_CONTINUATION_TOP_K` remains available as an advanced `.env`, Python,
 and API setting, but it is intentionally hidden from the browser UI. Its default
 is `20`.
+
+`SYNARMO_PHRASE_LOGPROBS=0` keeps live typing faster by using first-word scores.
+Set it to `1` when you want phrase-level geometric-mean confidence scores and
+can accept the continuation logprob latency cost.
 
 ## Integration Examples
 
