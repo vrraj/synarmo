@@ -94,8 +94,8 @@ def test_ui_defaults_render_from_env(monkeypatch) -> None:
     assert 'id="choices" type="number" min="1" max="10" step="1" value="4"' in response.text
     assert 'id="candidate-tokens" type="number" min="1" max="64" step="1" value="7"' in response.text
     assert 'id="candidate-words" type="number" min="1" max="8" step="1" value="2"' in response.text
-    assert 'id="temperature" type="number" min="0" max="2" step="0.1" value="0.6"' in response.text
-    assert 'id="top-p" type="number" min="0" max="1" step="0.05" value="0.85"' in response.text
+    assert 'id="temperature" type="number" min="0" max="2" step="0.1" value="0.6" disabled' in response.text
+    assert 'id="top-p" type="number" min="0" max="1" step="0.05" value="0.85" disabled' in response.text
     assert (
         'id="continuation-temperature" type="number" min="0" max="2" step="0.1" value="0.5"'
         in response.text

@@ -59,8 +59,8 @@ LOCAL_MODELS_CACHE=~/models/synarmo
 SYNARMO_MAX_SUGGESTIONS=3
 SYNARMO_MAX_TOKENS=5
 SYNARMO_MAX_SUGGESTION_WORDS=1
-SYNARMO_TEMPERATURE=0.25
-SYNARMO_TOP_P=0.95
+SYNARMO_TEMPERATURE=0.0
+SYNARMO_TOP_P=1.0
 SYNARMO_CONTINUATION_TEMPERATURE=0.5
 SYNARMO_CONTINUATION_TOP_P=0.9
 SYNARMO_CONTINUATION_TOP_K=20
@@ -207,8 +207,11 @@ LOCAL_MODELS_CACHE=~/models/synarmo
 SYNARMO_MAX_SUGGESTIONS=3
 SYNARMO_MAX_TOKENS=5
 SYNARMO_MAX_SUGGESTION_WORDS=4
-SYNARMO_TEMPERATURE=0.25
-SYNARMO_TOP_P=0.95
+SYNARMO_TEMPERATURE=0.0
+SYNARMO_TOP_P=1.0
+SYNARMO_CONTINUATION_TEMPERATURE=0.5
+SYNARMO_CONTINUATION_TOP_P=0.9
+SYNARMO_CONTINUATION_TOP_K=20
 SYNARMO_LOGPROB_POOL=24
 SYNARMO_N_GPU_LAYERS=-1
 SYNARMO_LLAMA_VERBOSE=0
@@ -229,8 +232,11 @@ LOCAL_MODELS_CACHE=~/models/synarmo
 SYNARMO_MAX_SUGGESTIONS=3
 SYNARMO_MAX_TOKENS=5
 SYNARMO_MAX_SUGGESTION_WORDS=4
-SYNARMO_TEMPERATURE=0.25
-SYNARMO_TOP_P=0.95
+SYNARMO_TEMPERATURE=0.0
+SYNARMO_TOP_P=1.0
+SYNARMO_CONTINUATION_TEMPERATURE=0.5
+SYNARMO_CONTINUATION_TOP_P=0.9
+SYNARMO_CONTINUATION_TOP_K=20
 SYNARMO_LOGPROB_POOL=24
 SYNARMO_N_GPU_LAYERS=-1
 SYNARMO_LLAMA_VERBOSE=0
@@ -443,8 +449,8 @@ engine = SynarmoEngine.load(
     backend="llama-cpp",
     max_suggestions=3,
     max_suggestion_words=4,
-    temperature=0.25,
-    top_p=0.95,
+    temperature=0.0,
+    top_p=1.0,
     continuation_temperature=0.5,
     continuation_top_p=0.9,
     continuation_top_k=20,
@@ -471,8 +477,8 @@ suggestions = synarmo.predict(
     backend="llama-cpp",
     max_suggestions=3,
     max_suggestion_words=4,
-    temperature=0.25,
-    top_p=0.95,
+    temperature=0.0,
+    top_p=1.0,
     continuation_temperature=0.5,
     continuation_top_p=0.9,
     continuation_top_k=20,
@@ -531,8 +537,8 @@ lets you:
 
 - type the current message
 - provide conversation or scene context
-- change auto-suggest parameters such as choices, candidate words, temperature,
-  top-p, and logprob pool
+- change auto-suggest parameters such as choices, candidate words, first-word
+  logprob pool, and phrase sampling
 - inspect how the service responds
 
 #### Compose Parameters
@@ -541,16 +547,17 @@ When testing an installed package or the browser UI, these startup defaults can
 come from `.env`. UI changes still apply to the current browser request; edit
 `.env` and restart `synarmo serve` or `make ux` to change the initial defaults.
 
-| Parameter | Built-in default | What it does |
+| Parameter | Browser UI default | What it does |
 | --- | ---: | --- |
 | Choices | 3 | Number of suggestions to show. |
 | Tokens | 5 | Maximum generated tokens behind each suggestion. Higher values allow longer completions but can take longer. |
 | Words | 4 | Maximum words displayed for each suggestion. |
-| First Word Temp | 0.25 | Controls randomness for the one-token first-word probe. Lower is more predictable; higher is more varied. |
-| First Word Top P | 0.95 | Nucleus sampling value passed to the one-token llama.cpp probe. |
+| First Word Temp | 0.0 | Fixed in the browser UI. Starter branches are chosen from ranked raw logprobs, not from the sampled starter token. |
+| First Word Top P | 1.0 | Fixed in the browser UI. The first-word candidate list comes from `Logprobs`, so Top P is not used as a visible starter cutoff. |
+| Logprobs | 24 | Number of top next-token log probabilities to request from llama.cpp for starter selection. |
 | Phrase Temp | 0.5 | Controls randomness while expanding each selected first word into a phrase. |
 | Phrase Top P | 0.9 | Nucleus sampling value used during phrase continuation. |
-| Logprobs | 24 | Number of top next-token log probabilities to request from llama.cpp for starter selection. |
+| Phrase Logprobs | Off | `0` keeps live typing faster by scoring from the first-word token. `1` requests continuation logprobs for phrase-level scoring, but adds latency. |
 | Auto - Suggest on Spacebar | On | Automatically asks for new suggestions after typing a space. |
 
 | `.env` setting | Applies to |
@@ -558,21 +565,40 @@ come from `.env`. UI changes still apply to the current browser request; edit
 | `SYNARMO_MAX_SUGGESTIONS` | Choices |
 | `SYNARMO_MAX_TOKENS` | Tokens |
 | `SYNARMO_MAX_SUGGESTION_WORDS` | Words |
-| `SYNARMO_TEMPERATURE` | First Word Temp |
-| `SYNARMO_TOP_P` | First Word Top P |
+| `SYNARMO_TEMPERATURE` | First Word Temp for API/package calls; browser UI fixes this to `0.0` |
+| `SYNARMO_TOP_P` | First Word Top P for API/package calls; browser UI fixes this to `1.0` |
+| `SYNARMO_LOGPROB_POOL` | Logprobs |
 | `SYNARMO_CONTINUATION_TEMPERATURE` | Phrase Temp |
 | `SYNARMO_CONTINUATION_TOP_P` | Phrase Top P |
 | `SYNARMO_CONTINUATION_TOP_K` | Advanced continuation top-k guardrail |
-| `SYNARMO_PHRASE_LOGPROBS` | `0` for faster starter-token scoring; `1` for phrase-level logprob scoring with extra latency |
-| `SYNARMO_LOGPROB_POOL` | Logprobs |
+| `SYNARMO_PHRASE_LOGPROBS` | Phrase Logprobs |
 | `SYNARMO_CONTEXT_WINDOW` | llama.cpp `n_ctx` |
 
-For auto-suggest, Synarmo uses `Logprobs` as the starter pool size. It asks
-llama.cpp for a one-token probe with `logprobs` enabled, sorts the returned
-next-token probabilities, removes duplicate first-word starters, and expands up
-to `Choices` starters into short suggestions. Starter sampling controls only
-the probe. Continuation sampling controls the autoregressive expansion after a
-starter has been selected, so multi-word suggestions do not have to use purely
+For auto-suggest, Synarmo separates first-word branch selection from phrase
+continuation:
+
+```text
+First word:
+  raw logprobs -> filter/rank/diversify -> Choices visible branches
+
+Phrase:
+  sampler chain -> natural autoregressive continuation
+```
+
+`Logprobs` controls how many next-token candidates Synarmo asks llama.cpp to
+return for the first-word pool. `Choices` controls how many of those filtered
+starter branches are kept and shown. For example, with `Logprobs = 24` and
+`Choices = 3`, Synarmo inspects up to 24 likely next tokens, removes empty or
+duplicate first-word starters, then expands up to 3 visible suggestions.
+
+Synarmo uses raw logprobs for the first word because auto-suggest needs a small
+menu of strong next-phrase directions quickly. Ranking the returned logprob
+table gives stable starter branches and useful confidence scores without
+running several independent full generations. The browser UI therefore fixes
+first-word temperature to `0.0` and first-word Top P to `1.0`.
+
+Continuation sampling controls the autoregressive expansion after a starter has
+been selected, so multi-word suggestions can sound natural without using purely
 greedy decoding.
 
 #### How The Auto-suggest Flow Works
@@ -634,13 +660,16 @@ Words = 3  -> go outside with
 The llama.cpp auto-suggest path has two phases:
 
 1. Starter probe: Synarmo asks for one generated token and a `Logprobs`-sized
-   table of likely next-token alternatives. It sorts that table, removes
-   duplicate first-word starters, and keeps up to `Choices` starters.
+   table of likely next-token alternatives. It sorts that raw logprob table,
+   filters empty tokens, removes duplicate first-word starters, and keeps up to
+   `Choices` starters. `Choices` comes from `SYNARMO_MAX_SUGGESTIONS` or the
+   browser UI field with the same label.
 2. Autoregressive continuation: Synarmo appends each starter to the prompt and
-   generates up to `Tokens - 1` future tokens using `Phrase Temp` and
-   `Phrase Top P`. Setting `Phrase Temp` to `0` makes this phase greedy;
-   higher values make the multi-word continuation more varied. Advanced users
-   can also set `SYNARMO_CONTINUATION_TOP_K` as a hard sampling guardrail.
+   generates up to `Tokens - 1` future tokens through the llama.cpp sampler
+   chain using `Phrase Temp` and `Phrase Top P`. Setting `Phrase Temp` to `0`
+   makes this phase greedy; higher values make the multi-word continuation more
+   varied. Advanced users can also set `SYNARMO_CONTINUATION_TOP_K` as a hard
+   sampling guardrail.
 
 By default, candidate percentages use the first-word logprob for lower latency.
 When `SYNARMO_PHRASE_LOGPROBS=1`, percentages are based on the tokens that
@@ -672,8 +701,8 @@ curl -X POST http://127.0.0.1:8765/evaluate/autocomplete \
     "choices": 3,
     "candidate_tokens": 5,
     "candidate_words": 2,
-    "temperature": 0.5,
-    "top_p": 0.95,
+    "temperature": 0.0,
+    "top_p": 1.0,
     "continuation_temperature": 0.5,
     "continuation_top_p": 0.9,
     "continuation_top_k": 20,
