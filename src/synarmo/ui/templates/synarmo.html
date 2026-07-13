@@ -190,6 +190,17 @@
               </div>
             </aside>
           </div>
+
+          <details class="infrastructure-panel">
+            <summary>Infrastructure diagnostics</summary>
+            <div class="infrastructure-heading">
+              <p>On-demand snapshot of model, memory, cache, and GPU state.</p>
+              <button id="refresh-infrastructure-btn" class="secondary" type="button">Refresh</button>
+            </div>
+            <dl id="infrastructure-metrics" class="infrastructure-metrics" aria-live="polite">
+              <div><dt>Status</dt><dd>Loading...</dd></div>
+            </dl>
+          </details>
         </section>
       </main>
     </div>

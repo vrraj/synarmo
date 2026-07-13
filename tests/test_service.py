@@ -4,16 +4,38 @@ from synarmo import SynarmoEngine
 from synarmo.service.app import create_app
 
 
-def test_suggest_endpoint_accepts_json_body() -> None:
+def test_predict_endpoint_accepts_json_body() -> None:
     pytest.importorskip("fastapi")
 
     app = create_app(SynarmoEngine.load(profile="service-test"))
     schema = app.openapi()
 
-    suggest_schema = schema["paths"]["/suggest"]["post"]
-    assert "requestBody" in suggest_schema
-    parameter_names = [item["name"] for item in suggest_schema.get("parameters", [])]
+    predict_schema = schema["paths"]["/predict"]["post"]
+    assert "requestBody" in predict_schema
+    parameter_names = [item["name"] for item in predict_schema.get("parameters", [])]
     assert "request" not in parameter_names
+    assert schema["paths"]["/suggest"]["post"]["deprecated"] is True
+
+
+def test_predict_endpoint_accepts_per_request_compose_parameters() -> None:
+    pytest.importorskip("fastapi")
+    from fastapi.testclient import TestClient
+
+    client = TestClient(create_app(SynarmoEngine.load(profile="service-request-options-test")))
+    response = client.post(
+        "/predict",
+        json={
+            "text": "I want to",
+            "context": "At home",
+            "max_suggestions": 2,
+            "max_tokens": 4,
+            "max_words": 2,
+            "continuation_temperature": 0.6,
+        },
+    )
+
+    assert response.status_code == 200
+    assert len(response.json()["suggestions"]) == 2
 
 
 def test_health_endpoint_reports_runtime_diagnostics() -> None:
@@ -29,6 +51,7 @@ def test_health_endpoint_reports_runtime_diagnostics() -> None:
     assert response.json()["status"] == "ok"
     assert response.json()["backend"] == "mock"
     assert response.json()["n_gpu_layers"] == 0
+    assert response.json()["infrastructure"]["kv_cache_tokens_current"] is None
 
 
 def test_autocomplete_evaluation_endpoint_accepts_json_body() -> None:
@@ -64,6 +87,8 @@ def test_ui_endpoints_render_static_assets() -> None:
     assert "continuation-temperature" in response.text
     assert "continuation-top-p" in response.text
     assert "continuation-top-k" not in response.text
+    assert "infrastructure-metrics" in response.text
+    assert "refresh-infrastructure-btn" in response.text
     assert "<style>" not in response.text
     assert "<script>" not in response.text
 

@@ -83,8 +83,8 @@ print([s.text for s in suggestions])
 
 ## How Suggestions Work
 
-Synarmo uses the same basic flow from Python, the CLI, the local service, and
-the browser UI:
+Synarmo uses the same basic flow from Python, the CLI, the local service, the
+browser UI, and `engine.evaluate_autocomplete()` (which now calls `engine.suggest()` under the hood so every entry point shares the same ranking path):
 
 ```text
 User types text
@@ -105,6 +105,8 @@ The ranker removes duplicates, trims punctuation, limits suggestion length,
 filters instruction echoes, and returns up to the configured number of
 suggestions. The default is three suggestions, with each suggestion usually
 limited to one to four words.
+
+Per-request overrides (max suggestions, token/word limits, sampling knobs, logprob controls) can now be passed directly to `engine.suggest()` or the module-level `synarmo.suggest()`/`synarmo.predict()` helpers without mutating the engine default config. The engine copies the active config, applies overrides for that call, and reuses the existing warm backend instance.
 
 With the llama.cpp backend, autocomplete uses two sampling phases. First,
 Synarmo runs a one-token starter probe with `logprobs` enabled, ranks likely
@@ -149,6 +151,13 @@ suggestions = engine.suggest(
 
 ### Multiple Contexts for Evaluation
 
+`engine.evaluate_autocomplete()` is now a compatibility adapter that runs
+`engine.suggest()` for each supplied context and returns the composed prompt and
+ranked candidate list. It no longer exposes backend-specific starter token
+tables; the `logprob` field mirrors the per-suggestion score returned by the
+ranker. If you need raw llama.cpp starter logprobs, call the backend's
+`evaluate_autocomplete()` directly.
+
 Evaluate suggestions across different contexts:
 
 ```python
@@ -169,7 +178,7 @@ evaluations = engine.evaluate_autocomplete(
 for eval in evaluations:
     print(f"\nContext: {eval.context}")
     for candidate in eval.candidates:
-        print(f"  {candidate.text} (logprob: {candidate.logprob})")
+        print(f"  {candidate.text} (score: {candidate.logprob})")
 ```
 
 ## Configuration Patterns

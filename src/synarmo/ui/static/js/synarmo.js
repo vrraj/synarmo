@@ -20,6 +20,8 @@ const continuationTemperatureInput = document.getElementById("continuation-tempe
 const continuationTopPInput = document.getElementById("continuation-top-p");
 const logprobPoolInput = document.getElementById("logprob-pool");
 const suggestOnSpacebarInput = document.getElementById("suggest-on-spacebar");
+const infrastructureMetrics = document.getElementById("infrastructure-metrics");
+const refreshInfrastructureBtn = document.getElementById("refresh-infrastructure-btn");
 let requestId = 0;
 let lastSuggestionRequestText = "";
 
@@ -85,6 +87,7 @@ async function checkHealth() {
     ]
       .filter(Boolean)
       .join(" / ");
+    renderInfrastructure(data.infrastructure);
   } catch {
     serviceStatusValue.textContent = "Unavailable";
     serviceStatusValue.classList.remove("is-ok");
@@ -92,7 +95,97 @@ async function checkHealth() {
     modelNameValue.textContent = "Unknown";
     gpuLayersValue.textContent = "Unknown";
     serviceStatus.title = "Service status: Unavailable";
+    renderInfrastructure(null);
   }
+}
+
+function renderInfrastructure(infrastructure) {
+  infrastructureMetrics.innerHTML = "";
+  if (!infrastructure) {
+    appendInfrastructureMetric("Status", "Unavailable");
+    return;
+  }
+  appendInfrastructureMetric("Model file", formatBytes(infrastructure.model_file_bytes));
+  appendInfrastructureMetric(
+    "Model weights resident in RAM",
+    formatBytes(infrastructure.model_mapped_resident_ram_bytes)
+  );
+  appendInfrastructureMetric(
+    "Synarmo process RAM (includes resident model pages)",
+    formatBytes(infrastructure.process_resident_ram_bytes)
+  );
+  appendInfrastructureMetric("KV tokens (last evaluation)", formatTokenUsage(infrastructure));
+
+  const modelArchitecture = infrastructure.model_architecture || {};
+  appendInfrastructureMetric("Model architecture", formatValue(modelArchitecture.architecture));
+  appendInfrastructureMetric("Sequence length (n_ctx)", formatValue(modelArchitecture.sequence_length));
+  appendInfrastructureMetric(
+    "Trained sequence length",
+    formatValue(modelArchitecture.trained_sequence_length)
+  );
+  appendInfrastructureMetric("Vocabulary size", formatValue(modelArchitecture.vocabulary_size));
+  appendInfrastructureMetric("Hidden dimension", formatValue(modelArchitecture.hidden_dimension));
+  appendInfrastructureMetric("Attention heads", formatValue(modelArchitecture.attention_heads));
+  appendInfrastructureMetric(
+    "Key/value attention heads",
+    formatValue(modelArchitecture.key_value_attention_heads)
+  );
+  appendInfrastructureMetric("Transformer layers", formatValue(modelArchitecture.layers));
+
+  const gpu = infrastructure.gpu || {};
+  if (gpu.available) {
+    appendInfrastructureMetric("Synarmo GPU VRAM", formatBytes(gpu.process_memory_bytes));
+    appendInfrastructureMetric(
+      "GPU device VRAM",
+      `${formatBytes(gpu.device_memory_used_bytes)} / ${formatBytes(gpu.device_memory_total_bytes)}`
+    );
+    appendInfrastructureMetric("GPU device utilization", formatPercent(gpu.device_utilization_pct));
+  } else {
+    appendInfrastructureMetric("NVIDIA GPU telemetry", gpu.reason || "Unavailable");
+  }
+}
+
+function appendInfrastructureMetric(label, value) {
+  const item = document.createElement("div");
+  const term = document.createElement("dt");
+  const description = document.createElement("dd");
+  term.textContent = label;
+  description.textContent = value;
+  item.append(term, description);
+  infrastructureMetrics.appendChild(item);
+}
+
+function formatBytes(value) {
+  if (typeof value !== "number" || value < 0) {
+    return "Unavailable";
+  }
+  const units = ["B", "KiB", "MiB", "GiB", "TiB"];
+  let amount = value;
+  let unit = 0;
+  while (amount >= 1024 && unit < units.length - 1) {
+    amount /= 1024;
+    unit += 1;
+  }
+  return `${amount.toFixed(unit === 0 ? 0 : 1)} ${units[unit]}`;
+}
+
+function formatTokenUsage(infrastructure) {
+  const current = infrastructure.kv_cache_tokens_current;
+  const maximum = infrastructure.kv_cache_tokens_max;
+  if (typeof current !== "number" || typeof maximum !== "number") {
+    return "Unavailable";
+  }
+  const utilization = infrastructure.kv_cache_utilization_pct;
+  const suffix = typeof utilization === "number" ? ` (${utilization.toFixed(1)}%)` : "";
+  return `${current} / ${maximum}${suffix}`;
+}
+
+function formatPercent(value) {
+  return typeof value === "number" ? `${value}%` : "Unavailable";
+}
+
+function formatValue(value) {
+  return value === null || value === undefined || value === "" ? "Unavailable" : String(value);
 }
 
 async function fetchSuggestions(textOverride) {
@@ -108,15 +201,15 @@ async function fetchSuggestions(textOverride) {
   setError("");
   setLoading(true);
   try {
-    const response = await fetch("/evaluate/autocomplete", {
+    const response = await fetch("/predict", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         text: requestText,
-        contexts: [contextText.value.trim() || ""],
-        choices: numberValue(choicesInput, 3),
-        candidate_tokens: numberValue(candidateTokensInput, 5),
-        candidate_words: numberValue(candidateWordsInput, 1),
+        context: contextText.value.trim() || "",
+        max_suggestions: numberValue(choicesInput, 3),
+        max_tokens: numberValue(candidateTokensInput, 5),
+        max_words: numberValue(candidateWordsInput, 1),
         temperature: numberValue(temperatureInput, 0.5),
         top_p: numberValue(topPInput, 0.95),
         continuation_temperature: numberValue(continuationTemperatureInput, 0.5),
@@ -131,12 +224,7 @@ async function fetchSuggestions(textOverride) {
     if (currentRequest !== requestId) {
       return;
     }
-    const firstResult = (data.results || [])[0] || {};
-    const candidates = firstResult.candidates || [];
-    renderSuggestions(
-      candidates.map((candidate) => candidate.text),
-      candidates.map((candidate) => candidate.logprob)
-    );
+    renderSuggestions(data.suggestions || [], data.scores || []);
   } catch (error) {
     if (currentRequest === requestId) {
       suggestionsList.innerHTML = '<div class="muted">No suggestions available.</div>';
@@ -272,6 +360,7 @@ clearBtn.addEventListener("click", () => {
 typedText.addEventListener("input", maybeSuggestAfterSpace);
 candidateWordsInput.addEventListener("input", updateTokenRecommendation);
 candidateTokensInput.addEventListener("input", updateTokenRecommendation);
+refreshInfrastructureBtn.addEventListener("click", checkHealth);
 
 updateCount();
 updateTokenRecommendation();

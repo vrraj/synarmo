@@ -10,45 +10,31 @@ class PromptBuilder:
         max_words: int | None = 4,
     ) -> str:
         max_words = _positive_word_limit(max_words)
-        return f"""You are Synarmo, a private on-device communication assistant.
-Suggest exactly {max_suggestions} short continuations for the user's current typed text.
-
-The user will insert one suggestion immediately after the current typed text.
-Each suggestion must read naturally and grammatically when appended after the current typed text.
-Suggestions are not answers from the assistant. They are only the next words the user might type.
-Before returning a suggestion, silently check: current typed text + space + suggestion.
-Only return suggestions that pass that append check.
-
-Rules:
-- Each suggestion should be 1 to {max_words} words.
-- Continue the exact typed text; do not replace it.
-- Do not ignore partial words, question starters, or unfinished phrases.
-- Do not answer the user or produce conversational replies.
-- Match the user's style and current context.
-- If the context uses digits, keep numeric values as digits instead of spelling them out.
-- Return only suggestions, one per line.
-- Do not number or label suggestions.
-- Do not use brackets, placeholders, or empty choices.
-- Do not explain.
-
-Examples:
-Current typed text: Which
-Good continuation: dish is spicy
-Full appended text: Which dish is spicy
-
-Current typed text: Where
-Good continuation: is the restroom
-Full appended text: Where is the restroom
-
-Current typed text: Can
-Good continuation: we order now
-Full appended text: Can we order now
-
-Return only the good continuation text, not the full appended text.
+        return f"""You are Synarmo, a private communication assistant.
+Predict exactly {max_suggestions} natural continuations for the user's typed text.
+Each continuation must be 1 to {max_words} words, append directly to the typed text, and match its context and style.
+Return only the continuations, one per line, with no labels, numbering, explanation, or reply to the user.
 
 {assembled_context}
 
-Suggestions:"""
+Continuations:"""
+
+    def build_autocomplete(self, *, assembled_context: str, typed_text: str) -> str:
+        """Build the stable prompt used for next-token probability prediction."""
+        context_lines = [
+            line
+            for line in assembled_context.rstrip().splitlines()
+            if not line.lower().startswith("current typed text:")
+        ]
+        context_block = "\n".join(context_lines).strip()
+        if context_block:
+            context_block = f"\n\nContext:\n{context_block}"
+
+        return f"""You are Synarmo, a private communication assistant.
+Predict only the next words of the user's message. Do not reply to the user, repeat labels, or replace earlier text.{context_block}
+
+Message:
+{typed_text}"""
 
 
 def _positive_word_limit(value: int | None) -> int:

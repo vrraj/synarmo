@@ -184,10 +184,26 @@ passed directly, that local GGUF file must already exist.
 
 ### `suggest()`
 
-Generate suggestions for the given text.
+Generate suggestions for the given text. Request-level overrides can be passed
+without mutating the engine's default configuration.
 
 ```python
-def suggest(self, text: str, context: str | None = None) -> list[Suggestion]
+def suggest(
+    self,
+    text: str,
+    context: str | None = None,
+    *,
+    max_suggestions: int | None = None,
+    max_tokens: int | None = None,
+    max_words: int | None = None,
+    temperature: float | None = None,
+    top_p: float | None = None,
+    continuation_temperature: float | None = None,
+    continuation_top_p: float | None = None,
+    continuation_top_k: int | None = None,
+    phrase_logprobs: bool | None = None,
+    logprob_pool: int | None = None,
+) -> list[Suggestion]
 ```
 
 **Parameters:**
@@ -196,6 +212,16 @@ def suggest(self, text: str, context: str | None = None) -> list[Suggestion]
 |-----------|------|----------|-------------|
 | `text` | `str` | ✅ | Current text to complete |
 | `context` | `str | None` | ❌ | Optional conversation or scene context |
+| `max_suggestions` | `int | None` | ❌ | Override the number of suggestions (falls back to config) |
+| `max_tokens` | `int | None` | ❌ | Override maximum generation tokens |
+| `max_words` | `int | None` | ❌ | Override maximum visible words per suggestion |
+| `temperature` | `float | None` | ❌ | Override starter probe temperature |
+| `top_p` | `float | None` | ❌ | Override starter probe Top P |
+| `continuation_temperature` | `float | None` | ❌ | Override continuation temperature |
+| `continuation_top_p` | `float | None` | ❌ | Override continuation Top P |
+| `continuation_top_k` | `int | None` | ❌ | Override continuation Top K guardrail |
+| `phrase_logprobs` | `bool | None` | ❌ | Override phrase logprob scoring toggle |
+| `logprob_pool` | `int | None` | ❌ | Override number of next-token logprobs to request |
 
 **Returns:** `list[Suggestion]` - List of ranked suggestions
 
@@ -223,7 +249,12 @@ for suggestion in suggestions:
 
 ### `evaluate_autocomplete()`
 
-Evaluate auto-suggest behavior with detailed token-level information. The llama-cpp backend returns model logprobs; the mock backend returns deterministic fallback candidates for tests and wiring checks.
+Run `suggest()` for multiple contexts while surfacing the assembled prompt and
+ranked candidates. This compatibility adapter keeps the public API stable while
+ensuring every entry point (CLI, service, browser UI, Python API) now shares the
+same prediction path. The `logprob` field mirrors the per-suggestion score
+returned by the ranker; `top_tokens` will be empty unless you call a backend's
+`evaluate_autocomplete()` directly.
 
 ```python
 def evaluate_autocomplete(
@@ -283,7 +314,7 @@ evaluations = engine.evaluate_autocomplete(
 for eval in evaluations:
     print(f"Context: {eval.context}")
     for candidate in eval.candidates:
-        print(f"  {candidate.text} (logprob: {candidate.logprob})")
+        print(f"  {candidate.text} (score: {candidate.logprob})")
 ```
 
 ### `configure()`
@@ -425,7 +456,11 @@ class SuggestionRanker:
 
 ### `predict()`
 
-One-shot prediction function (loads engine on first call).
+One-shot prediction function (loads engine on first call). Any keyword arguments
+recognized by `SynarmoEngine.suggest()` (e.g., `max_suggestions`, `max_tokens`,
+`max_words`, sampling controls, `phrase_logprobs`, `logprob_pool`) can now be
+passed directly and apply only to that request. The helper also accepts the
+legacy `max_suggestion_words` name and maps it to `max_words` for convenience.
 
 ```python
 def predict(
@@ -467,7 +502,8 @@ suggestions = synarmo.predict(
 
 ### `suggest()`
 
-Alias for `predict()` function.
+Alias for `predict()` with the same per-request override behavior and
+`max_suggestion_words` compatibility alias.
 
 ```python
 def suggest(

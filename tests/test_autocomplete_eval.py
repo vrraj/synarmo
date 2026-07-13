@@ -22,7 +22,7 @@ def test_build_autocomplete_prompt_keeps_stable_prefix_before_context_and_text()
     first = build_autocomplete_prompt("Current context: At the gym", "I want")
     second = build_autocomplete_prompt("Current context: At the gym", "I want to")
 
-    assert first.startswith("Continue the message with only the next few words.")
+    assert first.startswith("You are Synarmo, a private communication assistant.")
     assert first.split("Message:\n", 1)[0] == second.split("Message:\n", 1)[0]
 
 

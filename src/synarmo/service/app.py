@@ -23,6 +23,16 @@ def create_app(engine: SynarmoEngine):
     class SuggestRequest(BaseModel):
         text: str
         context: str | None = None
+        max_suggestions: int = compose_defaults["choices"]
+        max_tokens: int = compose_defaults["candidate_tokens"]
+        max_words: int = compose_defaults["candidate_words"]
+        temperature: float = compose_defaults["temperature"]
+        top_p: float = compose_defaults["top_p"]
+        continuation_temperature: float = compose_defaults["continuation_temperature"]
+        continuation_top_p: float = compose_defaults["continuation_top_p"]
+        continuation_top_k: int = compose_defaults["continuation_top_k"]
+        phrase_logprobs: bool = compose_defaults["phrase_logprobs"]
+        logprob_pool: int = compose_defaults["logprob_pool"]
 
     class SuggestResponse(BaseModel):
         suggestions: list[str]
@@ -77,9 +87,23 @@ def create_app(engine: SynarmoEngine):
     def health() -> dict[str, object]:
         return {"status": "ok", **engine.runtime_diagnostics()}
 
-    @app.post("/suggest", response_model=SuggestResponse)
-    def suggest(request: SuggestRequest) -> SuggestResponse:
-        suggestions = engine.suggest(text=request.text, context=request.context)
+    @app.post("/suggest", response_model=SuggestResponse, deprecated=True)
+    @app.post("/predict", response_model=SuggestResponse)
+    def predict(request: SuggestRequest) -> SuggestResponse:
+        suggestions = engine.suggest(
+            text=request.text,
+            context=request.context,
+            max_suggestions=request.max_suggestions,
+            max_tokens=request.max_tokens,
+            max_words=request.max_words,
+            temperature=request.temperature,
+            top_p=request.top_p,
+            continuation_temperature=request.continuation_temperature,
+            continuation_top_p=request.continuation_top_p,
+            continuation_top_k=request.continuation_top_k,
+            phrase_logprobs=request.phrase_logprobs,
+            logprob_pool=request.logprob_pool,
+        )
         return SuggestResponse(
             suggestions=[item.text for item in suggestions],
             scores=[item.score for item in suggestions],
@@ -125,12 +149,26 @@ def create_app(engine: SynarmoEngine):
         )
 
     @app.websocket("/ws/suggest")
-    async def suggest_ws(websocket: WebSocket) -> None:
+    @app.websocket("/ws/predict")
+    async def predict_ws(websocket: WebSocket) -> None:
         await websocket.accept()
         while True:
             payload = await websocket.receive_json()
             request = SuggestRequest.model_validate(payload)
-            suggestions = engine.suggest(text=request.text, context=request.context)
+            suggestions = engine.suggest(
+                text=request.text,
+                context=request.context,
+                max_suggestions=request.max_suggestions,
+                max_tokens=request.max_tokens,
+                max_words=request.max_words,
+                temperature=request.temperature,
+                top_p=request.top_p,
+                continuation_temperature=request.continuation_temperature,
+                continuation_top_p=request.continuation_top_p,
+                continuation_top_k=request.continuation_top_k,
+                phrase_logprobs=request.phrase_logprobs,
+                logprob_pool=request.logprob_pool,
+            )
             await websocket.send_json(
                 {
                     "suggestions": [item.text for item in suggestions],

@@ -119,6 +119,7 @@ Future backends:
 | `PromptBuilder` | Constructs prompts for the model |
 | `SuggestionRanker` | Ranks and filters generated suggestions |
 | `SynarmoConfig` | Configuration management with environment variable support |
+| `synarmo.infrastructure` | Collects per-request system, model, and GPU diagnostics for runtime health checks |
 
 | Infrastructure Component | Role |
 | --- | --- |
@@ -182,8 +183,8 @@ punctuation while keeping meaningful `!` and `?` tokens in the score.
 
 | Endpoint | Role |
 | --- | --- |
-| `GET /health` | Service health and model status |
-| `POST /suggest` | Generate suggestions over REST |
+| `GET /health` | Service health plus `collect_infrastructure_diagnostics()` snapshot (RAM, GPU, KV cache) |
+| `POST /predict` | Generate suggestions over REST (`/suggest` remains a deprecated alias) |
 | `POST /evaluate/autocomplete` | Evaluate auto-suggest candidates |
 | `WebSocket /ws/suggest` | Real-time suggestion channel |
 | `GET /ui` | Browser-based UI |

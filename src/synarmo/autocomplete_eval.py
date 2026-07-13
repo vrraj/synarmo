@@ -4,6 +4,8 @@ from dataclasses import dataclass, field
 import math
 from typing import Any
 
+from synarmo.prompts import PromptBuilder
+
 PURE_FORMATTING_PUNCTUATION = set(",.;:()[]{}\"'-")
 PURE_FORMATTING_PUNCTUATION.update({"-", "–", "—"})
 
@@ -31,21 +33,11 @@ class AutocompleteEvaluation:
 
 
 def build_autocomplete_prompt(context: str, typed_text: str) -> str:
-    context_lines = [
-        line
-        for line in context.rstrip().splitlines()
-        if not line.lower().startswith("current typed text:")
-    ]
-    context_block = "\n".join(context_lines).strip()
-    if context_block:
-        context_block = f"\n\nContext:\n{context_block}"
-
-    return f"""Continue the message with only the next few words.
-Do not repeat labels or earlier text.
-Keep the context and message structure intact.{context_block}
-
-Message:
-{typed_text}"""
+    """Compatibility wrapper for the canonical prompt builder."""
+    return PromptBuilder().build_autocomplete(
+        assembled_context=context,
+        typed_text=typed_text,
+    )
 
 
 def normalize_candidate(text: str, *, max_words: int) -> str:

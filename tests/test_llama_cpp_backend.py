@@ -118,6 +118,17 @@ def test_llama_cpp_backend_passes_gpu_layers_to_local_model(tmp_path, monkeypatc
         def n_ctx(self):
             return 1024
 
+        def n_vocab(self):
+            return 32000
+
+        metadata = {
+            "general.architecture": "llama",
+            "llama.context_length": "4096",
+            "llama.embedding_length": "2048",
+            "llama.attention.head_count": "32",
+            "llama.attention.head_count_kv": "8",
+        }
+
         def __call__(self, *args, **kwargs):
             return {"choices": [{"text": "hello"}]}
 
@@ -133,10 +144,24 @@ def test_llama_cpp_backend_passes_gpu_layers_to_local_model(tmp_path, monkeypatc
 
     assert calls["n_gpu_layers"] == -1
     assert calls["verbose"] is True
-    assert backend.diagnostics() == {
+    diagnostics = backend.diagnostics()
+    assert {key: value for key, value in diagnostics.items() if key != "infrastructure"} == {
         "n_gpu_layers": -1,
         "requested_gpu_layers": "all",
         "gpu_offload_supported": True,
         "llama_verbose": True,
         "actual_context_window": 1024,
+    }
+    assert diagnostics["infrastructure"]["model_file_bytes"] == 0
+    assert diagnostics["infrastructure"]["kv_cache_tokens_current"] is None
+    assert diagnostics["infrastructure"]["kv_cache_tokens_max"] == 1024
+    assert diagnostics["infrastructure"]["model_architecture"] == {
+        "architecture": "llama",
+        "sequence_length": 1024,
+        "trained_sequence_length": 4096,
+        "vocabulary_size": 32000,
+        "hidden_dimension": 2048,
+        "attention_heads": 32,
+        "key_value_attention_heads": 8,
+        "layers": None,
     }
