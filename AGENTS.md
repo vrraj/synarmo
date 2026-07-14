@@ -35,26 +35,26 @@ The core package should stay UI-free and reusable.
 ## Common Commands
 
 ```bash
-PYTHONPATH=src python3 -m synarmo.cli suggest "I want to" --context "At home"
-PYTHONPATH=src python3 -c "from synarmo import SynarmoEngine; e=SynarmoEngine.load(); print([s.text for s in e.suggest('I want to')])"
-python3 -m compileall src tests
+uv run python -m synarmo.cli suggest "I want to" --context "At home"
+uv run python -c "from synarmo import SynarmoEngine; e=SynarmoEngine.load(); print([s.text for s in e.suggest('I want to')])"
+uv run python -m compileall src tests
 ```
 
 When dependencies are installed:
 
 ```bash
-pip install -e ".[dev,service]"
-pytest
-synarmo serve
+uv sync --extra dev --extra service
+uv run pytest
+uv run synarmo serve
 ```
 
 For GGUF inference:
 
 ```bash
-pip install -e ".[llama,service]"
+uv sync --extra llama --extra service
 cp .env.example .env
 mkdir -p ~/models/synarmo
-synarmo suggest "I want to" --backend llama-cpp
+uv run synarmo suggest "I want to" --backend llama-cpp
 ```
 
 Local GGUF files should live under `LOCAL_MODELS_CACHE` from `.env`, defaulting
@@ -66,6 +66,8 @@ or pass `--model-path` for a one-off override.
 - The repo is intended to remain private.
 - Do not commit model files, generated profiles, or personal conversation data.
 - If editing outside the active workspace root, respect sandbox approvals.
+- Only update documentation when the user explicitly asks for documentation
+  changes; do not automatically update docs after every code change.
 - Before finishing documentation changes, verify every configuration value,
   command, model reference, endpoint, and behavior claim against the source
   configuration files and the code that implements or reads them.

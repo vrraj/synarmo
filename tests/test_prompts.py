@@ -1,43 +1,40 @@
 from synarmo.prompts import PromptBuilder
 
 
-def test_prompt_requests_exact_unnumbered_suggestions() -> None:
+def test_base_prompt_contains_only_context_and_final_typed_text() -> None:
     prompt = PromptBuilder().build(
-        assembled_context="Current typed text: Which",
+        assembled_context="Current context: At home\nCurrent typed text: Which",
+        typed_text="Which",
         max_suggestions=3,
         max_words=6,
     )
 
-    assert "Suggest exactly 3" in prompt
-    assert "Each suggestion should be 1 to 6 words." in prompt
-    assert "immediately after the current typed text" in prompt
-    assert "Suggestions are not answers from the assistant." in prompt
-    assert "Only return suggestions that pass that append check." in prompt
-    assert "Continue the exact typed text; do not replace it." in prompt
-    assert "Do not ignore partial words, question starters, or unfinished phrases." in prompt
-    assert "Do not answer the user or produce conversational replies." in prompt
-    assert "keep numeric values as digits" in prompt
-    assert "Do not number or label suggestions." in prompt
-    assert "Do not use brackets, placeholders, or empty choices." in prompt
-    assert "Current typed text: Which" in prompt
-    assert "dish is spicy" in prompt
-    assert "Current typed text: Where" in prompt
-    assert "is the restroom" in prompt
-    assert "Where is the restroom" in prompt
-    assert "Return only the good continuation text" in prompt
+    assert prompt == "Current context: At home\n\nWhich"
 
 
-def test_prompt_word_limit_is_at_least_one() -> None:
-    zero_prompt = PromptBuilder().build(
-        assembled_context="Current typed text: Which",
-        max_suggestions=3,
-        max_words=0,
-    )
-    none_prompt = PromptBuilder().build(
-        assembled_context="Current typed text: Which",
-        max_suggestions=3,
-        max_words=None,
+def test_base_autocomplete_prompt_ends_exactly_with_typed_text() -> None:
+    prompt = PromptBuilder().build_autocomplete(
+        assembled_context="Current context: At home\nCurrent typed text: I want to",
+        typed_text="I want to",
     )
 
-    assert "Each suggestion should be 1 to 1 words." in zero_prompt
-    assert "Each suggestion should be 1 to 1 words." in none_prompt
+    assert prompt.startswith("Current context: At home\n\n")
+    assert "Current typed text:" not in prompt
+    assert prompt.endswith("I want to")
+
+
+def test_instruct_messages_describe_a_short_continuation() -> None:
+    messages = PromptBuilder().build_instruct_messages(
+        assembled_context="Current context: At home\nCurrent typed text: I want to",
+        typed_text="I want to",
+        max_suggestions=3,
+        max_words=2,
+    )
+
+    assert messages[0]["role"] == "system"
+    assert "exactly 3 distinct continuations" in messages[0]["content"]
+    assert "1 to 2 words" in messages[0]["content"]
+    assert messages[1] == {
+        "role": "user",
+        "content": "Context:\nCurrent context: At home\n\nTyped text:\nI want to",
+    }

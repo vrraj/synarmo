@@ -62,8 +62,20 @@
             </section>
 
             <aside class="parameter-rail">
-              <h2>Compose Parameters</h2>
+              <h2>Parameters</h2>
               <div class="parameter-grid">
+                <div class="field-row field-row-wide">
+                  <label class="parameter-label" for="model-type">
+                    Model Type
+                    <span
+                      class="parameter-help"
+                      title="Base models predict directly from context and typed text. Instruct models use the GGUF's native chat template. Set SYNARMO_MODEL_TYPE and restart the service to change it."
+                      aria-label="Base models predict directly from context and typed text. Instruct models use the GGUF's native chat template. Set SYNARMO_MODEL_TYPE and restart the service to change it."
+                      tabindex="0"
+                    >?</span>
+                  </label>
+                  <input id="model-type" type="text" value="{{ compose_defaults.model_type }}" disabled />
+                </div>
                 <div class="field-row">
                   <label class="parameter-label" for="choices">
                     Choices
@@ -101,29 +113,40 @@
                   <input id="candidate-words" type="number" min="1" max="8" step="1" value="{{ compose_defaults.candidate_words }}" />
                   <div id="token-recommendation" class="parameter-note" aria-live="polite"></div>
                 </div>
+                <div class="field-row field-row-wide">
+                  <h3>
+                    First Word Selection
+                    <span
+                      class="parameter-help"
+                      title="Synarmo asks llama.cpp for a logprob table of likely next tokens, then ranks those raw next-token probabilities to choose starter branches. Temperature and Top P are fixed here because logprobs, not sampling, drive first-word auto-suggest."
+                      aria-label="Synarmo asks llama.cpp for a logprob table of likely next tokens, then ranks those raw next-token probabilities to choose starter branches. Temperature and Top P are fixed here because logprobs, not sampling, drive first-word auto-suggest."
+                      tabindex="0"
+                    >?</span>
+                  </h3>
+                </div>
                 <div class="field-row">
                   <label class="parameter-label" for="temperature">
                     Temperature
                     <span
                       class="parameter-help"
-                      title="Controls randomness when probing likely next tokens. Lower is steadier; higher is more varied."
-                      aria-label="Controls randomness when probing likely next tokens. Lower is steadier; higher is more varied."
+                      title="Configured from .env and disabled in the browser UI. First-word choices come from ranked logprobs, so sampled-token randomness is not useful for starter selection."
+                      aria-label="Configured from .env and disabled in the browser UI. First-word choices come from ranked logprobs, so sampled-token randomness is not useful for starter selection."
                       tabindex="0"
                     >?</span>
                   </label>
-                  <input id="temperature" type="number" min="0" max="2" step="0.1" value="{{ compose_defaults.temperature }}" />
+                  <input id="temperature" type="number" min="0" max="2" step="0.1" value="{{ compose_defaults.temperature }}" disabled />
                 </div>
                 <div class="field-row">
                   <label class="parameter-label" for="top-p">
                     Top P
                     <span
                       class="parameter-help"
-                      title="Nucleus sampling value passed to the one-token probe. Synarmo ranks starters from the returned logprob table; it does not apply a separate Top P cutoff to that table."
-                      aria-label="Nucleus sampling value passed to the one-token probe. Synarmo ranks starters from the returned logprob table; it does not apply a separate Top P cutoff to that table."
+                      title="Configured from .env and disabled in the browser UI. Synarmo ranks starters from the returned logprob table instead of applying a Top P cutoff to first-word candidates."
+                      aria-label="Configured from .env and disabled in the browser UI. Synarmo ranks starters from the returned logprob table instead of applying a Top P cutoff to first-word candidates."
                       tabindex="0"
                     >?</span>
                   </label>
-                  <input id="top-p" type="number" min="0" max="1" step="0.05" value="{{ compose_defaults.top_p }}" />
+                  <input id="top-p" type="number" min="0" max="1" step="0.05" value="{{ compose_defaults.top_p }}" disabled />
                 </div>
                 <div class="field-row">
                   <label class="parameter-label" for="logprob-pool">
@@ -138,8 +161,35 @@
                   <input id="logprob-pool" type="number" min="1" max="50" step="1" value="{{ compose_defaults.logprob_pool }}" />
                 </div>
                 <div class="field-row field-row-wide">
+                  <h3>Phrase Completion</h3>
+                </div>
+                <div class="field-row">
+                  <label class="parameter-label" for="continuation-temperature">
+                    Temperature
+                    <span
+                      class="parameter-help"
+                      title="Controls randomness when expanding each selected starter into a short phrase."
+                      aria-label="Controls randomness when expanding each selected starter into a short phrase."
+                      tabindex="0"
+                    >?</span>
+                  </label>
+                  <input id="continuation-temperature" type="number" min="0" max="2" step="0.1" value="{{ compose_defaults.continuation_temperature }}" />
+                </div>
+                <div class="field-row">
+                  <label class="parameter-label" for="continuation-top-p">
+                    Top P
+                    <span
+                      class="parameter-help"
+                      title="Nucleus sampling value used while expanding selected starter tokens."
+                      aria-label="Nucleus sampling value used while expanding selected starter tokens."
+                      tabindex="0"
+                    >?</span>
+                  </label>
+                  <input id="continuation-top-p" type="number" min="0" max="1" step="0.05" value="{{ compose_defaults.continuation_top_p }}" />
+                </div>
+                <div class="field-row field-row-wide">
                   <label class="parameter-label" for="suggest-on-spacebar">
-                    Auto - Suggest on Spacebar
+                    Suggest on Spacebar
                     <input id="suggest-on-spacebar" type="checkbox" checked />
                     <span
                       class="parameter-help"
@@ -152,6 +202,17 @@
               </div>
             </aside>
           </div>
+
+          <details class="infrastructure-panel">
+            <summary>Infrastructure diagnostics</summary>
+            <div class="infrastructure-heading">
+              <p>On-demand snapshot of model, memory, cache, and GPU state.</p>
+              <button id="refresh-infrastructure-btn" class="secondary" type="button">Refresh</button>
+            </div>
+            <dl id="infrastructure-metrics" class="infrastructure-metrics" aria-live="polite">
+              <div><dt>Status</dt><dd>Loading...</dd></div>
+            </dl>
+          </details>
         </section>
       </main>
     </div>

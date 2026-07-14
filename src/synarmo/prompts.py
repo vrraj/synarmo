@@ -6,49 +6,57 @@ class PromptBuilder:
         self,
         *,
         assembled_context: str,
+        typed_text: str,
         max_suggestions: int,
         max_words: int | None = 4,
     ) -> str:
+        """Build a base-model prompt that ends exactly with the typed text."""
+        del max_suggestions, max_words
+        return self.build_autocomplete(
+            assembled_context=assembled_context,
+            typed_text=typed_text,
+        )
+
+    def build_autocomplete(self, *, assembled_context: str, typed_text: str) -> str:
+        """Build the stable prompt used for next-token probability prediction."""
+        context_lines = [
+            line
+            for line in assembled_context.rstrip().splitlines()
+            if not line.lower().startswith("current typed text:")
+        ]
+        context_block = "\n".join(context_lines).strip()
+        return f"{context_block}\n\n{typed_text}" if context_block else typed_text
+
+    def build_instruct_messages(
+        self,
+        *,
+        assembled_context: str,
+        typed_text: str,
+        max_suggestions: int,
+        max_words: int | None = 4,
+    ) -> list[dict[str, str]]:
+        """Build role messages for an instruction-tuned model's native template."""
         max_words = _positive_word_limit(max_words)
-        return f"""You are Synarmo, a private on-device communication assistant.
-Suggest exactly {max_suggestions} short continuations for the user's current typed text.
-
-The user will insert one suggestion immediately after the current typed text.
-Each suggestion must read naturally and grammatically when appended after the current typed text.
-Suggestions are not answers from the assistant. They are only the next words the user might type.
-Before returning a suggestion, silently check: current typed text + space + suggestion.
-Only return suggestions that pass that append check.
-
-Rules:
-- Each suggestion should be 1 to {max_words} words.
-- Continue the exact typed text; do not replace it.
-- Do not ignore partial words, question starters, or unfinished phrases.
-- Do not answer the user or produce conversational replies.
-- Match the user's style and current context.
-- If the context uses digits, keep numeric values as digits instead of spelling them out.
-- Return only suggestions, one per line.
-- Do not number or label suggestions.
-- Do not use brackets, placeholders, or empty choices.
-- Do not explain.
-
-Examples:
-Current typed text: Which
-Good continuation: dish is spicy
-Full appended text: Which dish is spicy
-
-Current typed text: Where
-Good continuation: is the restroom
-Full appended text: Where is the restroom
-
-Current typed text: Can
-Good continuation: we order now
-Full appended text: Can we order now
-
-Return only the good continuation text, not the full appended text.
-
-{assembled_context}
-
-Suggestions:"""
+        context_lines = [
+            line
+            for line in assembled_context.rstrip().splitlines()
+            if not line.lower().startswith("current typed text:")
+        ]
+        context = "\n".join(context_lines).strip()
+        user_content = f"Context:\n{context}\n\n" if context else ""
+        user_content += f"Typed text:\n{typed_text}"
+        return [
+            {
+                "role": "system",
+                "content": (
+                    "Return exactly "
+                    f"{max_suggestions} distinct continuations of the typed text. "
+                    f"Each continuation must be 1 to {max_words} words. "
+                    "Return only the continuations, one per line; do not answer the user."
+                ),
+            },
+            {"role": "user", "content": user_content},
+        ]
 
 
 def _positive_word_limit(value: int | None) -> int:

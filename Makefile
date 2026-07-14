@@ -80,17 +80,17 @@ help:
 	@echo "Overrides:"
 	@echo "  HOST=0.0.0.0 BACKEND=mock PORT=8766 TEXT='Can you' CONTEXT='Asking for help'"
 
-# Install package in editable mode.
+# Sync the base package into the project virtual environment.
 install:
-	$(PYTHON) -m pip install -e .
+	uv sync
 
 # Install all dependencies needed for local development and real GGUF inference.
 dev:
-	$(PYTHON) -m pip install -e ".[dev,service,llama]"
+	uv sync --extra dev --extra service --extra llama
 
 # Install only service and llama extras for local inference.
 llama:
-	$(PYTHON) -m pip install -e ".[service,llama]"
+	uv sync --extra service --extra llama
 
 # Run tests.
 test:
@@ -98,7 +98,7 @@ test:
 
 # Run a fast syntax/import smoke check.
 compile:
-	python3 -m compileall src tests
+	$(PYTHON) -m compileall src tests
 
 # Run the service in the foreground. Use Ctrl-C to stop. For llama.cpp, this
 # checks LOCAL_MODELS_CACHE and downloads SYNARMO_MODEL from SYNARMO_MODEL_REPO_ID

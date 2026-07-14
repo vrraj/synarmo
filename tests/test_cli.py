@@ -1,4 +1,7 @@
-from synarmo.cli import _compose, _display_text, _print_suggestions, build_parser
+from pathlib import Path
+
+import synarmo.cli as cli
+from synarmo.cli import _compose, _display_text, _print_suggestions, _setup, build_parser
 from synarmo.engine import SynarmoEngine
 from synarmo.suggestions import Suggestion
 
@@ -22,6 +25,26 @@ def test_model_ensure_defaults_to_llama_cpp_backend() -> None:
     assert args.command == "model-ensure"
     assert args.backend == "llama-cpp"
     assert args.profile == "default"
+
+
+def test_setup_defaults_to_a_local_env_file() -> None:
+    args = build_parser().parse_args(["setup"])
+
+    assert args.command == "setup"
+    assert args.env_path == Path(".env")
+    assert args.skip_model is False
+    assert args.backend == "llama-cpp"
+
+
+def test_setup_creates_default_configuration_without_loading_a_model(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(cli, "load_env_file", lambda _path: None)
+    env_path = tmp_path / ".env"
+    args = build_parser().parse_args(["setup", "--skip-model"])
+
+    _setup(args)
+
+    assert "SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF" in env_path.read_text()
 
 
 def test_suggest_output_labels_original_text_and_suggestions(capsys) -> None:
@@ -49,7 +72,7 @@ def test_suggest_display_text_completes_my_goals_heading() -> None:
 
 
 def test_compose_appends_selected_suggestion_and_predicts_again(monkeypatch, capsys) -> None:
-    engine = SynarmoEngine.load(profile="compose-test", max_suggestions=3)
+    engine = SynarmoEngine.load(profile="compose-test", max_suggestions=3, max_suggestion_words=4)
     choices = iter(["1", "q"])
     monkeypatch.setattr("builtins.input", lambda _prompt: next(choices))
 
