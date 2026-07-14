@@ -86,6 +86,7 @@ def test_ui_endpoints_render_static_assets() -> None:
     assert "gpu-layers-value" in response.text
     assert "continuation-temperature" in response.text
     assert "continuation-top-p" in response.text
+    assert 'id="model-type"' in response.text
     assert "continuation-top-k" not in response.text
     assert "infrastructure-metrics" in response.text
     assert "refresh-infrastructure-btn" in response.text

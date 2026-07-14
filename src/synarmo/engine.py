@@ -75,6 +75,7 @@ class SynarmoEngine:
     def runtime_diagnostics(self) -> dict[str, object]:
         diagnostics: dict[str, object] = {
             "backend": self.backend.name,
+            "model_type": self.config.model_type,
             "model": self.model_label(),
             "context_window": self.config.context_window,
             "n_gpu_layers": self.config.n_gpu_layers,
@@ -157,42 +158,62 @@ class SynarmoEngine:
             context=context,
             memory=self.memory if self.config.style_adaptation else UserMemory(profile=self.config.profile),
         )
-        evaluator = getattr(self.backend, "evaluate_autocomplete", None)
+        evaluator = (
+            getattr(self.backend, "evaluate_instruct_autocomplete", None)
+            if self.config.model_type == "instruct"
+            else getattr(self.backend, "evaluate_autocomplete", None)
+        )
         if evaluator is not None:
             with self._generation_lock:
-                evaluation = evaluator(
-                    context=assembled_context,
-                    typed_text=text,
-                    choices=choices,
-                    max_tokens=token_limit,
-                    max_words=word_limit,
-                    temperature=sampling_temperature,
-                    top_p=sampling_top_p,
-                    continuation_temperature=continuation_sampling_temperature,
-                    continuation_top_p=continuation_sampling_top_p,
-                    continuation_top_k=continuation_sampling_top_k,
-                    phrase_logprobs=use_phrase_logprobs,
-                    logprob_pool=logprob_count,
-                )
-            ranked = self.ranker.rank(
-                "\n".join(candidate.text for candidate in evaluation.candidates),
+                if self.config.model_type == "instruct":
+                    evaluation = evaluator(
+                        messages=self.prompt_builder.build_instruct_messages(
+                            assembled_context=assembled_context,
+                            typed_text=text,
+                            max_suggestions=choices,
+                            max_words=word_limit,
+                        ),
+                        context=assembled_context,
+                        choices=choices,
+                        max_tokens=token_limit,
+                        max_words=word_limit,
+                        temperature=continuation_sampling_temperature,
+                        top_p=continuation_sampling_top_p,
+                    )
+                else:
+                    evaluation = evaluator(
+                        context=assembled_context,
+                        typed_text=text,
+                        choices=choices,
+                        max_tokens=token_limit,
+                        max_words=word_limit,
+                        temperature=sampling_temperature,
+                        top_p=sampling_top_p,
+                        continuation_temperature=continuation_sampling_temperature,
+                        continuation_top_p=continuation_sampling_top_p,
+                        continuation_top_k=continuation_sampling_top_k,
+                        phrase_logprobs=use_phrase_logprobs,
+                        logprob_pool=logprob_count,
+                    )
+            return self.ranker.rank_scored(
+                [
+                    Suggestion(
+                        text=candidate.text,
+                        score=candidate.logprob,
+                        source="autocomplete",
+                    )
+                    for candidate in evaluation.candidates
+                ],
                 current_text=text,
                 max_suggestions=choices,
                 max_words=word_limit,
             )
-            return [
-                Suggestion(
-                    text=suggestion.text,
-                    score=suggestion.score,
-                    source="autocomplete",
-                )
-                for suggestion in ranked
-            ]
 
         generation_count = min(choices * 3, 10)
         generation_max_tokens = max(token_limit, generation_count * 8)
         prompt = self.prompt_builder.build(
             assembled_context=assembled_context,
+            typed_text=text,
             max_suggestions=generation_count,
             max_words=word_limit,
         )
@@ -284,13 +305,25 @@ class SynarmoEngine:
                 phrase_logprobs=phrase_logprobs,
                 logprob_pool=logprob_pool,
             )
+            if self.config.model_type == "instruct":
+                messages = self.prompt_builder.build_instruct_messages(
+                    assembled_context=assembled_context,
+                    typed_text=text,
+                    max_suggestions=choices,
+                    max_words=max_words,
+                )
+                prompt = "\n".join(
+                    f"{message['role']}: {message['content']}" for message in messages
+                )
+            else:
+                prompt = self.prompt_builder.build_autocomplete(
+                    assembled_context=assembled_context,
+                    typed_text=text,
+                )
             results.append(
                 AutocompleteEvaluation(
                     context=assembled_context,
-                    prompt=self.prompt_builder.build_autocomplete(
-                        assembled_context=assembled_context,
-                        typed_text=text,
-                    ),
+                    prompt=prompt,
                     candidates=[
                         AutocompleteCandidate(
                             text=item.text,

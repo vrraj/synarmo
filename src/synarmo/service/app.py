@@ -210,8 +210,9 @@ def _mount_ui(
         return RedirectResponse(url="/ui")
 
 
-def _compose_defaults(engine: SynarmoEngine) -> dict[str, int | float | bool]:
+def _compose_defaults(engine: SynarmoEngine) -> dict[str, int | float | bool | str]:
     return {
+        "model_type": engine.config.model_type,
         "choices": engine.config.max_suggestions,
         "candidate_tokens": engine.config.max_tokens,
         "candidate_words": engine.config.max_suggestion_words,

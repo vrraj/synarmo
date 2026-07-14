@@ -32,3 +32,13 @@ def test_context_assembler_preserves_current_typed_text_when_text_is_long() -> N
 
     assert assembled.startswith("Current typed text:")
     assert assembled.endswith("explain this carefully")
+
+
+def test_context_assembler_preserves_typed_trailing_space() -> None:
+    assembled = ContextAssembler().assemble(
+        text="I want ",
+        context=None,
+        memory=UserMemory(profile="test"),
+    )
+
+    assert assembled.endswith("Current typed text: I want ")

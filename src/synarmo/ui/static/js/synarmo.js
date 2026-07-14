@@ -190,7 +190,7 @@ function formatValue(value) {
 
 async function fetchSuggestions(textOverride) {
   const text = textOverride ?? typedText.value;
-  const requestText = text.trimEnd();
+  const requestText = text;
   if (!requestText.trim()) {
     suggestionsList.innerHTML = '<div class="muted">Enter typed text to get suggestions.</div>';
     return;

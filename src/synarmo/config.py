@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Literal
 
 BackendName = Literal["mock", "llama-cpp"]
+ModelType = Literal["base", "instruct"]
 
 DEFAULT_MODELS_CACHE = Path("~/models/synarmo")
 ENV_FILE = ".env"
@@ -26,6 +27,7 @@ LOGPROB_POOL_ENV = "SYNARMO_LOGPROB_POOL"
 CONTEXT_WINDOW_ENV = "SYNARMO_CONTEXT_WINDOW"
 N_GPU_LAYERS_ENV = "SYNARMO_N_GPU_LAYERS"
 LLAMA_VERBOSE_ENV = "SYNARMO_LLAMA_VERBOSE"
+MODEL_TYPE_ENV = "SYNARMO_MODEL_TYPE"
 
 
 def load_env_file(path: str | Path = ENV_FILE) -> None:
@@ -165,9 +167,17 @@ def configured_llama_verbose() -> bool:
     return value is not None and value.strip().lower() in {"1", "true", "yes", "on"}
 
 
+def configured_model_type() -> ModelType:
+    value = os.getenv(MODEL_TYPE_ENV, "base").strip().lower()
+    if value not in {"base", "instruct"}:
+        raise ValueError("SYNARMO_MODEL_TYPE must be 'base' or 'instruct'")
+    return value  # type: ignore[return-value]
+
+
 @dataclass(slots=True)
 class SynarmoConfig:
     backend: BackendName = "mock"
+    model_type: ModelType = field(default_factory=configured_model_type)
     model_path: Path | None = None
     model_repo_id: str | None = None
     model_filename: str | None = None
@@ -195,6 +205,8 @@ class SynarmoConfig:
         self.models_cache_dir = self.models_cache_dir.expanduser()
         if self.model_path is not None:
             self.model_path = self.model_path.expanduser()
+        if self.model_type not in {"base", "instruct"}:
+            raise ValueError("model_type must be 'base' or 'instruct'")
         if not 1 <= self.max_suggestions <= 10:
             raise ValueError("max_suggestions must be between 1 and 10")
         if self.max_latency_ms < 1:

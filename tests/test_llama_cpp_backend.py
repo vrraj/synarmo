@@ -108,6 +108,42 @@ def test_llama_cpp_backend_generate_passes_sampling_options(tmp_path, monkeypatc
     }
 
 
+def test_llama_cpp_backend_uses_native_chat_completion_for_instruct_mode(tmp_path, monkeypatch) -> None:
+    calls = {}
+
+    class FakeLlama:
+        metadata = {"tokenizer.chat_template": "{{ messages }}"}
+
+        def __init__(self, **kwargs):
+            pass
+
+        def create_chat_completion(self, **kwargs):
+            calls.update(kwargs)
+            return {"choices": [{"message": {"content": "go outside\nhave lunch"}}]}
+
+    model_path = tmp_path / "model.gguf"
+    model_path.write_text("", encoding="utf-8")
+    fake_module = types.SimpleNamespace(Llama=FakeLlama, llama_cpp=fake_llama_cpp_module())
+    monkeypatch.setitem(sys.modules, "llama_cpp", fake_module)
+
+    backend = LlamaCppBackend(model_path)
+    evaluation = backend.evaluate_instruct_autocomplete(
+        messages=[{"role": "system", "content": "Continue text"}],
+        context="Current context: At home",
+        choices=2,
+        max_tokens=3,
+        max_words=2,
+        temperature=0.6,
+        top_p=0.85,
+    )
+
+    assert calls["messages"] == [{"role": "system", "content": "Continue text"}]
+    assert calls["max_tokens"] == 16
+    assert calls["temperature"] == 0.6
+    assert calls["top_p"] == 0.85
+    assert [candidate.text for candidate in evaluation.candidates] == ["go outside", "have lunch"]
+
+
 def test_llama_cpp_backend_passes_gpu_layers_to_local_model(tmp_path, monkeypatch) -> None:
     calls = {}
 

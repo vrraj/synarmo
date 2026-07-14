@@ -15,15 +15,15 @@ def test_build_autocomplete_prompt_omits_duplicate_current_typed_text_label() ->
     )
 
     assert "Current typed text:" not in prompt
-    assert prompt.endswith("Message:\nI want to")
+    assert prompt.endswith("I want to")
 
 
 def test_build_autocomplete_prompt_keeps_stable_prefix_before_context_and_text() -> None:
     first = build_autocomplete_prompt("Current context: At the gym", "I want")
     second = build_autocomplete_prompt("Current context: At the gym", "I want to")
 
-    assert first.startswith("You are Synarmo, a private communication assistant.")
-    assert first.split("Message:\n", 1)[0] == second.split("Message:\n", 1)[0]
+    assert first.startswith("Current context: At the gym\n\n")
+    assert first.removesuffix("I want") == second.removesuffix("I want to")
 
 
 def test_extract_top_logprobs_returns_empty_dict_for_empty_llama_logprobs() -> None:
@@ -102,7 +102,7 @@ def test_evaluate_with_llama_uses_ranked_logprob_starters() -> None:
     assert len(calls) == 3
 
 
-def test_evaluate_with_llama_can_score_with_phrase_logprobs() -> None:
+def test_evaluate_with_llama_keeps_starter_logprob_when_phrase_logprobs_are_requested() -> None:
     calls = []
 
     def fake_llama(**kwargs):
@@ -136,9 +136,9 @@ def test_evaluate_with_llama_can_score_with_phrase_logprobs() -> None:
         phrase_logprobs=True,
     )
 
-    assert calls[1]["logprobs"] == 1
+    assert "logprobs" not in calls[1]
     assert result.candidates[0].text == "help soon"
-    assert result.candidates[0].logprob == pytest.approx((-0.2 - 0.6) / 2)
+    assert result.candidates[0].logprob == pytest.approx(-0.2)
 
 
 def test_evaluate_with_llama_accepts_continuation_sampling_options() -> None:

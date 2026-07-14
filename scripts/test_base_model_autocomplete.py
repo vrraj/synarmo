@@ -225,7 +225,7 @@ def main() -> int:
     try:
         from llama_cpp import Llama
     except ImportError:
-        print("llama-cpp-python is not installed. Try: pip install -e '.[llama]'")
+        print("llama-cpp-python is not installed. Try: uv sync --extra llama")
         return 1
 
     print(f"Loading {model_label(model_path)} model: {model_path}")

@@ -18,7 +18,7 @@ class ContextAssembler:
             parts.append(f"Known preferences: {prefs}")
         if context:
             parts.append(f"Current context: {context.strip()}")
-        parts.append(f"Current typed text: {text.strip()}")
+        parts.append(f"Current typed text: {text}")
         assembled = "\n".join(part for part in parts if part)
         if len(assembled) <= self.max_chars:
             return assembled

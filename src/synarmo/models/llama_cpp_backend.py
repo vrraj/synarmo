@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from synarmo.autocomplete_eval import AutocompleteEvaluation, evaluate_with_llama
+from synarmo.autocomplete_eval import (
+    AutocompleteCandidate,
+    AutocompleteEvaluation,
+    evaluate_with_llama,
+)
 from synarmo.infrastructure import collect_infrastructure_diagnostics
 from synarmo.models.base import GenerationOptions
 
@@ -196,6 +200,52 @@ class LlamaCppBackend:
             continuation_top_k=continuation_top_k,
             phrase_logprobs=phrase_logprobs,
             logprob_pool=logprob_pool,
+        )
+
+    def evaluate_instruct_autocomplete(
+        self,
+        *,
+        messages: list[dict[str, str]],
+        context: str,
+        choices: int = 3,
+        max_tokens: int = 5,
+        max_words: int = 1,
+        temperature: float = 0.5,
+        top_p: float = 0.9,
+    ) -> AutocompleteEvaluation:
+        """Generate alternatives through the GGUF's native chat template."""
+        if not self._has_embedded_chat_template():
+            raise ValueError(
+                "Instruct mode requires a GGUF with an embedded tokenizer.chat_template; "
+                "choose a compatible instruct model or set SYNARMO_MODEL_TYPE=base."
+            )
+        response = self._llm.create_chat_completion(
+            messages=messages,
+            max_tokens=max(max_tokens, choices * max_words * 4),
+            temperature=temperature,
+            top_p=top_p,
+            stop=["\n\n"],
+        )
+        content = response["choices"][0]["message"].get("content", "")
+        text = content if isinstance(content, str) else ""
+        candidates = [
+            AutocompleteCandidate(
+                text=line.strip(),
+                starter=line.strip().split(maxsplit=1)[0] if line.strip() else "",
+                rest="",
+                logprob=0.0,
+            )
+            for line in text.splitlines()
+            if line.strip()
+        ]
+        prompt = "\n".join(f"{message['role']}: {message['content']}" for message in messages)
+        return AutocompleteEvaluation(context=context, prompt=prompt, candidates=candidates)
+
+    def _has_embedded_chat_template(self) -> bool:
+        metadata = getattr(self._llm, "metadata", {})
+        return isinstance(metadata, dict) and any(
+            isinstance(key, str) and key.startswith("tokenizer.chat_template")
+            for key in metadata
         )
 
 

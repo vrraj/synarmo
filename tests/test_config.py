@@ -12,6 +12,7 @@ from synarmo.config import (
     configured_max_suggestion_words,
     configured_max_tokens,
     configured_model_filename,
+    configured_model_type,
     configured_model_path,
     configured_model_repo_id,
     configured_models_cache,
@@ -89,6 +90,14 @@ def test_configured_model_repo_id_reads_env(monkeypatch) -> None:
     )
 
     assert configured_model_repo_id() == "hugging-quants/Llama-3.2-1B-Instruct-Q4_K_M-GGUF"
+
+
+def test_configured_model_type_defaults_to_base_and_reads_instruct(monkeypatch) -> None:
+    monkeypatch.delenv("SYNARMO_MODEL_TYPE", raising=False)
+    assert configured_model_type() == "base"
+
+    monkeypatch.setenv("SYNARMO_MODEL_TYPE", "instruct")
+    assert configured_model_type() == "instruct"
 
 
 def test_explicit_model_path_overrides_env_model_path(tmp_path, monkeypatch) -> None:
@@ -242,3 +251,12 @@ def test_config_rejects_invalid_gpu_layers() -> None:
         assert "n_gpu_layers" in str(exc)
     else:
         raise AssertionError("Expected invalid n_gpu_layers to raise ValueError")
+
+
+def test_config_rejects_invalid_model_type() -> None:
+    try:
+        SynarmoConfig(model_type="other")  # type: ignore[arg-type]
+    except ValueError as exc:
+        assert "model_type" in str(exc)
+    else:
+        raise AssertionError("Expected invalid model_type to raise ValueError")

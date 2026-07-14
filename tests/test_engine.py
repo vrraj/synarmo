@@ -109,6 +109,7 @@ def test_engine_suggest_uses_autocomplete_evaluator_when_available(tmp_path) -> 
     assert backend.kwargs["phrase_logprobs"] is False
     assert [item.text for item in suggestions] == ["go outside"]
     assert suggestions[0].source == "autocomplete"
+    assert suggestions[0].score == -0.2
 
 
 def test_engine_filters_autocomplete_candidates_against_current_text(tmp_path) -> None:
@@ -150,3 +151,46 @@ def test_engine_suggest_passes_continuation_config_to_autocomplete_backend(tmp_p
     assert backend.kwargs["continuation_top_p"] == 0.85
     assert backend.kwargs["continuation_top_k"] == 24
     assert backend.kwargs["phrase_logprobs"] is True
+
+
+class InstructAutocompleteBackend:
+    name = "instruct-autocomplete"
+
+    def __init__(self) -> None:
+        self.kwargs = {}
+
+    def generate(self, prompt, options):  # noqa: ANN001
+        raise AssertionError("instruct mode should use evaluate_instruct_autocomplete")
+
+    def evaluate_instruct_autocomplete(self, **kwargs):  # noqa: ANN003
+        self.kwargs = kwargs
+        return AutocompleteEvaluation(
+            context=kwargs["context"],
+            prompt="native chat template",
+            candidates=[
+                AutocompleteCandidate(
+                    text="go outside",
+                    starter="go",
+                    rest=" outside",
+                    logprob=0.0,
+                )
+            ],
+        )
+
+
+def test_engine_uses_instruct_evaluator_with_role_messages(tmp_path) -> None:
+    from synarmo.config import SynarmoConfig
+    from synarmo.memory import UserMemory
+
+    backend = InstructAutocompleteBackend()
+    engine = SynarmoEngine(
+        config=SynarmoConfig(model_type="instruct", profiles_dir=tmp_path),
+        backend=backend,
+        memory=UserMemory(profile="test"),
+    )
+
+    suggestions = engine.suggest("I want to", context="At home")
+
+    assert [item.text for item in suggestions] == ["go outside"]
+    assert backend.kwargs["messages"][0]["role"] == "system"
+    assert backend.kwargs["messages"][1]["content"].endswith("Typed text:\nI want to")

@@ -62,8 +62,20 @@
             </section>
 
             <aside class="parameter-rail">
-              <h2>Compose Parameters</h2>
+              <h2>Parameters</h2>
               <div class="parameter-grid">
+                <div class="field-row field-row-wide">
+                  <label class="parameter-label" for="model-type">
+                    Model Type
+                    <span
+                      class="parameter-help"
+                      title="Base models predict directly from context and typed text. Instruct models use the GGUF's native chat template. Set SYNARMO_MODEL_TYPE and restart the service to change it."
+                      aria-label="Base models predict directly from context and typed text. Instruct models use the GGUF's native chat template. Set SYNARMO_MODEL_TYPE and restart the service to change it."
+                      tabindex="0"
+                    >?</span>
+                  </label>
+                  <input id="model-type" type="text" value="{{ compose_defaults.model_type }}" disabled />
+                </div>
                 <div class="field-row">
                   <label class="parameter-label" for="choices">
                     Choices
@@ -177,7 +189,7 @@
                 </div>
                 <div class="field-row field-row-wide">
                   <label class="parameter-label" for="suggest-on-spacebar">
-                    Auto - Suggest on Spacebar
+                    Suggest on Spacebar
                     <input id="suggest-on-spacebar" type="checkbox" checked />
                     <span
                       class="parameter-help"

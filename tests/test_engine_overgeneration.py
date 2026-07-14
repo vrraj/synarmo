@@ -27,7 +27,7 @@ def test_engine_overgenerates_then_returns_configured_count(tmp_path) -> None:
 
     suggestions = engine.suggest("I want to", context="At home")
 
-    assert "Predict exactly 9 natural continuations" in backend.prompt
+    assert backend.prompt == "Current context: At home\n\nI want to"
     assert backend.options is not None
     assert backend.options.max_tokens == 72
     assert backend.options.top_p == 0.95

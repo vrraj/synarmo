@@ -10,9 +10,12 @@ personalized next-word and short-phrase predictions across messaging, chat, and
 assistive typing workflows. It combines context-aware local inference, service
 APIs, and llama.cpp/GGUF support for swappable local models.
 
+Synarmo uses [uv](https://docs.astral.sh/uv/) for local development and
+dependency management. Install `uv` before using the checkout commands below.
+
 ```bash
-# Install with llama.cpp and service support
-pip install "synarmo[llama,service]"
+# Install the Synarmo CLI with llama.cpp and service support
+uv tool install "synarmo[llama,service]"
 ```
 
 The repository includes an
@@ -39,49 +42,33 @@ The primary path uses a local GGUF model for inference through llama.cpp. For no
 
 ## Install - PyPI Package
 
+Choose this route when you want the published command-line package. For a
+source checkout, use `./scripts/synarmo_pkg_setup.sh` instead; it performs the
+checkout-local setup in one command.
+
 Install Synarmo with llama.cpp and service support:
 
 **Step 1: Install the package**
 
 ```bash
-pip install "synarmo[llama,service]"
+uv tool install "synarmo[llama,service]"
 mkdir -p ~/models/synarmo
 ```
 
-**Step 2: Create a `.env` file**
-
-Create a `.env` file in the directory where you will run `synarmo` or your
-Python app with the following configuration:
+**Step 2: Set up configuration and the model**
 
 ```bash
-cat > .env << 'EOF'
-LOCAL_MODELS_CACHE=~/models/synarmo
-SYNARMO_MAX_SUGGESTIONS=3
-SYNARMO_MAX_TOKENS=5
-SYNARMO_MAX_SUGGESTION_WORDS=1
-SYNARMO_TEMPERATURE=0.0
-SYNARMO_TOP_P=1.0
-SYNARMO_CONTINUATION_TEMPERATURE=0.5
-SYNARMO_CONTINUATION_TOP_P=0.9
-SYNARMO_CONTINUATION_TOP_K=20
-SYNARMO_PHRASE_LOGPROBS=0
-SYNARMO_LOGPROB_POOL=24
-SYNARMO_N_GPU_LAYERS=-1
-SYNARMO_LLAMA_VERBOSE=0
-SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF
-SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
-EOF
+synarmo setup
 ```
 
-**Step 3: Download or verify the local inference model**
+The command:
 
-```bash
-synarmo model-ensure --backend llama-cpp
-```
+- creates `.env` in the current directory only when one does not already exist;
+- uses the default local model configuration;
+- downloads or verifies the configured GGUF model; and
+- prints the installed runtime and next command.
 
-This checks `LOCAL_MODELS_CACHE` and downloads `SYNARMO_MODEL` from
-`SYNARMO_MODEL_REPO_ID` if the GGUF model file is missing. With this `.env`
-configuration, the model is stored at:
+With the default configuration, the model is stored at:
 
 ```text
 ~/models/synarmo/Llama-3.2-1B.Q4_K_M.gguf
@@ -92,7 +79,7 @@ See
 [Infrastructure - llama.cpp Configuration](#infrastructure---llamacpp-configuration)
 for CPU/GPU settings.
 
-**Step 4: Test the installed package with the llama.cpp backend**
+**Step 3: Test the installed package with the llama.cpp backend**
 
 Run one suggestion request:
 
@@ -117,7 +104,8 @@ text, and immediately predicts the next suggestions.
 
 ## Install - Interactive `/ui` (Git Repo Clone)
 
-The Interactive `/ui` allows you to test local suggestions with context and auto-suggest parameters. It needs FastAPI service, static UI assets, and a virtual environment.
+The Interactive `/ui` lets you test local suggestions with context and
+auto-suggest parameters. This is the source-checkout route.
 
 **Step 1 — Clone the repository:**
 
@@ -126,51 +114,33 @@ git clone https://github.com/vrraj/synarmo.git
 cd synarmo
 ```
 
-**Step 2 — Create a virtual environment and install with llama.cpp and service extras:**
+**Step 2 — Run the setup script:**
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e ".[llama,service]"
+./scripts/synarmo_interactive_setup.sh
 ```
 
-This installs Synarmo in editable mode with llama.cpp and service dependencies.
-Use the `[dev]` extra when running tests or linters.
+The script:
 
-**Step 3 — Configure a local GGUF model:**
+- creates `.venv` and installs Synarmo with llama.cpp and FastAPI;
+- creates `.env` only when it is missing;
+- downloads or verifies the configured GGUF model; and
+- prints the next command and UI URL.
 
-```bash
-cp .env.example .env
-mkdir -p ~/models/synarmo
-```
+Run it once per virtual environment. If you later run plain `uv sync` or
+`make install`, run `make llama` before starting the UI to restore the UI and
+llama.cpp dependencies.
 
-The included `.env.example` sets the Hugging Face repo and GGUF filename that
-the next step can download, and assumes an Apple Silicon Mac with one
-integrated Metal GPU. See
-[Configure A Local Model](#configure-a-local-model) for manual model paths and
-other model options, and
-[Infrastructure - llama.cpp Configuration](#infrastructure---llamacpp-configuration)
-for CPU/GPU settings.
-
-**Step 4 — Download or verify the local inference model:**
-
-```bash
-make model-ensure
-```
-
-This checks `LOCAL_MODELS_CACHE` and downloads `SYNARMO_MODEL` from
-`SYNARMO_MODEL_REPO_ID` if the GGUF file is missing. The first model download
-can take some time.
-
-**Step 5 — Start the service with real local inference:**
+**Step 3 — Start the UI:**
 
 ```bash
 make ux
 ```
 
-`make ux` starts the configured llama.cpp backend in the background and waits for `/health`.
+`make ux` starts the configured llama.cpp backend in the background and waits
+for `/health`. For another trusted device on your LAN, use `make serve-lan`.
 
-**Step 6 — Open the UI shown by `make ux`:**
+**Step 4 — Open the UI:**
 
 ```text
 http://127.0.0.1:8765/ui
@@ -375,13 +345,13 @@ On Apple Silicon, the normal install is usually enough. If Metal offload is not
 available, rebuild `llama-cpp-python` with Metal:
 
 ```bash
-CMAKE_ARGS="-DGGML_METAL=on" pip install --upgrade --force-reinstall --no-cache-dir llama-cpp-python
+CMAKE_ARGS="-DGGML_METAL=on" uv pip install --upgrade --reinstall --no-cache llama-cpp-python
 ```
 
 For NVIDIA CUDA:
 
 ```bash
-CMAKE_ARGS="-DGGML_CUDA=on" pip install --upgrade --force-reinstall --no-cache-dir llama-cpp-python
+CMAKE_ARGS="-DGGML_CUDA=on" uv pip install --upgrade --reinstall --no-cache llama-cpp-python
 ```
 
 Then use:
@@ -557,7 +527,6 @@ come from `.env`. UI changes still apply to the current browser request; edit
 | Logprobs | 24 | Number of top next-token log probabilities to request from llama.cpp for starter selection. |
 | Phrase Temp | 0.5 | Controls randomness while expanding each selected first word into a phrase. |
 | Phrase Top P | 0.9 | Nucleus sampling value used during phrase continuation. |
-| Phrase Logprobs | Off | `0` keeps live typing faster by scoring from the first-word token. `1` requests continuation logprobs for phrase-level scoring, but adds latency. |
 | Auto - Suggest on Spacebar | On | Automatically asks for new suggestions after typing a space. |
 
 | `.env` setting | Applies to |
@@ -571,7 +540,6 @@ come from `.env`. UI changes still apply to the current browser request; edit
 | `SYNARMO_CONTINUATION_TEMPERATURE` | Phrase Temp |
 | `SYNARMO_CONTINUATION_TOP_P` | Phrase Top P |
 | `SYNARMO_CONTINUATION_TOP_K` | Advanced continuation top-k guardrail |
-| `SYNARMO_PHRASE_LOGPROBS` | Phrase Logprobs |
 | `SYNARMO_CONTEXT_WINDOW` | llama.cpp `n_ctx` |
 
 For auto-suggest, Synarmo separates first-word branch selection from phrase
@@ -671,14 +639,11 @@ The llama.cpp auto-suggest path has two phases:
    varied. Advanced users can also set `SYNARMO_CONTINUATION_TOP_K` as a hard
    sampling guardrail.
 
-By default, candidate percentages use the first-word logprob for lower latency.
-When `SYNARMO_PHRASE_LOGPROBS=1`, percentages are based on the tokens that
-remain visible after the `Words` limit is applied. Synarmo averages the visible
-token logprobs and the browser displays `exp(average_logprob) * 100`;
-equivalently, the phrase score is `exp((log p1 + log p2 + ... + log pn) / n)`.
-Pure formatting punctuation such as commas, quotes, brackets, and dashes is
-excluded from that average; meaningful `!` and `?` tokens remain part of the
-score.
+Each candidate retains the model-provided logprob for its starter token. The
+browser displays `exp(starter_logprob) * 100`, which is the likelihood of that
+first word at the cursor—not the likelihood of the full generated phrase.
+`Choices`, `Tokens`, and `Words` do not alter that score. Continuation
+logprobs are not requested, keeping live type-ahead responsive.
 
 ### Use Service Endpoints
 
@@ -796,15 +761,14 @@ Use it to check:
 Install the lightweight package and run a no-model API check:
 
 ```bash
-pip install synarmo
-python -c "from synarmo import SynarmoEngine; e=SynarmoEngine.load(); print([s.text for s in e.suggest('I want to')])"
+uv run --with synarmo python -c "from synarmo import SynarmoEngine; e=SynarmoEngine.load(); print([s.text for s in e.suggest('I want to')])"
 ```
 
 From a source checkout, run the verification specs without downloading a model:
 
 ```bash
-pip install -e ".[dev]"
-PYTHONPATH=src pytest
+uv sync --extra dev
+uv run pytest
 ```
 
 The files under `tests/` are production behavior verification specs. For

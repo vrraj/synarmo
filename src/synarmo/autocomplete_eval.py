@@ -184,28 +184,13 @@ def evaluate_with_llama(
             "stop": ["\n"],
             "echo": False,
         }
-        if phrase_logprobs:
-            continuation_options["logprobs"] = 1
         response = llm(**continuation_options)
         rest = str(response["choices"][0]["text"])
-        if phrase_logprobs:
-            continuation_pairs = extract_generated_token_logprob_pairs(response)
-            token_texts = [starter.text]
-            token_logprobs = [starter.logprob]
-            if continuation_pairs:
-                token_texts.extend(token_text for token_text, _ in continuation_pairs)
-                token_logprobs.extend(logprob for _, logprob in continuation_pairs)
-                candidate, logprob = trim_candidate_with_logprobs(
-                    token_texts,
-                    token_logprobs,
-                    max_words=max_words,
-                )
-            else:
-                candidate = normalize_candidate(starter.text + rest, max_words=max_words)
-                logprob = starter.logprob
-        else:
-            candidate = normalize_candidate(starter.text + rest, max_words=max_words)
-            logprob = starter.logprob
+        # Continuation logprobs add material latency. A candidate therefore
+        # always retains its starter token's model-provided logprob, regardless
+        # of the generated phrase length.
+        candidate = normalize_candidate(starter.text + rest, max_words=max_words)
+        logprob = starter.logprob
         candidates.append(
             AutocompleteCandidate(
                 text=candidate,
