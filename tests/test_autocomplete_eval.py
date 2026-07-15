@@ -8,22 +8,27 @@ from synarmo.autocomplete_eval import (
 )
 
 
-def test_build_autocomplete_prompt_omits_duplicate_current_typed_text_label() -> None:
+def test_build_autocomplete_prompt_matches_v0_1_0_base_model_format() -> None:
     prompt = build_autocomplete_prompt(
         "Current context: At the gym\nCurrent typed text: I want to",
         "I want to",
     )
 
-    assert "Current typed text:" not in prompt
+    assert prompt == (
+        "Current context: At the gym\n"
+        "Current typed text: I want to\n\n"
+        "Live message:\n"
+        "I want to"
+    )
     assert prompt.endswith("I want to")
 
 
-def test_build_autocomplete_prompt_keeps_stable_prefix_before_context_and_text() -> None:
+def test_build_autocomplete_prompt_ends_with_each_typed_text_value() -> None:
     first = build_autocomplete_prompt("Current context: At the gym", "I want")
     second = build_autocomplete_prompt("Current context: At the gym", "I want to")
 
-    assert first.startswith("Current context: At the gym\n\n")
-    assert first.removesuffix("I want") == second.removesuffix("I want to")
+    assert first == "Current context: At the gym\n\nLive message:\nI want"
+    assert second == "Current context: At the gym\n\nLive message:\nI want to"
 
 
 def test_extract_top_logprobs_returns_empty_dict_for_empty_llama_logprobs() -> None:
@@ -100,6 +105,47 @@ def test_evaluate_with_llama_uses_ranked_logprob_starters() -> None:
     assert calls[1]["top_k"] == 20
     assert "logprobs" not in calls[1]
     assert len(calls) == 3
+
+
+def test_evaluate_with_llama_backfills_rejected_starters_to_requested_choice_count() -> None:
+    calls = []
+
+    def fake_llama(**kwargs):
+        calls.append(kwargs)
+        if kwargs["max_tokens"] == 1:
+            return {
+                "choices": [
+                    {
+                        "text": "",
+                        "logprobs": {
+                            "top_logprobs": [
+                                {
+                                    " <": -0.1,
+                                    " to": -0.2,
+                                    " help": -0.3,
+                                    " call": -0.4,
+                                    " eat": -0.5,
+                                }
+                            ]
+                        },
+                    }
+                ]
+            }
+        return {"choices": [{"text": " now"}]}
+
+    result = evaluate_with_llama(
+        fake_llama,
+        context="At home",
+        typed_text="I want to",
+        choices=3,
+        max_words=2,
+    )
+
+    assert [candidate.text for candidate in result.candidates] == [
+        "help now",
+        "call now",
+        "eat now",
+    ]
 
 
 def test_evaluate_with_llama_keeps_starter_logprob_when_phrase_logprobs_are_requested() -> None:

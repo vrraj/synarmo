@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 import math
 from typing import Any
 
-from synarmo.prompts import PromptBuilder
+from synarmo.suggestions import Suggestion, SuggestionRanker
 
 PURE_FORMATTING_PUNCTUATION = set(",.;:()[]{}\"'-")
 PURE_FORMATTING_PUNCTUATION.update({"-", "–", "—"})
@@ -33,11 +33,11 @@ class AutocompleteEvaluation:
 
 
 def build_autocomplete_prompt(context: str, typed_text: str) -> str:
-    """Compatibility wrapper for the canonical prompt builder."""
-    return PromptBuilder().build_autocomplete(
-        assembled_context=context,
-        typed_text=typed_text,
-    )
+    """Build the v0.1.0 Base-model next-token prompt exactly."""
+    return f"""{context.rstrip()}
+
+Live message:
+{typed_text}"""
 
 
 def normalize_candidate(text: str, *, max_words: int) -> str:
@@ -170,9 +170,8 @@ def evaluate_with_llama(
             continue
         seen_words.add(first_word)
         starters.append(LogprobToken(text=token_text, logprob=float(logprob)))
-        if len(starters) >= choices:
-            break
 
+    ranker = SuggestionRanker()
     candidates: list[AutocompleteCandidate] = []
     for starter in starters:
         continuation_options: dict[str, Any] = {
@@ -190,15 +189,24 @@ def evaluate_with_llama(
         # always retains its starter token's model-provided logprob, regardless
         # of the generated phrase length.
         candidate = normalize_candidate(starter.text + rest, max_words=max_words)
-        logprob = starter.logprob
+        accepted = ranker.rank_scored(
+            [Suggestion(text=candidate, score=starter.logprob, source="autocomplete")],
+            current_text=typed_text,
+            max_suggestions=1,
+            max_words=max_words,
+        )
+        if not accepted or any(existing.text.lower() == candidate.lower() for existing in candidates):
+            continue
         candidates.append(
             AutocompleteCandidate(
                 text=candidate,
                 starter=starter.text,
                 rest=rest,
-                logprob=logprob,
+                logprob=starter.logprob,
             )
         )
+        if len(candidates) >= choices:
+            break
 
     return AutocompleteEvaluation(
         context=context,
