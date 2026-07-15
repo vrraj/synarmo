@@ -57,32 +57,20 @@ def _process_resident_ram() -> int | None:
 def _macos_process_resident_ram() -> int | None:
     class ProcessTaskInfo(Structure):
         _fields_ = [
-            ("virtual_size", c_uint64),
-            ("resident_size", c_uint64),
-            ("total_user", c_uint64),
-            ("total_system", c_uint64),
-            ("threads_user", c_uint64),
-            ("threads_system", c_uint64),
-            ("policy", c_int),
-            ("faults", c_int),
-            ("pageins", c_int),
-            ("cow_faults", c_int),
-            ("messages_sent", c_int),
-            ("messages_received", c_int),
-            ("syscalls_mach", c_int),
-            ("syscalls_unix", c_int),
-            ("csw", c_int),
-            ("threadnum", c_int),
-            ("numrunning", c_int),
-            ("priority", c_int),
+            ("virtual_size", c_uint64), ("resident_size", c_uint64),
+            ("total_user", c_uint64), ("total_system", c_uint64),
+            ("threads_user", c_uint64), ("threads_system", c_uint64),
+            ("policy", c_int), ("faults", c_int), ("pageins", c_int),
+            ("cow_faults", c_int), ("messages_sent", c_int),
+            ("messages_received", c_int), ("syscalls_mach", c_int),
+            ("syscalls_unix", c_int), ("csw", c_int), ("threadnum", c_int),
+            ("numrunning", c_int), ("priority", c_int),
         ]
 
     try:
         info = ProcessTaskInfo()
         library = CDLL("/usr/lib/libproc.dylib")
-        result = library.proc_pidinfo(
-            os.getpid(), 4, 0, byref(info), sizeof(info)
-        )
+        result = library.proc_pidinfo(os.getpid(), 4, 0, byref(info), sizeof(info))
         return int(info.resident_size) if result else None
     except OSError:
         return None
@@ -123,13 +111,12 @@ def _gpu_diagnostics() -> dict[str, object]:
         handle = pynvml.nvmlDeviceGetHandleByIndex(0)
         memory = pynvml.nvmlDeviceGetMemoryInfo(handle)
         utilization = pynvml.nvmlDeviceGetUtilizationRates(handle)
-        process_memory = _nvml_process_memory(pynvml, handle)
         return {
             "available": True,
             "device_memory_used_bytes": int(memory.used),
             "device_memory_total_bytes": int(memory.total),
             "device_utilization_pct": int(utilization.gpu),
-            "process_memory_bytes": process_memory,
+            "process_memory_bytes": _nvml_process_memory(pynvml, handle),
         }
     except Exception as exc:
         return {"available": False, "reason": str(exc)}

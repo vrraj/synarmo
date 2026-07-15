@@ -20,7 +20,7 @@ class FillBackend:
 def test_engine_fill_pass_runs_when_cleanup_leaves_too_few_suggestions(tmp_path) -> None:
     backend = FillBackend()
     engine = SynarmoEngine(
-        config=SynarmoConfig(max_suggestions=3, max_suggestion_words=4, profiles_dir=tmp_path),
+        config=SynarmoConfig(max_suggestions=3, profiles_dir=tmp_path),
         backend=backend,
         memory=UserMemory(profile="test"),
     )

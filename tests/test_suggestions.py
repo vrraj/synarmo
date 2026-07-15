@@ -118,18 +118,6 @@ def test_ranker_drops_suggestions_already_in_current_text() -> None:
     assert [item.text for item in suggestions] == ["take a walk"]
 
 
-def test_ranker_strips_leading_sentence_punctuation_before_duplicate_check() -> None:
-    ranker = SuggestionRanker()
-
-    suggestions = ranker.rank(
-        ". I want to\nfor 30 minutes",
-        current_text="I want to be able to run",
-        max_suggestions=3,
-    )
-
-    assert [item.text for item in suggestions] == ["for 30 minutes"]
-
-
 def test_ranker_drops_instruction_echoes() -> None:
     ranker = SuggestionRanker()
 

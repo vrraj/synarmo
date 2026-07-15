@@ -5,22 +5,17 @@ from pathlib import Path
 
 from synarmo.config import configured_models_cache, load_env_file
 from synarmo.engine import SynarmoEngine
-from synarmo.suggestions import Suggestion
 
 
 _DEFAULT_ENV = """LOCAL_MODELS_CACHE=~/models/synarmo
 SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF
 SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
-SYNARMO_CONTEXT_WINDOW=4096
 SYNARMO_N_GPU_LAYERS=-1
 SYNARMO_MAX_SUGGESTIONS=3
 SYNARMO_MAX_TOKENS=5
-SYNARMO_MAX_SUGGESTION_WORDS=2
-SYNARMO_TEMPERATURE=0
-SYNARMO_TOP_P=1
-SYNARMO_CONTINUATION_TEMPERATURE=0.5
-SYNARMO_CONTINUATION_TOP_P=0.9
-SYNARMO_CONTINUATION_TOP_K=20
+SYNARMO_MAX_SUGGESTION_WORDS=4
+SYNARMO_TEMPERATURE=0.25
+SYNARMO_TOP_P=0.95
 SYNARMO_LOGPROB_POOL=24
 """
 
@@ -56,7 +51,7 @@ def build_parser() -> argparse.ArgumentParser:
     setup_parser.add_argument(
         "--skip-model",
         action="store_true",
-        help="Create or preserve the configuration without loading or downloading the model.",
+        help="Create or preserve the configuration without downloading the model.",
     )
 
     compose_parser = subcommands.add_parser(
@@ -90,8 +85,8 @@ def app() -> None:
 
     if args.command == "suggest":
         engine = _load_engine(args)
-        text = _display_text(args.text)
-        _print_suggestions(text, engine.suggest(text=text, context=args.context))
+        for item in engine.suggest(text=args.text, context=args.context):
+            print(item.text)
         return
 
     if args.command == "model-ensure":
@@ -164,11 +159,8 @@ def _format_runtime_diagnostics(engine: SynarmoEngine) -> str:
     parts = [
         f"backend={diagnostics.get('backend', '')}",
         f"model={diagnostics.get('model', '')}",
-        f"context_window={diagnostics.get('context_window', '')}",
         f"n_gpu_layers={diagnostics.get('n_gpu_layers', '')}",
     ]
-    if "actual_context_window" in diagnostics:
-        parts.append(f"actual_context_window={diagnostics['actual_context_window']}")
     if "requested_gpu_layers" in diagnostics:
         parts.append(f"requested_gpu_layers={diagnostics['requested_gpu_layers']}")
     if "model_layers" in diagnostics:
@@ -178,23 +170,6 @@ def _format_runtime_diagnostics(engine: SynarmoEngine) -> str:
     if "llama_verbose" in diagnostics:
         parts.append(f"llama_verbose={diagnostics['llama_verbose']}")
     return "Synarmo runtime: " + " ".join(parts)
-
-
-def _display_text(text: str) -> str:
-    normalized = " ".join(text.split())
-    if normalized.lower() == "my goals":
-        return "My Goals are"
-    return text.strip()
-
-
-def _print_suggestions(text: str, suggestions: list[Suggestion]) -> None:
-    print(text)
-    print("Suggestions:")
-    if not suggestions:
-        print("No suggestions.")
-        return
-    for index, item in enumerate(suggestions, start=1):
-        print(f"{index}. {item.text}")
 
 
 def _compose(engine: SynarmoEngine, *, text: str, context: str) -> None:

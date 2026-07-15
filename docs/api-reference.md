@@ -62,17 +62,12 @@ class SynarmoConfig:
     profile: str = "default"
     max_suggestions: int = field(default_factory=configured_max_suggestions)
     max_latency_ms: int = 100
-    context_window: int = field(default_factory=configured_context_window)
+    context_window: int = 2048
     style_adaptation: bool = True
-    temperature: float = field(default_factory=configured_temperature)
-    top_p: float = field(default_factory=configured_top_p)
-    continuation_temperature: float = field(default_factory=configured_continuation_temperature)
-    continuation_top_p: float = field(default_factory=configured_continuation_top_p)
-    continuation_top_k: int = field(default_factory=configured_continuation_top_k)
-    phrase_logprobs: bool = field(default_factory=configured_phrase_logprobs)
+    temperature: float = 0.25
+    top_p: float = 0.95
     max_tokens: int = 5
     max_suggestion_words: int = 4
-    logprob_pool: int = field(default_factory=configured_logprob_pool)
     stop: list[str] = field(default_factory=lambda: ["\n\n"])
     profiles_dir: Path = Path("profiles")
 ```
@@ -89,17 +84,12 @@ class SynarmoConfig:
 | `profile` | `str` | "default" | User profile name |
 | `max_suggestions` | `int` | 3 | Maximum number of suggestions to return (1-10) |
 | `max_latency_ms` | `int` | 100 | Target maximum latency in milliseconds |
-| `context_window` | `int` | 2048 unless `SYNARMO_CONTEXT_WINDOW` is set | Context window size in tokens (min 128). Local tuning uses `4096`. |
+| `context_window` | `int` | 2048 | Context window size in tokens (min 128) |
 | `style_adaptation` | `bool` | True | Whether to adapt to user style from memory |
-| `temperature` | `float` | 0.25 unless `SYNARMO_TEMPERATURE` is set | First-word probe temperature for API/package calls. For the logprob-based starter flow, pass `0.0` for deterministic starter ranking. |
-| `top_p` | `float` | 0.95 unless `SYNARMO_TOP_P` is set | First-word probe Top P for API/package calls. For the logprob-based starter flow, pass `1.0` so starter candidates come from the raw logprob table. |
-| `continuation_temperature` | `float` | 0.5 unless `SYNARMO_CONTINUATION_TEMPERATURE` is set | Phrase continuation temperature (0.0-2.0) |
-| `continuation_top_p` | `float` | 0.9 unless `SYNARMO_CONTINUATION_TOP_P` is set | Phrase continuation nucleus sampling threshold |
-| `continuation_top_k` | `int` | 20 unless `SYNARMO_CONTINUATION_TOP_K` is set | Phrase continuation top-k guardrail; `0` disables |
-| `phrase_logprobs` | `bool` | false unless `SYNARMO_PHRASE_LOGPROBS=1` | Enables phrase-level logprob scoring for visible tokens; adds latency |
+| `temperature` | `float` | 0.25 | Sampling temperature (0.0-2.0) |
+| `top_p` | `float` | 0.95 | Nucleus sampling threshold (greater than 0.0 and up to 1.0) |
 | `max_tokens` | `int` | 5 | Maximum tokens to generate (1-128) |
 | `max_suggestion_words` | `int` | 4 | Maximum words per suggestion (1-20) |
-| `logprob_pool` | `int` | 24 unless `SYNARMO_LOGPROB_POOL` is set | Number of first-word next-token logprobs to inspect |
 | `stop` | `list[str]` | ["\n\n"] | Stop sequences for generation |
 | `profiles_dir` | `Path` | "profiles" | Directory for user profiles |
 
@@ -166,11 +156,7 @@ engine = SynarmoEngine.load(
     backend="llama-cpp",
     profile="default",
     max_suggestions=3,
-    temperature=0.0,
-    top_p=1.0,
-    continuation_temperature=0.5,
-    continuation_top_p=0.9,
-    logprob_pool=24,
+    temperature=0.25,
 )
 
 # Load with mock backend for no-model wiring checks
@@ -184,26 +170,10 @@ passed directly, that local GGUF file must already exist.
 
 ### `suggest()`
 
-Generate suggestions for the given text. Request-level overrides can be passed
-without mutating the engine's default configuration.
+Generate suggestions for the given text.
 
 ```python
-def suggest(
-    self,
-    text: str,
-    context: str | None = None,
-    *,
-    max_suggestions: int | None = None,
-    max_tokens: int | None = None,
-    max_words: int | None = None,
-    temperature: float | None = None,
-    top_p: float | None = None,
-    continuation_temperature: float | None = None,
-    continuation_top_p: float | None = None,
-    continuation_top_k: int | None = None,
-    phrase_logprobs: bool | None = None,
-    logprob_pool: int | None = None,
-) -> list[Suggestion]
+def suggest(self, text: str, context: str | None = None) -> list[Suggestion]
 ```
 
 **Parameters:**
@@ -212,16 +182,6 @@ def suggest(
 |-----------|------|----------|-------------|
 | `text` | `str` | ✅ | Current text to complete |
 | `context` | `str | None` | ❌ | Optional conversation or scene context |
-| `max_suggestions` | `int | None` | ❌ | Override the number of suggestions (falls back to config) |
-| `max_tokens` | `int | None` | ❌ | Override maximum generation tokens |
-| `max_words` | `int | None` | ❌ | Override maximum visible words per suggestion |
-| `temperature` | `float | None` | ❌ | Override starter probe temperature |
-| `top_p` | `float | None` | ❌ | Override starter probe Top P |
-| `continuation_temperature` | `float | None` | ❌ | Override continuation temperature |
-| `continuation_top_p` | `float | None` | ❌ | Override continuation Top P |
-| `continuation_top_k` | `int | None` | ❌ | Override continuation Top K guardrail |
-| `phrase_logprobs` | `bool | None` | ❌ | Override phrase logprob scoring toggle |
-| `logprob_pool` | `int | None` | ❌ | Override number of next-token logprobs to request |
 
 **Returns:** `list[Suggestion]` - List of ranked suggestions
 
@@ -230,14 +190,7 @@ def suggest(
 ```python
 from synarmo import SynarmoEngine
 
-engine = SynarmoEngine.load(
-    backend="llama-cpp",
-    temperature=0.0,
-    top_p=1.0,
-    continuation_temperature=0.5,
-    continuation_top_p=0.9,
-    logprob_pool=24,
-)
+engine = SynarmoEngine.load(backend="llama-cpp")
 suggestions = engine.suggest(
     text="I want to",
     context="At home, asking for help"
@@ -249,12 +202,7 @@ for suggestion in suggestions:
 
 ### `evaluate_autocomplete()`
 
-Run `suggest()` for multiple contexts while surfacing the assembled prompt and
-ranked candidates. This compatibility adapter keeps the public API stable while
-ensuring every entry point (CLI, service, browser UI, Python API) now shares the
-same prediction path. The `logprob` field mirrors the per-suggestion score
-returned by the ranker; `top_tokens` will be empty unless you call a backend's
-`evaluate_autocomplete()` directly.
+Evaluate auto-suggest behavior with detailed token-level information. The llama-cpp backend returns model logprobs; the mock backend returns deterministic fallback candidates for tests and wiring checks.
 
 ```python
 def evaluate_autocomplete(
@@ -267,10 +215,6 @@ def evaluate_autocomplete(
     max_words: int = 1,
     temperature: float = 0.5,
     top_p: float = 0.95,
-    continuation_temperature: float | None = None,
-    continuation_top_p: float | None = None,
-    continuation_top_k: int | None = None,
-    phrase_logprobs: bool | None = None,
     logprob_pool: int = 24,
 ) -> list[AutocompleteEvaluation]
 ```
@@ -284,13 +228,9 @@ def evaluate_autocomplete(
 | `choices` | `int` | 3 | Number of suggestions to return |
 | `max_tokens` | `int` | 5 | Maximum tokens per suggestion |
 | `max_words` | `int` | 1 | Maximum words per suggestion |
-| `temperature` | `float` | 0.5 | First-word probe temperature. For logprob-ranked starter branches, use `0.0`. |
-| `top_p` | `float` | 0.95 | First-word probe Top P. For logprob-ranked starter branches, use `1.0`. |
-| `continuation_temperature` | `float | None` | None | Phrase continuation temperature; `None` uses engine config |
-| `continuation_top_p` | `float | None` | None | Phrase continuation Top P; `None` uses engine config |
-| `continuation_top_k` | `int | None` | None | Phrase continuation Top K; `None` uses engine config |
-| `phrase_logprobs` | `bool | None` | None | Enables phrase-level logprob scoring; `None` uses engine config |
-| `logprob_pool` | `int` | 24 | Number of first-word next-token logprobs to inspect |
+| `temperature` | `float` | 0.5 | Sampling temperature |
+| `top_p` | `float` | 0.95 | Nucleus sampling threshold |
+| `logprob_pool` | `int` | 24 | Number of logprob tokens to inspect |
 
 **Returns:** `list[AutocompleteEvaluation]` - Detailed auto-suggest evaluation results
 
@@ -304,17 +244,13 @@ evaluations = engine.evaluate_autocomplete(
     text="I want to",
     contexts=["At home", "At work", "With friends"],
     choices=3,
-    temperature=0.0,
-    top_p=1.0,
-    continuation_temperature=0.5,
-    continuation_top_p=0.9,
-    logprob_pool=24,
+    temperature=0.5,
 )
 
 for eval in evaluations:
     print(f"Context: {eval.context}")
     for candidate in eval.candidates:
-        print(f"  {candidate.text} (score: {candidate.logprob})")
+        print(f"  {candidate.text} (logprob: {candidate.logprob})")
 ```
 
 ### `configure()`
@@ -336,10 +272,7 @@ def configure(self, **updates: object) -> None
 ```python
 engine.configure(
     max_suggestions=5,
-    temperature=0.0,
-    top_p=1.0,
-    continuation_temperature=0.5,
-    continuation_top_p=0.9,
+    temperature=0.3,
     max_suggestion_words=3,
 )
 ```
@@ -393,10 +326,7 @@ from synarmo import SynarmoConfig
 config = SynarmoConfig()
 new_config = config.copy_with(
     max_suggestions=5,
-    temperature=0.0,
-    top_p=1.0,
-    continuation_temperature=0.5,
-    continuation_top_p=0.9,
+    temperature=0.3,
     backend="llama-cpp"
 )
 ```
@@ -456,11 +386,7 @@ class SuggestionRanker:
 
 ### `predict()`
 
-One-shot prediction function (loads engine on first call). Any keyword arguments
-recognized by `SynarmoEngine.suggest()` (e.g., `max_suggestions`, `max_tokens`,
-`max_words`, sampling controls, `phrase_logprobs`, `logprob_pool`) can now be
-passed directly and apply only to that request. The helper also accepts the
-legacy `max_suggestion_words` name and maps it to `max_words` for convenience.
+One-shot prediction function (loads engine on first call).
 
 ```python
 def predict(
@@ -492,18 +418,12 @@ suggestions = synarmo.predict(
     context="At home",
     backend="llama-cpp",
     max_suggestions=3,
-    temperature=0.0,
-    top_p=1.0,
-    continuation_temperature=0.5,
-    continuation_top_p=0.9,
-    logprob_pool=24,
 )
 ```
 
 ### `suggest()`
 
-Alias for `predict()` with the same per-request override behavior and
-`max_suggestion_words` compatibility alias.
+Alias for `predict()` function.
 
 ```python
 def suggest(
@@ -548,11 +468,6 @@ This uses the model configured in `.env`:
 ```dotenv
 LOCAL_MODELS_CACHE=~/models/synarmo
 SYNARMO_MAX_SUGGESTIONS=3
-SYNARMO_TEMPERATURE=0.0
-SYNARMO_TOP_P=1.0
-SYNARMO_CONTINUATION_TEMPERATURE=0.5
-SYNARMO_CONTINUATION_TOP_P=0.9
-SYNARMO_LOGPROB_POOL=24
 SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF
 SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
 ```
@@ -568,11 +483,6 @@ from synarmo import SynarmoEngine
 engine = SynarmoEngine.load(
     backend="llama-cpp",
     model_path="~/models/synarmo/Llama-3.2-1B.Q4_K_M.gguf",
-    temperature=0.0,
-    top_p=1.0,
-    continuation_temperature=0.5,
-    continuation_top_p=0.9,
-    logprob_pool=24,
 )
 suggestions = engine.suggest(
     text="I want to",
@@ -606,11 +516,7 @@ suggestions = synarmo.predict(
     context="greeting",
     backend="llama-cpp",
     max_suggestions=3,
-    temperature=0.0,
-    top_p=1.0,
-    continuation_temperature=0.5,
-    continuation_top_p=0.9,
-    logprob_pool=24,
+    temperature=0.25,
 )
 ```
 
@@ -623,11 +529,8 @@ engine = SynarmoEngine.load(
     backend="llama-cpp",
     max_suggestions=5,
     max_suggestion_words=3,
-    temperature=0.0,
-    top_p=1.0,
-    continuation_temperature=0.5,
-    continuation_top_p=0.9,
-    logprob_pool=24,
+    temperature=0.3,
+    top_p=0.90,
     style_adaptation=True,
 )
 ```
@@ -638,13 +541,7 @@ engine = SynarmoEngine.load(
 from synarmo import SynarmoEngine
 
 engine = SynarmoEngine.load(backend="llama-cpp")
-engine.configure(
-    max_suggestions=5,
-    temperature=0.0,
-    top_p=1.0,
-    continuation_temperature=0.5,
-    continuation_top_p=0.9,
-)
+engine.configure(max_suggestions=5, temperature=0.3)
 ```
 
 ### 7. User Profile and Memory
@@ -675,11 +572,7 @@ evaluations = engine.evaluate_autocomplete(
     text="I want to",
     contexts=["At home", "At work", "With friends"],
     choices=3,
-    temperature=0.0,
-    top_p=1.0,
-    continuation_temperature=0.5,
-    continuation_top_p=0.9,
-    logprob_pool=24,
+    temperature=0.5,
 )
 
 for eval in evaluations:
@@ -734,12 +627,8 @@ def suggest():
 | `profile` | ✅ Stable | User profile name |
 | `max_suggestions` | ✅ Stable | Maximum suggestions (1-10) |
 | `max_suggestion_words` | ✅ Stable | Maximum words per suggestion (1-20) |
-| `temperature` | ✅ Stable | First-word probe temperature (0.0-2.0); use `0.0` for logprob-ranked starters |
-| `top_p` | ✅ Stable | First-word probe Top P; use `1.0` for logprob-ranked starters |
-| `continuation_temperature` | ✅ Stable | Phrase continuation temperature (0.0-2.0) |
-| `continuation_top_p` | ✅ Stable | Phrase continuation nucleus sampling |
-| `continuation_top_k` | ✅ Stable | Phrase continuation top-k guardrail |
-| `logprob_pool` | ✅ Stable | Number of first-word logprob candidates to inspect |
+| `temperature` | ✅ Stable | Sampling temperature (0.0-2.0) |
+| `top_p` | ✅ Stable | Nucleus sampling (greater than 0.0 and up to 1.0) |
 | `max_tokens` | ✅ Stable | Maximum tokens (1-128) |
 | `context_window` | ✅ Stable | Context window size |
 | `style_adaptation` | ✅ Stable | Style adaptation toggle |

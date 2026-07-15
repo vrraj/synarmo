@@ -27,10 +27,6 @@ def test_predict_accepts_generation_parameters() -> None:
         max_suggestion_words=2,
         temperature=0.4,
         top_p=0.8,
-        continuation_temperature=0.6,
-        continuation_top_p=0.85,
-        continuation_top_k=32,
-        phrase_logprobs=True,
         max_tokens=16,
     )
 
@@ -61,24 +57,16 @@ class AutocompleteBackend:
 
     def __init__(self) -> None:
         self.called = False
-        self.kwargs = {}
 
     def generate(self, prompt, options):  # noqa: ANN001
         raise AssertionError("suggest should use evaluate_autocomplete when available")
 
     def evaluate_autocomplete(self, **kwargs):  # noqa: ANN003
         self.called = True
-        self.kwargs = kwargs
         return AutocompleteEvaluation(
             context=kwargs["context"],
             prompt="prompt",
             candidates=[
-                AutocompleteCandidate(
-                    text=". I want to",
-                    starter=".",
-                    rest=" I want to",
-                    logprob=-0.1,
-                ),
                 AutocompleteCandidate(
                     text="go outside",
                     starter=" go",
@@ -103,94 +91,5 @@ def test_engine_suggest_uses_autocomplete_evaluator_when_available(tmp_path) -> 
     suggestions = engine.suggest("I want to", context="At home")
 
     assert backend.called
-    assert backend.kwargs["continuation_temperature"] == 0.5
-    assert backend.kwargs["continuation_top_p"] == 0.9
-    assert backend.kwargs["continuation_top_k"] == 20
-    assert backend.kwargs["phrase_logprobs"] is False
     assert [item.text for item in suggestions] == ["go outside"]
     assert suggestions[0].source == "autocomplete"
-    assert suggestions[0].score == -0.2
-
-
-def test_engine_filters_autocomplete_candidates_against_current_text(tmp_path) -> None:
-    from synarmo.config import SynarmoConfig
-    from synarmo.memory import UserMemory
-
-    backend = AutocompleteBackend()
-    engine = SynarmoEngine(
-        config=SynarmoConfig(max_suggestions=2, max_suggestion_words=4, profiles_dir=tmp_path),
-        backend=backend,
-        memory=UserMemory(profile="test"),
-    )
-
-    suggestions = engine.suggest("I want to be able to run", context="At the gym")
-
-    assert [item.text for item in suggestions] == ["go outside"]
-
-
-def test_engine_suggest_passes_continuation_config_to_autocomplete_backend(tmp_path) -> None:
-    from synarmo.config import SynarmoConfig
-    from synarmo.memory import UserMemory
-
-    backend = AutocompleteBackend()
-    engine = SynarmoEngine(
-        config=SynarmoConfig(
-            continuation_temperature=0.7,
-            continuation_top_p=0.85,
-            continuation_top_k=24,
-            phrase_logprobs=True,
-            profiles_dir=tmp_path,
-        ),
-        backend=backend,
-        memory=UserMemory(profile="test"),
-    )
-
-    engine.suggest("I want to", context="At home")
-
-    assert backend.kwargs["continuation_temperature"] == 0.7
-    assert backend.kwargs["continuation_top_p"] == 0.85
-    assert backend.kwargs["continuation_top_k"] == 24
-    assert backend.kwargs["phrase_logprobs"] is True
-
-
-class InstructAutocompleteBackend:
-    name = "instruct-autocomplete"
-
-    def __init__(self) -> None:
-        self.kwargs = {}
-
-    def generate(self, prompt, options):  # noqa: ANN001
-        raise AssertionError("instruct mode should use evaluate_instruct_autocomplete")
-
-    def evaluate_instruct_autocomplete(self, **kwargs):  # noqa: ANN003
-        self.kwargs = kwargs
-        return AutocompleteEvaluation(
-            context=kwargs["context"],
-            prompt="native chat template",
-            candidates=[
-                AutocompleteCandidate(
-                    text="go outside",
-                    starter="go",
-                    rest=" outside",
-                    logprob=0.0,
-                )
-            ],
-        )
-
-
-def test_engine_uses_instruct_evaluator_with_role_messages(tmp_path) -> None:
-    from synarmo.config import SynarmoConfig
-    from synarmo.memory import UserMemory
-
-    backend = InstructAutocompleteBackend()
-    engine = SynarmoEngine(
-        config=SynarmoConfig(model_type="instruct", profiles_dir=tmp_path),
-        backend=backend,
-        memory=UserMemory(profile="test"),
-    )
-
-    suggestions = engine.suggest("I want to", context="At home")
-
-    assert [item.text for item in suggestions] == ["go outside"]
-    assert backend.kwargs["messages"][0]["role"] == "system"
-    assert backend.kwargs["messages"][1]["content"].endswith("Typed text:\nI want to")

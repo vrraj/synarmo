@@ -46,38 +46,6 @@ def test_llama_cpp_backend_uses_from_pretrained_for_repo_model(tmp_path, monkeyp
     }
 
 
-def test_llama_cpp_backend_prefers_existing_local_model_over_repo(tmp_path, monkeypatch) -> None:
-    calls = {}
-
-    class FakeLlama:
-        def __init__(self, **kwargs):
-            calls["local"] = kwargs
-
-        @classmethod
-        def from_pretrained(cls, **kwargs):
-            calls["repo"] = kwargs
-            return cls()
-
-        def __call__(self, *args, **kwargs):
-            return {"choices": [{"text": "hello"}]}
-
-    model_path = tmp_path / "model.gguf"
-    model_path.write_text("", encoding="utf-8")
-    fake_module = types.SimpleNamespace(Llama=FakeLlama, llama_cpp=fake_llama_cpp_module())
-    monkeypatch.setitem(sys.modules, "llama_cpp", fake_module)
-
-    LlamaCppBackend(
-        model_path,
-        model_repo_id="hugging-quants/Llama-3.2-1B-Instruct-Q4_K_M-GGUF",
-        model_filename="model.gguf",
-        models_cache_dir=tmp_path,
-        n_ctx=1024,
-    )
-
-    assert "repo" not in calls
-    assert calls["local"]["model_path"] == str(model_path)
-
-
 def test_llama_cpp_backend_generate_passes_sampling_options(tmp_path, monkeypatch) -> None:
     calls = {}
 
@@ -108,62 +76,12 @@ def test_llama_cpp_backend_generate_passes_sampling_options(tmp_path, monkeypatc
     }
 
 
-def test_llama_cpp_backend_uses_native_chat_completion_for_instruct_mode(tmp_path, monkeypatch) -> None:
-    calls = {}
-
-    class FakeLlama:
-        metadata = {"tokenizer.chat_template": "{{ messages }}"}
-
-        def __init__(self, **kwargs):
-            pass
-
-        def create_chat_completion(self, **kwargs):
-            calls.update(kwargs)
-            return {"choices": [{"message": {"content": "go outside\nhave lunch"}}]}
-
-    model_path = tmp_path / "model.gguf"
-    model_path.write_text("", encoding="utf-8")
-    fake_module = types.SimpleNamespace(Llama=FakeLlama, llama_cpp=fake_llama_cpp_module())
-    monkeypatch.setitem(sys.modules, "llama_cpp", fake_module)
-
-    backend = LlamaCppBackend(model_path)
-    evaluation = backend.evaluate_instruct_autocomplete(
-        messages=[{"role": "system", "content": "Continue text"}],
-        context="Current context: At home",
-        choices=2,
-        max_tokens=3,
-        max_words=2,
-        temperature=0.6,
-        top_p=0.85,
-    )
-
-    assert calls["messages"] == [{"role": "system", "content": "Continue text"}]
-    assert calls["max_tokens"] == 16
-    assert calls["temperature"] == 0.6
-    assert calls["top_p"] == 0.85
-    assert [candidate.text for candidate in evaluation.candidates] == ["go outside", "have lunch"]
-
-
 def test_llama_cpp_backend_passes_gpu_layers_to_local_model(tmp_path, monkeypatch) -> None:
     calls = {}
 
     class FakeLlama:
         def __init__(self, **kwargs):
             calls.update(kwargs)
-
-        def n_ctx(self):
-            return 1024
-
-        def n_vocab(self):
-            return 32000
-
-        metadata = {
-            "general.architecture": "llama",
-            "llama.context_length": "4096",
-            "llama.embedding_length": "2048",
-            "llama.attention.head_count": "32",
-            "llama.attention.head_count_kv": "8",
-        }
 
         def __call__(self, *args, **kwargs):
             return {"choices": [{"text": "hello"}]}
@@ -186,18 +104,8 @@ def test_llama_cpp_backend_passes_gpu_layers_to_local_model(tmp_path, monkeypatc
         "requested_gpu_layers": "all",
         "gpu_offload_supported": True,
         "llama_verbose": True,
-        "actual_context_window": 1024,
     }
     assert diagnostics["infrastructure"]["model_file_bytes"] == 0
     assert diagnostics["infrastructure"]["kv_cache_tokens_current"] is None
-    assert diagnostics["infrastructure"]["kv_cache_tokens_max"] == 1024
-    assert diagnostics["infrastructure"]["model_architecture"] == {
-        "architecture": "llama",
-        "sequence_length": 1024,
-        "trained_sequence_length": 4096,
-        "vocabulary_size": 32000,
-        "hidden_dimension": 2048,
-        "attention_heads": 32,
-        "key_value_attention_heads": 8,
-        "layers": None,
-    }
+    assert diagnostics["infrastructure"]["kv_cache_tokens_max"] is None
+    assert diagnostics["infrastructure"]["model_architecture"]["layers"] is None

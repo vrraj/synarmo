@@ -16,8 +16,6 @@ const candidateWordsInput = document.getElementById("candidate-words");
 const tokenRecommendation = document.getElementById("token-recommendation");
 const temperatureInput = document.getElementById("temperature");
 const topPInput = document.getElementById("top-p");
-const continuationTemperatureInput = document.getElementById("continuation-temperature");
-const continuationTopPInput = document.getElementById("continuation-top-p");
 const logprobPoolInput = document.getElementById("logprob-pool");
 const suggestOnSpacebarInput = document.getElementById("suggest-on-spacebar");
 const infrastructureMetrics = document.getElementById("infrastructure-metrics");
@@ -106,39 +104,22 @@ function renderInfrastructure(infrastructure) {
     return;
   }
   appendInfrastructureMetric("Model file", formatBytes(infrastructure.model_file_bytes));
-  appendInfrastructureMetric(
-    "Model weights resident in RAM",
-    formatBytes(infrastructure.model_mapped_resident_ram_bytes)
-  );
-  appendInfrastructureMetric(
-    "Synarmo process RAM (includes resident model pages)",
-    formatBytes(infrastructure.process_resident_ram_bytes)
-  );
+  appendInfrastructureMetric("Model weights resident in RAM", formatBytes(infrastructure.model_mapped_resident_ram_bytes));
+  appendInfrastructureMetric("Synarmo process RAM", formatBytes(infrastructure.process_resident_ram_bytes));
   appendInfrastructureMetric("KV tokens (last evaluation)", formatTokenUsage(infrastructure));
-
-  const modelArchitecture = infrastructure.model_architecture || {};
-  appendInfrastructureMetric("Model architecture", formatValue(modelArchitecture.architecture));
-  appendInfrastructureMetric("Sequence length (n_ctx)", formatValue(modelArchitecture.sequence_length));
-  appendInfrastructureMetric(
-    "Trained sequence length",
-    formatValue(modelArchitecture.trained_sequence_length)
-  );
-  appendInfrastructureMetric("Vocabulary size", formatValue(modelArchitecture.vocabulary_size));
-  appendInfrastructureMetric("Hidden dimension", formatValue(modelArchitecture.hidden_dimension));
-  appendInfrastructureMetric("Attention heads", formatValue(modelArchitecture.attention_heads));
-  appendInfrastructureMetric(
-    "Key/value attention heads",
-    formatValue(modelArchitecture.key_value_attention_heads)
-  );
-  appendInfrastructureMetric("Transformer layers", formatValue(modelArchitecture.layers));
-
+  const architecture = infrastructure.model_architecture || {};
+  appendInfrastructureMetric("Model architecture", formatValue(architecture.architecture));
+  appendInfrastructureMetric("Sequence length (n_ctx)", formatValue(architecture.sequence_length));
+  appendInfrastructureMetric("Trained sequence length", formatValue(architecture.trained_sequence_length));
+  appendInfrastructureMetric("Vocabulary size", formatValue(architecture.vocabulary_size));
+  appendInfrastructureMetric("Hidden dimension", formatValue(architecture.hidden_dimension));
+  appendInfrastructureMetric("Attention heads", formatValue(architecture.attention_heads));
+  appendInfrastructureMetric("Key/value attention heads", formatValue(architecture.key_value_attention_heads));
+  appendInfrastructureMetric("Transformer layers", formatValue(architecture.layers));
   const gpu = infrastructure.gpu || {};
   if (gpu.available) {
     appendInfrastructureMetric("Synarmo GPU VRAM", formatBytes(gpu.process_memory_bytes));
-    appendInfrastructureMetric(
-      "GPU device VRAM",
-      `${formatBytes(gpu.device_memory_used_bytes)} / ${formatBytes(gpu.device_memory_total_bytes)}`
-    );
+    appendInfrastructureMetric("GPU device VRAM", `${formatBytes(gpu.device_memory_used_bytes)} / ${formatBytes(gpu.device_memory_total_bytes)}`);
     appendInfrastructureMetric("GPU device utilization", formatPercent(gpu.device_utilization_pct));
   } else {
     appendInfrastructureMetric("NVIDIA GPU telemetry", gpu.reason || "Unavailable");
@@ -156,25 +137,17 @@ function appendInfrastructureMetric(label, value) {
 }
 
 function formatBytes(value) {
-  if (typeof value !== "number" || value < 0) {
-    return "Unavailable";
-  }
+  if (typeof value !== "number" || value < 0) return "Unavailable";
   const units = ["B", "KiB", "MiB", "GiB", "TiB"];
   let amount = value;
   let unit = 0;
-  while (amount >= 1024 && unit < units.length - 1) {
-    amount /= 1024;
-    unit += 1;
-  }
+  while (amount >= 1024 && unit < units.length - 1) { amount /= 1024; unit += 1; }
   return `${amount.toFixed(unit === 0 ? 0 : 1)} ${units[unit]}`;
 }
 
 function formatTokenUsage(infrastructure) {
-  const current = infrastructure.kv_cache_tokens_current;
-  const maximum = infrastructure.kv_cache_tokens_max;
-  if (typeof current !== "number" || typeof maximum !== "number") {
-    return "Unavailable";
-  }
+  const { kv_cache_tokens_current: current, kv_cache_tokens_max: maximum } = infrastructure;
+  if (typeof current !== "number" || typeof maximum !== "number") return "Unavailable";
   const utilization = infrastructure.kv_cache_utilization_pct;
   const suffix = typeof utilization === "number" ? ` (${utilization.toFixed(1)}%)` : "";
   return `${current} / ${maximum}${suffix}`;
@@ -190,7 +163,7 @@ function formatValue(value) {
 
 async function fetchSuggestions(textOverride) {
   const text = textOverride ?? typedText.value;
-  const requestText = text;
+  const requestText = text.trimEnd();
   if (!requestText.trim()) {
     suggestionsList.innerHTML = '<div class="muted">Enter typed text to get suggestions.</div>';
     return;
@@ -201,19 +174,17 @@ async function fetchSuggestions(textOverride) {
   setError("");
   setLoading(true);
   try {
-    const response = await fetch("/predict", {
+    const response = await fetch("/evaluate/autocomplete", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         text: requestText,
-        context: contextText.value.trim() || "",
-        max_suggestions: numberValue(choicesInput, 3),
-        max_tokens: numberValue(candidateTokensInput, 5),
-        max_words: numberValue(candidateWordsInput, 1),
+        contexts: [contextText.value.trim() || ""],
+        choices: numberValue(choicesInput, 3),
+        candidate_tokens: numberValue(candidateTokensInput, 5),
+        candidate_words: numberValue(candidateWordsInput, 1),
         temperature: numberValue(temperatureInput, 0.5),
         top_p: numberValue(topPInput, 0.95),
-        continuation_temperature: numberValue(continuationTemperatureInput, 0.5),
-        continuation_top_p: numberValue(continuationTopPInput, 0.9),
         logprob_pool: numberValue(logprobPoolInput, 24),
       }),
     });
@@ -224,7 +195,12 @@ async function fetchSuggestions(textOverride) {
     if (currentRequest !== requestId) {
       return;
     }
-    renderSuggestions(data.suggestions || [], data.scores || []);
+    const firstResult = (data.results || [])[0] || {};
+    const candidates = firstResult.candidates || [];
+    renderSuggestions(
+      candidates.map((candidate) => candidate.text),
+      candidates.map((candidate) => candidate.logprob)
+    );
   } catch (error) {
     if (currentRequest === requestId) {
       suggestionsList.innerHTML = '<div class="muted">No suggestions available.</div>';

@@ -1,14 +1,14 @@
 ---
 layout: default
-title: "Synarmo: Context-Aware Local Inference Auto-Suggest Engine"
-description: "A context-aware local inference, low-latency auto-suggest engine for personalized next-word and short-phrase predictions across messaging, chat, and assistive typing workflows."
+title: "Synarmo: Local-First Auto-Suggest Engine"
+description: "A local-first, low-latency auto-suggest engine for personalized next-word and short-phrase predictions across messaging, chat, and assistive typing workflows."
 ---
 
-# Synarmo - Context-Aware Local Inference Auto-Suggest
+# Synarmo
 
 <p align="left">
   <a href="https://pypi.org/project/synarmo/">
-    <img src="https://img.shields.io/pypi/v/synarmo?color=blue&logo=pypi&logoColor=white" alt="PyPI - Version">
+    <img src="https://img.shields.io/pypi/v/synarmo?color=3776ab&logo=pypi&logoColor=white" alt="PyPI - Version">
   </a>
   <a href="https://github.com/vrraj/synarmo/releases">
     <img src="https://img.shields.io/github/v/release/vrraj/synarmo?label=github%20release&color=0f172a&logo=github" alt="GitHub Release">
@@ -19,7 +19,7 @@ description: "A context-aware local inference, low-latency auto-suggest engine f
 </p>
 
 Synarmo (derived from *synarmozo* — "to fit together, to join closely") is a
-local inference, low-latency auto-suggest engine and Python package for
+local-first, low-latency auto-suggest engine and Python package for
 personalized next-word and short-phrase predictions across messaging, chat, and
 assistive typing workflows.
 
@@ -27,19 +27,21 @@ Use it to embed short type-ahead suggestions in Python apps, run a local
 REST/WebSocket suggestion service, test auto-suggest behavior in a browser
 `/ui`, and evaluate different local GGUF models through llama.cpp.
 
+> Local-first next-word and next-phrase suggestions tuned for short completions.
 
-![Synarmo context-aware auto-suggest UI](https://raw.githubusercontent.com/vrraj/synarmo/main/assets/synarmo-context-aware-auto-suggest.png)
+![Synarmo context-aware auto-suggest UI](https://raw.githubusercontent.com/vrraj/synarmo/main/assets/synarmo-context-aware-auto-suggest.jpeg)
 
 ## Why this exists
 
 People who type to communicate benefit from suggestions that are fast, short,
-context-aware, and personal. Synarmo focuses on a narrow local inference loop:
-the user has typed a partial thought, and the engine should return a few natural
-continuations that can be inserted immediately.
+context-aware, and personal. Generic completion systems often optimize for long
+answers, remote inference, or broad chat behavior. Synarmo focuses on a narrower
+loop: the user has typed a partial thought, and the engine should return a few
+natural continuations that can be inserted immediately.
 
-The package loads the model once, keeps it warm, combines the current text with
-optional context and profile memory, then ranks and filters candidates into
-short suggestions.
+The package keeps that loop local where possible. It loads the model once,
+keeps it warm, combines the current text with optional context and profile
+memory, then ranks and filters candidates into short suggestions.
 
 ## Primary use case: local type-ahead suggestions
 
@@ -158,9 +160,10 @@ number of GPUs. Apple M2 has one integrated Metal GPU; `-1` tells llama.cpp to
 use it for all possible layers.
 
 On the Apple M2 development setup with the default 1B Q4_K_M model and Metal
-offload, local auto-suggest evaluation commonly shows short generation reaching
-around 70 - 95 tokens per second on a lightly loaded machine. Real logs can vary
-when other apps are active or when requests generate only a few tokens.
+offload, local auto-suggest evaluation commonly shows prefill/prompt evaluation
+around 50 tokens per second and short generation reaching around 95-100 tokens
+per second on a lightly loaded machine. Real logs can vary when other apps are
+active or when requests generate only a few tokens.
 
 ## Quick example
 
@@ -254,8 +257,8 @@ make stop
 
 Synarmo is a reusable local suggestion layer for short, personalized
 type-ahead. It is intentionally narrower than a general chatbot: it accepts
-current text and context, uses local inference with a GGUF model, and returns a
-few immediately insertable suggestions.
+current text and context, keeps inference local when configured with a GGUF
+model, and returns a few immediately insertable suggestions.
 
 The Python implementation is also the reference shape for future applications,
 including desktop clients, browser integrations, keyboards, and mobile apps

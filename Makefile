@@ -80,17 +80,17 @@ help:
 	@echo "Overrides:"
 	@echo "  HOST=0.0.0.0 BACKEND=mock PORT=8766 TEXT='Can you' CONTEXT='Asking for help'"
 
-# Sync the base package into the project virtual environment.
+# Install package in editable mode.
 install:
-	uv sync
+	$(PYTHON) -m pip install -e .
 
 # Install all dependencies needed for local development and real GGUF inference.
 dev:
-	uv sync --extra dev --extra service --extra llama
+	$(PYTHON) -m pip install -e ".[dev,service,llama]"
 
 # Install only service and llama extras for local inference.
 llama:
-	uv sync --extra service --extra llama
+	$(PYTHON) -m pip install -e ".[service,llama]"
 
 # Run tests.
 test:
@@ -98,7 +98,7 @@ test:
 
 # Run a fast syntax/import smoke check.
 compile:
-	$(PYTHON) -m compileall src tests
+	python3 -m compileall src tests
 
 # Run the service in the foreground. Use Ctrl-C to stop. For llama.cpp, this
 # checks LOCAL_MODELS_CACHE and downloads SYNARMO_MODEL from SYNARMO_MODEL_REPO_ID
@@ -124,11 +124,6 @@ ux-mock: start-mock ui
 start:
 	@if [ -f "$(PID_FILE)" ] && kill -0 "$$(cat $(PID_FILE))" 2>/dev/null; then \
 		echo "Synarmo is already running with PID $$(cat $(PID_FILE))"; \
-	elif command -v lsof >/dev/null 2>&1 && lsof -nP -iTCP:$(PORT) -sTCP:LISTEN >/dev/null 2>&1; then \
-		echo "Synarmo cannot start because port $(PORT) is already in use."; \
-		echo "Stop the process using that port, or choose another port with PORT=8766."; \
-		lsof -nP -iTCP:$(PORT) -sTCP:LISTEN; \
-		exit 1; \
 	else \
 		nohup $(SYNARMO) serve --host $(HOST) --port $(PORT) --profile $(PROFILE) --backend $(BACKEND) > "$(LOG_FILE)" 2>&1 & echo $$! > "$(PID_FILE)"; \
 		STARTED=0; \

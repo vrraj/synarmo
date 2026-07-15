@@ -14,16 +14,5 @@ fi
 echo "Installing Synarmo with llama.cpp and service support..."
 uv sync --extra llama --extra service
 
-echo "Verifying installed Python packages..."
-.venv/bin/python - <<'PY'
-import fastapi
-import llama_cpp
-import synarmo
-
-print(f"  Synarmo: {getattr(synarmo, '__version__', 'installed')}")
-print(f"  FastAPI: {fastapi.__version__}")
-print(f"  llama-cpp-python: {llama_cpp.__version__}")
-PY
-
 echo "Creating or checking configuration and the configured GGUF model..."
 .venv/bin/synarmo setup

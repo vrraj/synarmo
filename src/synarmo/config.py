@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Literal
 
 BackendName = Literal["mock", "llama-cpp"]
-ModelType = Literal["base", "instruct"]
 
 DEFAULT_MODELS_CACHE = Path("~/models/synarmo")
 ENV_FILE = ".env"
@@ -19,15 +18,9 @@ MAX_TOKENS_ENV = "SYNARMO_MAX_TOKENS"
 MAX_SUGGESTION_WORDS_ENV = "SYNARMO_MAX_SUGGESTION_WORDS"
 TEMPERATURE_ENV = "SYNARMO_TEMPERATURE"
 TOP_P_ENV = "SYNARMO_TOP_P"
-CONTINUATION_TEMPERATURE_ENV = "SYNARMO_CONTINUATION_TEMPERATURE"
-CONTINUATION_TOP_P_ENV = "SYNARMO_CONTINUATION_TOP_P"
-CONTINUATION_TOP_K_ENV = "SYNARMO_CONTINUATION_TOP_K"
-PHRASE_LOGPROBS_ENV = "SYNARMO_PHRASE_LOGPROBS"
 LOGPROB_POOL_ENV = "SYNARMO_LOGPROB_POOL"
-CONTEXT_WINDOW_ENV = "SYNARMO_CONTEXT_WINDOW"
 N_GPU_LAYERS_ENV = "SYNARMO_N_GPU_LAYERS"
 LLAMA_VERBOSE_ENV = "SYNARMO_LLAMA_VERBOSE"
-MODEL_TYPE_ENV = "SYNARMO_MODEL_TYPE"
 
 
 def load_env_file(path: str | Path = ENV_FILE) -> None:
@@ -42,27 +35,9 @@ def load_env_file(path: str | Path = ENV_FILE) -> None:
 
         key, value = line.split("=", 1)
         key = key.strip()
-        value = _strip_inline_comment(value).strip().strip("'\"")
+        value = value.strip().strip("'\"")
         if key and key not in os.environ:
             os.environ[key] = value
-
-
-def _strip_inline_comment(value: str) -> str:
-    quote: str | None = None
-    escaped = False
-    for index, char in enumerate(value):
-        if escaped:
-            escaped = False
-            continue
-        if char == "\\":
-            escaped = True
-            continue
-        if char in {"'", '"'}:
-            quote = None if quote == char else char if quote is None else quote
-            continue
-        if char == "#" and quote is None:
-            return value[:index]
-    return value
 
 
 def configured_models_cache() -> Path:
@@ -127,34 +102,9 @@ def configured_top_p() -> float:
     return float(value) if value else 0.95
 
 
-def configured_continuation_temperature() -> float:
-    value = os.getenv(CONTINUATION_TEMPERATURE_ENV)
-    return float(value) if value else 0.5
-
-
-def configured_continuation_top_p() -> float:
-    value = os.getenv(CONTINUATION_TOP_P_ENV)
-    return float(value) if value else 0.9
-
-
-def configured_continuation_top_k() -> int:
-    value = os.getenv(CONTINUATION_TOP_K_ENV)
-    return int(value) if value else 20
-
-
-def configured_phrase_logprobs() -> bool:
-    value = os.getenv(PHRASE_LOGPROBS_ENV)
-    return value is not None and value.strip().lower() in {"1", "true", "yes", "on"}
-
-
 def configured_logprob_pool() -> int:
     value = os.getenv(LOGPROB_POOL_ENV)
     return int(value) if value else 24
-
-
-def configured_context_window() -> int:
-    value = os.getenv(CONTEXT_WINDOW_ENV)
-    return int(value) if value else 2048
 
 
 def configured_n_gpu_layers() -> int:
@@ -167,17 +117,9 @@ def configured_llama_verbose() -> bool:
     return value is not None and value.strip().lower() in {"1", "true", "yes", "on"}
 
 
-def configured_model_type() -> ModelType:
-    value = os.getenv(MODEL_TYPE_ENV, "base").strip().lower()
-    if value not in {"base", "instruct"}:
-        raise ValueError("SYNARMO_MODEL_TYPE must be 'base' or 'instruct'")
-    return value  # type: ignore[return-value]
-
-
 @dataclass(slots=True)
 class SynarmoConfig:
     backend: BackendName = "mock"
-    model_type: ModelType = field(default_factory=configured_model_type)
     model_path: Path | None = None
     model_repo_id: str | None = None
     model_filename: str | None = None
@@ -185,14 +127,10 @@ class SynarmoConfig:
     profile: str = "default"
     max_suggestions: int = field(default_factory=configured_max_suggestions)
     max_latency_ms: int = 100
-    context_window: int = field(default_factory=configured_context_window)
+    context_window: int = 2048
     style_adaptation: bool = True
     temperature: float = field(default_factory=configured_temperature)
     top_p: float = field(default_factory=configured_top_p)
-    continuation_temperature: float = field(default_factory=configured_continuation_temperature)
-    continuation_top_p: float = field(default_factory=configured_continuation_top_p)
-    continuation_top_k: int = field(default_factory=configured_continuation_top_k)
-    phrase_logprobs: bool = field(default_factory=configured_phrase_logprobs)
     max_tokens: int = field(default_factory=configured_max_tokens)
     max_suggestion_words: int = field(default_factory=configured_max_suggestion_words)
     logprob_pool: int = field(default_factory=configured_logprob_pool)
@@ -205,8 +143,6 @@ class SynarmoConfig:
         self.models_cache_dir = self.models_cache_dir.expanduser()
         if self.model_path is not None:
             self.model_path = self.model_path.expanduser()
-        if self.model_type not in {"base", "instruct"}:
-            raise ValueError("model_type must be 'base' or 'instruct'")
         if not 1 <= self.max_suggestions <= 10:
             raise ValueError("max_suggestions must be between 1 and 10")
         if self.max_latency_ms < 1:
@@ -217,12 +153,6 @@ class SynarmoConfig:
             raise ValueError("temperature must be between 0.0 and 2.0")
         if not 0.0 < self.top_p <= 1.0:
             raise ValueError("top_p must be greater than 0.0 and at most 1.0")
-        if not 0.0 <= self.continuation_temperature <= 2.0:
-            raise ValueError("continuation_temperature must be between 0.0 and 2.0")
-        if not 0.0 < self.continuation_top_p <= 1.0:
-            raise ValueError("continuation_top_p must be greater than 0.0 and at most 1.0")
-        if not 0 <= self.continuation_top_k <= 500:
-            raise ValueError("continuation_top_k must be between 0 and 500")
         if not 1 <= self.max_tokens <= 128:
             raise ValueError("max_tokens must be between 1 and 128")
         if not 1 <= self.max_suggestion_words <= 20:

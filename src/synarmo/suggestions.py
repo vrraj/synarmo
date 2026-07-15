@@ -40,41 +40,6 @@ class SuggestionRanker:
         ranked.sort(key=lambda item: item.score, reverse=True)
         return ranked[:max_suggestions]
 
-    def rank_scored(
-        self,
-        candidates: list[Suggestion],
-        *,
-        current_text: str,
-        max_suggestions: int,
-        max_words: int = 4,
-    ) -> list[Suggestion]:
-        """Filter model-scored candidates without replacing their scores.
-
-        Autocomplete backends provide a logprob for each starter token.  It is
-        the only probability signal available when continuation logprobs are
-        disabled, so filtering must preserve it rather than applying the
-        presentation-oriented length heuristic used by ``rank``.
-        """
-        seen: set[str] = set()
-        ranked: list[Suggestion] = []
-        for candidate in candidates:
-            normalized = self._normalize(candidate.text, max_words=max_words)
-            key = normalized.lower()
-            if not normalized or key in seen:
-                continue
-            if not self._has_word_characters(normalized):
-                continue
-            if self._looks_like_instruction_echo(normalized):
-                continue
-            if self._duplicates_current_text(normalized, current_text):
-                continue
-            seen.add(key)
-            ranked.append(
-                Suggestion(text=normalized, score=candidate.score, source=candidate.source)
-            )
-        ranked.sort(key=lambda item: item.score, reverse=True)
-        return ranked[:max_suggestions]
-
     def _parse(self, raw_text: str) -> list[str]:
         lines = []
         for line in raw_text.splitlines():
@@ -91,8 +56,6 @@ class SuggestionRanker:
 
     def _normalize(self, text: str, *, max_words: int) -> str:
         text = re.sub(r"\s+", " ", text).strip()
-        text = text.lstrip(" \t\r\n\"'`.,;:!?")
-        text = text.rstrip(" \t\r\n\"'`")
         text = re.sub(r"\s+(?:\(?\d+[\].)]|\[\d+\])\s*$", "", text)
         text = re.sub(r"\s*(?:\[\d+\]|\(\d+\))\s*$", "", text)
         text = re.sub(r"[.!?]+$", "", text)
@@ -117,11 +80,6 @@ class SuggestionRanker:
         lowered = suggestion.lower()
         blocked_phrases = (
             "answer",
-            "context:",
-            "current context",
-            "current typed text",
-            "live message",
-            "message:",
             "more different",
             "plain text",
             "short lines",

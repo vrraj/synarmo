@@ -1,9 +1,5 @@
-from pathlib import Path
-
-import synarmo.cli as cli
-from synarmo.cli import _compose, _display_text, _print_suggestions, _setup, build_parser
+from synarmo.cli import _compose, _setup, build_parser
 from synarmo.engine import SynarmoEngine
-from synarmo.suggestions import Suggestion
 
 
 def test_serve_host_defaults_to_loopback() -> None:
@@ -27,52 +23,18 @@ def test_model_ensure_defaults_to_llama_cpp_backend() -> None:
     assert args.profile == "default"
 
 
-def test_setup_defaults_to_a_local_env_file() -> None:
-    args = build_parser().parse_args(["setup"])
-
-    assert args.command == "setup"
-    assert args.env_path == Path(".env")
-    assert args.skip_model is False
-    assert args.backend == "llama-cpp"
-
-
-def test_setup_creates_default_configuration_without_loading_a_model(tmp_path, monkeypatch) -> None:
-    monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr(cli, "load_env_file", lambda _path: None)
+def test_setup_creates_configuration_without_downloading_a_model(tmp_path, capsys) -> None:
     env_path = tmp_path / ".env"
-    args = build_parser().parse_args(["setup", "--skip-model"])
+    args = build_parser().parse_args(["setup", "--env-path", str(env_path), "--skip-model"])
 
     _setup(args)
 
     assert "SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF" in env_path.read_text()
-
-
-def test_suggest_output_labels_original_text_and_suggestions(capsys) -> None:
-    _print_suggestions(
-        "My Goals are",
-        [
-            Suggestion("to build strength", 1.0),
-            Suggestion("to run upstairs", 0.95),
-            Suggestion("without tiring", 0.9),
-        ],
-    )
-
-    output = capsys.readouterr().out.splitlines()
-    assert output == [
-        "My Goals are",
-        "Suggestions:",
-        "1. to build strength",
-        "2. to run upstairs",
-        "3. without tiring",
-    ]
-
-
-def test_suggest_display_text_completes_my_goals_heading() -> None:
-    assert _display_text("My goals") == "My Goals are"
+    assert "Skipped model download and verification." in capsys.readouterr().out
 
 
 def test_compose_appends_selected_suggestion_and_predicts_again(monkeypatch, capsys) -> None:
-    engine = SynarmoEngine.load(profile="compose-test", max_suggestions=3, max_suggestion_words=4)
+    engine = SynarmoEngine.load(profile="compose-test", max_suggestions=3)
     choices = iter(["1", "q"])
     monkeypatch.setattr("builtins.input", lambda _prompt: next(choices))
 
