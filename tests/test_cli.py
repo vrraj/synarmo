@@ -1,4 +1,4 @@
-from synarmo.cli import _compose, build_parser
+from synarmo.cli import _compose, _setup, build_parser
 from synarmo.engine import SynarmoEngine
 
 
@@ -21,6 +21,16 @@ def test_model_ensure_defaults_to_llama_cpp_backend() -> None:
     assert args.command == "model-ensure"
     assert args.backend == "llama-cpp"
     assert args.profile == "default"
+
+
+def test_setup_creates_configuration_without_downloading_a_model(tmp_path, capsys) -> None:
+    env_path = tmp_path / ".env"
+    args = build_parser().parse_args(["setup", "--env-path", str(env_path), "--skip-model"])
+
+    _setup(args)
+
+    assert "SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF" in env_path.read_text()
+    assert "Skipped model download and verification." in capsys.readouterr().out
 
 
 def test_compose_appends_selected_suggestion_and_predicts_again(monkeypatch, capsys) -> None:

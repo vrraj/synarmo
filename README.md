@@ -10,10 +10,8 @@ personalized next-word and short-phrase predictions across messaging, chat, and
 assistive typing workflows. It combines context-aware local inference, service
 APIs, and llama.cpp/GGUF support for swappable local models.
 
-```bash
-# Install with llama.cpp and service support
-pip install "synarmo[llama,service]"
-```
+Synarmo uses [uv](https://docs.astral.sh/uv/) for dependency management. Install
+`uv` first, then use one of the short setup paths below.
 
 The repository includes an
 [Interactive UI](#install---interactive-ui-git-clone) for evaluations and tuning
@@ -42,55 +40,18 @@ The primary path uses a local GGUF model for inference through llama.cpp. For no
 
 ## Install - PyPI Package
 
-Install Synarmo with llama.cpp and service support:
-
-**Step 1: Install the package**
+Use this when you want the published CLI:
 
 ```bash
-pip install "synarmo[llama,service]"
-mkdir -p ~/models/synarmo
+uv tool install "synarmo[llama,service]"
+synarmo setup
 ```
 
-**Step 2: Set up a `.env` file**
+`synarmo setup` creates `.env` only when it is missing, then downloads or
+verifies the default GGUF model in `~/models/synarmo`. To create or edit the
+configuration without downloading the model, use `synarmo setup --skip-model`.
 
-Create a `.env` file in the directory where you will run `synarmo` or your
-Python app. This example assumes an Apple Silicon Mac with one integrated Metal
-GPU:
-
-```dotenv
-LOCAL_MODELS_CACHE=~/models/synarmo
-SYNARMO_MAX_SUGGESTIONS=3
-SYNARMO_MAX_TOKENS=5
-SYNARMO_MAX_SUGGESTION_WORDS=4
-SYNARMO_TEMPERATURE=0.25
-SYNARMO_TOP_P=0.95
-SYNARMO_LOGPROB_POOL=24
-SYNARMO_N_GPU_LAYERS=-1
-SYNARMO_LLAMA_VERBOSE=0
-SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF
-SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
-```
-
-**Step 3: Download or verify the local inference model**
-
-```bash
-synarmo model-ensure --backend llama-cpp
-```
-
-This checks `LOCAL_MODELS_CACHE` and downloads `SYNARMO_MODEL` from
-`SYNARMO_MODEL_REPO_ID` if the GGUF model file is missing. With this `.env`
-configuration, the model is stored at:
-
-```text
-~/models/synarmo/Llama-3.2-1B.Q4_K_M.gguf
-```
-
-See
-[Configure A Local Model](#configure-a-local-model) for model paths and
-[Infrastructure - llama.cpp Configuration](#infrastructure---llamacpp-configuration)
-for CPU/GPU settings.
-
-**Step 4: Test Synarmo with the llama.cpp backend**
+Test the installed CLI:
 
 ```bash
 synarmo suggest "My goals" \
@@ -103,75 +64,22 @@ synarmo suggest "My goals" \
 
 ## Install - Interactive `/ui` (Git Repo Clone)
 
-The Interactive `/ui` allows you to test local suggestions with context and auto-suggest parameters. It needs FastAPI service, static UI assets, and a virtual environment.
-
-![Synarmo context-aware auto-suggest UI](https://raw.githubusercontent.com/vrraj/synarmo/main/assets/synarmo-context-aware-auto-suggest.png)
-
-**Step 1 — Clone the repository:**
+Use this recommended path for the browser UI and local development:
 
 ```bash
 git clone https://github.com/vrraj/synarmo.git
 cd synarmo
-```
-
-**Step 2 — Create a virtual environment and install with llama.cpp and service extras:**
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e ".[llama,service]"
-```
-
-This installs Synarmo in editable mode with llama.cpp and service dependencies.
-Use the `[dev]` extra when running tests or linters.
-
-**Step 3 — Configure a local GGUF model:**
-
-```bash
-cp .env.example .env
-mkdir -p ~/models/synarmo
-```
-
-The included `.env.example` sets the Hugging Face repo and GGUF filename that
-the next step can download, and assumes an Apple Silicon Mac with one
-integrated Metal GPU. See
-[Configure A Local Model](#configure-a-local-model) for manual model paths and
-other model options, and
-[Infrastructure - llama.cpp Configuration](#infrastructure---llamacpp-configuration)
-for CPU/GPU settings.
-
-**Step 4 — Download or verify the local inference model:**
-
-```bash
-make model-ensure
-```
-
-This checks `LOCAL_MODELS_CACHE` and downloads `SYNARMO_MODEL` from
-`SYNARMO_MODEL_REPO_ID` if the GGUF file is missing. The first model download
-can take some time.
-
-**Step 5 — Start the service with real local inference:**
-
-```bash
+./scripts/synarmo_interactive_setup.sh
 make ux
 ```
 
-`make ux` starts the configured llama.cpp backend in the background and waits for `/health`.
+The setup script creates `.venv`, installs the llama.cpp and FastAPI extras,
+creates `.env` only when needed, and downloads or verifies the configured GGUF
+model. Open `http://127.0.0.1:8765/ui` when `make ux` reports that the service
+is ready. Stop the background service with `make stop`.
 
-**Step 6 — Open the UI shown by `make ux`:**
-
-```text
-http://127.0.0.1:8765/ui
-```
-
-The UI calls the same `/health` and `/evaluate/autocomplete` endpoints that a
-client application can call directly.
-
-**Stop the background service when you are done:**
-
-```bash
-make stop
-```
+For a checkout that only needs the CLI and service dependencies, run
+`./scripts/synarmo_pkg_setup.sh` instead.
 
 ---
 
@@ -310,13 +218,13 @@ On Apple Silicon, the normal install is usually enough. If Metal offload is not
 available, rebuild `llama-cpp-python` with Metal:
 
 ```bash
-CMAKE_ARGS="-DGGML_METAL=on" pip install --upgrade --force-reinstall --no-cache-dir llama-cpp-python
+CMAKE_ARGS="-DGGML_METAL=on" uv pip install --upgrade --force-reinstall --no-cache llama-cpp-python
 ```
 
 For NVIDIA CUDA:
 
 ```bash
-CMAKE_ARGS="-DGGML_CUDA=on" pip install --upgrade --force-reinstall --no-cache-dir llama-cpp-python
+CMAKE_ARGS="-DGGML_CUDA=on" uv pip install --upgrade --force-reinstall --no-cache llama-cpp-python
 ```
 
 Then use:
@@ -657,15 +565,14 @@ Use it to check:
 Install the lightweight package and run a no-model API check:
 
 ```bash
-pip install synarmo
-python -c "from synarmo import SynarmoEngine; e=SynarmoEngine.load(); print([s.text for s in e.suggest('I want to')])"
+uv run --with synarmo python -c "from synarmo import SynarmoEngine; e=SynarmoEngine.load(); print([s.text for s in e.suggest('I want to')])"
 ```
 
 From a source checkout, run the verification specs without downloading a model:
 
 ```bash
-pip install -e ".[dev]"
-PYTHONPATH=src pytest
+uv sync --extra dev
+uv run pytest
 ```
 
 The files under `tests/` are production behavior verification specs. For
