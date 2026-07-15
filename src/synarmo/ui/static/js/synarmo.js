@@ -18,6 +18,8 @@ const temperatureInput = document.getElementById("temperature");
 const topPInput = document.getElementById("top-p");
 const logprobPoolInput = document.getElementById("logprob-pool");
 const suggestOnSpacebarInput = document.getElementById("suggest-on-spacebar");
+const infrastructureMetrics = document.getElementById("infrastructure-metrics");
+const refreshInfrastructureBtn = document.getElementById("refresh-infrastructure-btn");
 let requestId = 0;
 let lastSuggestionRequestText = "";
 
@@ -83,6 +85,7 @@ async function checkHealth() {
     ]
       .filter(Boolean)
       .join(" / ");
+    renderInfrastructure(data.infrastructure);
   } catch {
     serviceStatusValue.textContent = "Unavailable";
     serviceStatusValue.classList.remove("is-ok");
@@ -90,7 +93,72 @@ async function checkHealth() {
     modelNameValue.textContent = "Unknown";
     gpuLayersValue.textContent = "Unknown";
     serviceStatus.title = "Service status: Unavailable";
+    renderInfrastructure(null);
   }
+}
+
+function renderInfrastructure(infrastructure) {
+  infrastructureMetrics.innerHTML = "";
+  if (!infrastructure) {
+    appendInfrastructureMetric("Status", "Unavailable");
+    return;
+  }
+  appendInfrastructureMetric("Model file", formatBytes(infrastructure.model_file_bytes));
+  appendInfrastructureMetric("Model weights resident in RAM", formatBytes(infrastructure.model_mapped_resident_ram_bytes));
+  appendInfrastructureMetric("Synarmo process RAM", formatBytes(infrastructure.process_resident_ram_bytes));
+  appendInfrastructureMetric("KV tokens (last evaluation)", formatTokenUsage(infrastructure));
+  const architecture = infrastructure.model_architecture || {};
+  appendInfrastructureMetric("Model architecture", formatValue(architecture.architecture));
+  appendInfrastructureMetric("Sequence length (n_ctx)", formatValue(architecture.sequence_length));
+  appendInfrastructureMetric("Trained sequence length", formatValue(architecture.trained_sequence_length));
+  appendInfrastructureMetric("Vocabulary size", formatValue(architecture.vocabulary_size));
+  appendInfrastructureMetric("Hidden dimension", formatValue(architecture.hidden_dimension));
+  appendInfrastructureMetric("Attention heads", formatValue(architecture.attention_heads));
+  appendInfrastructureMetric("Key/value attention heads", formatValue(architecture.key_value_attention_heads));
+  appendInfrastructureMetric("Transformer layers", formatValue(architecture.layers));
+  const gpu = infrastructure.gpu || {};
+  if (gpu.available) {
+    appendInfrastructureMetric("Synarmo GPU VRAM", formatBytes(gpu.process_memory_bytes));
+    appendInfrastructureMetric("GPU device VRAM", `${formatBytes(gpu.device_memory_used_bytes)} / ${formatBytes(gpu.device_memory_total_bytes)}`);
+    appendInfrastructureMetric("GPU device utilization", formatPercent(gpu.device_utilization_pct));
+  } else {
+    appendInfrastructureMetric("NVIDIA GPU telemetry", gpu.reason || "Unavailable");
+  }
+}
+
+function appendInfrastructureMetric(label, value) {
+  const item = document.createElement("div");
+  const term = document.createElement("dt");
+  const description = document.createElement("dd");
+  term.textContent = label;
+  description.textContent = value;
+  item.append(term, description);
+  infrastructureMetrics.appendChild(item);
+}
+
+function formatBytes(value) {
+  if (typeof value !== "number" || value < 0) return "Unavailable";
+  const units = ["B", "KiB", "MiB", "GiB", "TiB"];
+  let amount = value;
+  let unit = 0;
+  while (amount >= 1024 && unit < units.length - 1) { amount /= 1024; unit += 1; }
+  return `${amount.toFixed(unit === 0 ? 0 : 1)} ${units[unit]}`;
+}
+
+function formatTokenUsage(infrastructure) {
+  const { kv_cache_tokens_current: current, kv_cache_tokens_max: maximum } = infrastructure;
+  if (typeof current !== "number" || typeof maximum !== "number") return "Unavailable";
+  const utilization = infrastructure.kv_cache_utilization_pct;
+  const suffix = typeof utilization === "number" ? ` (${utilization.toFixed(1)}%)` : "";
+  return `${current} / ${maximum}${suffix}`;
+}
+
+function formatPercent(value) {
+  return typeof value === "number" ? `${value}%` : "Unavailable";
+}
+
+function formatValue(value) {
+  return value === null || value === undefined || value === "" ? "Unavailable" : String(value);
 }
 
 async function fetchSuggestions(textOverride) {
@@ -268,6 +336,7 @@ clearBtn.addEventListener("click", () => {
 typedText.addEventListener("input", maybeSuggestAfterSpace);
 candidateWordsInput.addEventListener("input", updateTokenRecommendation);
 candidateTokensInput.addEventListener("input", updateTokenRecommendation);
+refreshInfrastructureBtn.addEventListener("click", checkHealth);
 
 updateCount();
 updateTokenRecommendation();

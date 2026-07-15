@@ -18,6 +18,7 @@ from synarmo.config import (
     load_env_file,
 )
 from synarmo.context import ContextAssembler
+from synarmo.infrastructure import collect_infrastructure_diagnostics
 from synarmo.memory import UserMemory
 from synarmo.models import GenerationOptions, ModelBackend, create_backend
 from synarmo.prompts import PromptBuilder
@@ -83,6 +84,12 @@ class SynarmoEngine:
         backend_diagnostics = getattr(self.backend, "diagnostics", None)
         if callable(backend_diagnostics):
             diagnostics.update(backend_diagnostics())
+        if "infrastructure" not in diagnostics:
+            diagnostics["infrastructure"] = collect_infrastructure_diagnostics(
+                model_path=None,
+                kv_cache_tokens_current=None,
+                kv_cache_tokens_max=None,
+            )
         return diagnostics
 
     def configure(self, **updates: object) -> None:

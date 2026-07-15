@@ -29,6 +29,7 @@ def test_health_endpoint_reports_runtime_diagnostics() -> None:
     assert response.json()["status"] == "ok"
     assert response.json()["backend"] == "mock"
     assert response.json()["n_gpu_layers"] == 0
+    assert response.json()["infrastructure"]["kv_cache_tokens_current"] is None
 
 
 def test_autocomplete_evaluation_endpoint_accepts_json_body() -> None:
@@ -61,6 +62,8 @@ def test_ui_endpoints_render_static_assets() -> None:
     assert "/static/css/synarmo.css" in response.text
     assert "/static/js/synarmo.js" in response.text
     assert "gpu-layers-value" in response.text
+    assert "infrastructure-metrics" in response.text
+    assert "refresh-infrastructure-btn" in response.text
     assert "<style>" not in response.text
     assert "<script>" not in response.text
 

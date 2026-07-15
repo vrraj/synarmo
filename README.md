@@ -495,12 +495,19 @@ come from `.env`. UI changes still apply to the current browser request; edit
 | `SYNARMO_TOP_P` | Top P |
 | `SYNARMO_LOGPROB_POOL` | Logprobs |
 
-For auto-suggest, Synarmo uses `Logprobs` as the starter pool size. It asks
-llama.cpp for a one-token probe with `logprobs` enabled, sorts the returned
-next-token probabilities, removes duplicate first-word starters, and expands up
-to `Choices` starters into short suggestions. `Top P` is passed to the probe
-sampling call; the follow-up expansion for each selected starter is
-deterministic.
+For auto-suggest, Synarmo uses `Logprobs` as the starter pool size. The exact
+flow is intentionally two-stage:
+
+1. llama.cpp performs a one-token probe with `logprobs` enabled. Synarmo passes
+   the configured `Temperature` and `Top P` to that probe, then ranks the
+   returned next-token log probabilities and removes duplicate first-word
+   starters.
+2. For up to `Choices` selected starters, llama.cpp completes a short phrase
+   from that starter with `temperature=0.0` and `top_p=1.0`. This second call is
+   deterministic; the configured Temperature and Top P do not control phrase
+   continuation in v0.1.0.
+
+Finally, Synarmo trims each completion to `Words` before displaying it.
 
 #### How The Auto-suggest Flow Works
 

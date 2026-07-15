@@ -98,9 +98,14 @@ def test_llama_cpp_backend_passes_gpu_layers_to_local_model(tmp_path, monkeypatc
 
     assert calls["n_gpu_layers"] == -1
     assert calls["verbose"] is True
-    assert backend.diagnostics() == {
+    diagnostics = backend.diagnostics()
+    assert {key: value for key, value in diagnostics.items() if key != "infrastructure"} == {
         "n_gpu_layers": -1,
         "requested_gpu_layers": "all",
         "gpu_offload_supported": True,
         "llama_verbose": True,
     }
+    assert diagnostics["infrastructure"]["model_file_bytes"] == 0
+    assert diagnostics["infrastructure"]["kv_cache_tokens_current"] is None
+    assert diagnostics["infrastructure"]["kv_cache_tokens_max"] is None
+    assert diagnostics["infrastructure"]["model_architecture"]["layers"] is None
