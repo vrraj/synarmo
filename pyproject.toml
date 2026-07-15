@@ -14,7 +14,8 @@ dependencies = []
 
 [project.optional-dependencies]
 llama = ["llama-cpp-python>=0.2.90", "huggingface-hub>=0.23"]
-service = ["fastapi>=0.111", "uvicorn[standard]>=0.30"]
+voice-openai = ["openai>=1.0"]
+service = ["fastapi>=0.111", "uvicorn[standard]>=0.30", "jinja2>=3.1"]
 dev = ["pytest>=8.2", "ruff>=0.5"]
 
 [project.scripts]

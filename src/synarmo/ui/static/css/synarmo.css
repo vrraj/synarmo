@@ -211,6 +211,7 @@ label {
 
 input[type="text"],
 input[type="number"],
+select,
 textarea {
   width: 100%;
   padding: 10px 14px;
@@ -273,11 +274,23 @@ button.secondary:hover {
   background: #efeee9;
 }
 
+button.compact-button {
+  font-size: 12px;
+  margin-top: 6px;
+  padding: 5px 9px;
+}
+
 .inline-actions {
   display: flex;
   gap: 10px;
   align-items: center;
   flex-wrap: wrap;
+}
+
+.typed-text-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: -2px 0 22px;
 }
 
 .parameter-rail {

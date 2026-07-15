@@ -11,8 +11,8 @@ if ! command -v uv >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "Installing Synarmo with llama.cpp and service support..."
-uv sync --extra llama --extra service
+echo "Installing Synarmo with llama.cpp, service, and optional OpenAI speech support..."
+uv sync --extra llama --extra service --extra voice-openai
 
 echo "Creating or checking configuration and the configured GGUF model..."
 .venv/bin/synarmo setup

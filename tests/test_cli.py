@@ -29,7 +29,10 @@ def test_setup_creates_configuration_without_downloading_a_model(tmp_path, capsy
 
     _setup(args)
 
-    assert "SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF" in env_path.read_text()
+    config = env_path.read_text()
+    assert "SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF" in config
+    assert "SYNARMO_VOICE_BACKEND=browser" in config
+    assert "SYNARMO_OPENAI_TTS_MODEL=gpt-4o-mini-tts" in config
     assert "Skipped model download and verification." in capsys.readouterr().out
 
 

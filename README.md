@@ -10,6 +10,10 @@ personalized next-word and short-phrase predictions across messaging, chat, and
 assistive typing workflows. It combines context-aware local inference, service
 APIs, and llama.cpp/GGUF support for swappable local models.
 
+It also includes optional speech output for the full text being composed:
+instant on-device Browser TTS or server-side OpenAI TTS. This lets a user hear
+their complete typed message without changing the local suggestion model.
+
 Synarmo uses [uv](https://docs.astral.sh/uv/) for dependency management. Install
 `uv` first, then use one of the short setup paths below.
 
@@ -32,6 +36,7 @@ Synarmo is intended to be used as:
 - integration surfaces for other applications through REST and WebSocket
 - an interactive browser `/ui` for testing and tuning API calls with context and parameters
 - a llama.cpp/GGUF-backed engine that can run on CPU or supported GPUs such as Apple Metal, with model and GPU-layer settings controlled through `.env`
+- a voice-assisted compose UI: the **Speak** button reads the complete typed text through Browser TTS or optional OpenAI TTS
 
 The primary path uses a local GGUF model for inference through llama.cpp. For no-model verification checks of package install, CLI, service, or UI wiring, see
 [Mock Mode](#mock-mode).
@@ -43,13 +48,15 @@ The primary path uses a local GGUF model for inference through llama.cpp. For no
 Use this when you want the published CLI:
 
 ```bash
-uv tool install "synarmo[llama,service]"
+uv tool install "synarmo[llama,service,voice-openai]"
 synarmo setup
 ```
 
 `synarmo setup` creates `.env` only when it is missing, then downloads or
 verifies the default GGUF model in `~/models/synarmo`. To create or edit the
 configuration without downloading the model, use `synarmo setup --skip-model`.
+The generated `.env` includes Browser and OpenAI speech settings; add an
+`OPENAI_API_KEY` only if you plan to select OpenAI TTS.
 
 Test the installed CLI:
 
@@ -73,10 +80,10 @@ cd synarmo
 make ux
 ```
 
-The setup script creates `.venv`, installs the llama.cpp and FastAPI extras,
-creates `.env` only when needed, and downloads or verifies the configured GGUF
-model. Open `http://127.0.0.1:8765/ui` when `make ux` reports that the service
-is ready. Stop the background service with `make stop`.
+The setup script creates `.venv`, installs llama.cpp, FastAPI, and OpenAI
+speech extras, creates `.env` only when needed, and downloads or verifies the
+configured GGUF model. Open `http://127.0.0.1:8765/ui` when `make ux` reports
+that the service is ready. Stop the background service with `make stop`.
 
 For a checkout that only needs the CLI and service dependencies, run
 `./scripts/synarmo_pkg_setup.sh` instead.
@@ -266,6 +273,7 @@ that model available over local endpoints:
 | `GET /health` | Check that the service is ready and see the active backend/model. |
 | `POST /suggest` | Request suggestions from an app, script, keyboard, or other client. |
 | `POST /evaluate/autocomplete` | Test auto-suggest parameters; this is the endpoint used by `/ui`. |
+| `POST /voice` | Speak supplied text with Browser TTS instructions or return OpenAI-generated WAV audio. |
 | `WebSocket /ws/suggest` | Keep a live suggestion channel open while a user types. |
 | `GET /ui` | Open the browser interface for testing and tuning suggestions. |
 
@@ -355,6 +363,7 @@ Useful endpoints:
 | `GET /health` | Confirms the service is ready and reports the active backend/model. |
 | `POST /suggest` | Returns ranked suggestions for text and optional context. |
 | `POST /evaluate/autocomplete` | Returns auto-suggest candidates and token scores for tuning. |
+| `POST /voice` | Returns a Browser TTS instruction or OpenAI WAV audio for complete typed text. |
 | `WebSocket /ws/suggest` | Accepts repeated suggestion requests over one live connection. |
 | `GET /ui` | Opens the browser UI backed by the same service. |
 
@@ -366,6 +375,70 @@ curl http://127.0.0.1:8765/health
 
 If the configured Hugging Face model is missing, startup downloads it before
 `/health` is ready.
+
+### Voice And Speech Output
+
+The Compose UI has a **Speak** button directly below the typed-text field that
+reads the full current typed text.
+Use **Voice output** in Compose Parameters to choose one of the implemented
+backends:
+
+- **Browser TTS** (default) uses the browser and operating system speech engine.
+  It is local, immediate, and needs no model download or API key.
+- **OpenAI TTS** sends the typed text from the Synarmo service to the OpenAI
+  speech API and returns WAV audio to the browser. The API key remains on the
+  service host and is never exposed to browser JavaScript.
+
+The standard PyPI and interactive setup commands above install the optional
+OpenAI client. For an existing environment, install it with:
+
+```bash
+uv pip install -e ".[voice-openai]"
+```
+
+For a source checkout, create the configuration with `cp .env.example .env`.
+For an installed package, `synarmo setup --skip-model` creates the equivalent
+`.env` in your current directory. Add your API key to that file, select the
+output mode, then restart `synarmo serve`:
+
+```dotenv
+# Browser or openai
+SYNARMO_VOICE_BACKEND=browser
+
+# Required only for OpenAI TTS.
+OPENAI_API_KEY=
+SYNARMO_OPENAI_TTS_MODEL=gpt-4o-mini-tts
+SYNARMO_OPENAI_TTS_VOICE=marin
+# SYNARMO_OPENAI_TTS_INSTRUCTIONS=Speak warmly and clearly.
+```
+
+The service endpoint is also available for future clients:
+
+```bash
+curl -X POST http://127.0.0.1:8765/voice \
+  -H 'content-type: application/json' \
+  -d '{"text":"Hello, this is my complete message.","backend":"browser"}'
+```
+
+For `browser`, the response is a JSON instruction for a client to speak. For
+`openai`, it is `audio/wav`. Synarmo deliberately does not load or manage a
+local TTS model; the separate `synarmo-echo` project is the place to evaluate
+future standalone voice providers and an MCP interface.
+
+The Python package exposes the same capability as `synarmo.speak()`. It takes
+text and an output mode, returning a `VoiceOutput` result:
+
+```python
+import synarmo
+
+result = synarmo.speak("Hello, this is my complete message.", output="openai")
+assert result.media_type == "audio/wav"
+audio_bytes = result.audio
+```
+
+With `output="browser"`, `result.audio` is `None` and the result contains the
+normalized text for a browser client to speak. This keeps Browser TTS fully
+on-device; only OpenAI output produces server-side audio bytes.
 
 ### Test And Tune With `/ui`
 

@@ -86,11 +86,11 @@ install:
 
 # Install all dependencies needed for local development and real GGUF inference.
 dev:
-	$(PYTHON) -m pip install -e ".[dev,service,llama]"
+	$(PYTHON) -m pip install -e ".[dev,service,llama,voice-openai]"
 
 # Install only service and llama extras for local inference.
 llama:
-	$(PYTHON) -m pip install -e ".[service,llama]"
+	$(PYTHON) -m pip install -e ".[service,llama,voice-openai]"
 
 # Run tests.
 test:

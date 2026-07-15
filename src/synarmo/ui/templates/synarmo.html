@@ -42,6 +42,9 @@
                 <span id="char-count" class="muted">0 characters</span>
               </div>
               <textarea id="typed-text" rows="4" autocomplete="off" spellcheck="true" placeholder="Start typing here..."></textarea>
+              <div class="typed-text-actions">
+                <button id="voice-btn" class="secondary" type="button" aria-pressed="false">Speak</button>
+              </div>
 
               <div class="suggestions-heading">
                 <h2>Suggestions <span class="muted">(click a pill to choose)</span></h2>
@@ -148,6 +151,14 @@
                       tabindex="0"
                     >?</span>
                   </label>
+                </div>
+                <div class="field-row field-row-wide">
+                  <label class="parameter-label" for="voice-backend">Voice output</label>
+                  <select id="voice-backend">
+                    <option value="browser" {% if voice_backend == "browser" %}selected{% endif %}>Browser TTS</option>
+                    <option value="openai" {% if voice_backend == "openai" %}selected{% endif %}>OpenAI TTS</option>
+                  </select>
+                  <div class="parameter-note">Browser is on-device. OpenAI sends text to the API.</div>
                 </div>
               </div>
             </aside>
