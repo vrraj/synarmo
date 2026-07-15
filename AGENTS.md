@@ -65,6 +65,8 @@ or pass `--model-path` for a one-off override.
 
 - The repo is intended to remain private.
 - Do not commit model files, generated profiles, or personal conversation data.
+- Do not create commits unless the user explicitly asks. Leave completed changes
+  uncommitted so the user can verify them first.
 - If editing outside the active workspace root, respect sandbox approvals.
 - Before finishing documentation changes, verify every configuration value,
   command, model reference, endpoint, and behavior claim against the source
