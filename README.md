@@ -22,9 +22,9 @@ sizes, and other load diagnostics.
 
 > Local-first next-word and next-phrase suggestions tuned for short completions.
 
-<video src="https://github.com/user-attachments/assets/ff5bdbd1-2391-4d5a-96e7-730c8100e6c8" controls muted playsinline width="100%"></video>
+<img src="assets/synarmo-context-aware-auto-suggest.png" alt="Synarmo interactive UI" width="100%">
 
-<p align="center"><em>Synarmo context-aware compose loop predicting short suggestions locally.</em></p>
+<p align="center"><em>Synarmo interactive browser UI for testing and tuning suggestions.</em></p>
 
 Synarmo is intended to be used as:
 
@@ -472,6 +472,12 @@ Words = 3  -> go outside with
 
 This auto-suggest strategy uses logprobs to pick strong starter tokens, then
 makes one short deterministic expansion call for each starter.
+
+### Model Memory Footprint
+
+<img src="assets/llama-3.2-1B-model-footprint.png" alt="Llama-3.2-1B model memory footprint" width="100%">
+
+<p align="center"><em>Memory footprint of the Llama-3.2-1B Q4_K_M model during inference.</em></p>
 
 ### Use Service Endpoints
 
