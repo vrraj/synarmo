@@ -14,6 +14,12 @@ It also includes optional **speech output** for the full text being composed:
 instant on-device Browser TTS or server-side OpenAI TTS. This lets a user
 communicate their complete typed message at the click of a button.
 
+> **Privacy note:** Local GGUF inference and Browser TTS keep the composed text
+> on the device. When OpenAI TTS is selected and an `OPENAI_API_KEY` is used,
+> Synarmo sends the supplied text to OpenAI's speech API. That text is no
+> longer solely local or private; use OpenAI TTS only for content you are
+> comfortable sending to OpenAI.
+
 
 
 The repository includes an
@@ -398,7 +404,9 @@ backends:
   It is local, immediate, and needs no model download or API key.
 - **OpenAI TTS** sends the typed text from the Synarmo service to the OpenAI
   speech API and returns WAV audio to the browser. The API key remains on the
-  service host and is never exposed to browser JavaScript.
+  service host and is never exposed to browser JavaScript. The typed text is
+  sent to OpenAI and is no longer solely local or private; use this option only
+  for text you are comfortable sending to OpenAI.
 
 The standard PyPI and interactive setup commands above install the optional
 OpenAI client. For an existing environment, install it with:
