@@ -158,7 +158,9 @@
                     <option value="browser" {% if voice_backend == "browser" %}selected{% endif %}>Browser TTS</option>
                     <option value="openai" {% if voice_backend == "openai" %}selected{% endif %}>OpenAI TTS</option>
                   </select>
-                  <div class="parameter-note">Browser is on-device. OpenAI sends text to the API.</div>
+                  <div class="parameter-note">
+                    Browser TTS stays on-device. Selecting OpenAI TTS sends the typed text to OpenAI's API for speech generation, so it is no longer solely local or private. Use it only with text you are comfortable sending to OpenAI.
+                  </div>
                 </div>
               </div>
             </aside>
