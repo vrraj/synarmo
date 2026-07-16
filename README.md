@@ -7,12 +7,12 @@
 Synarmo (derived from *synarmozo* — "to fit together, to join closely") is a
 local-first, low-latency auto-suggest engine and Python package for
 personalized next-word and short-phrase predictions across messaging, chat, and
-assistive typing workflows. It combines context-aware local inference, service
-APIs, and llama.cpp/GGUF support for swappable local models.
+assistive typing workflows. It combines context-aware local inference, voice
+output APIs, and llama.cpp/GGUF support for swappable local models.
 
-It also includes optional speech output for the full text being composed:
-instant on-device Browser TTS or server-side OpenAI TTS. This lets a user hear
-their complete typed message without changing the local suggestion model.
+It also includes optional **speech output** for the full text being composed:
+instant on-device Browser TTS or server-side OpenAI TTS. This lets a user
+communicate their complete typed message at the click of a button.
 
 Synarmo uses [uv](https://docs.astral.sh/uv/) for dependency management. Install
 `uv` first, then use one of the short setup paths below.
@@ -26,7 +26,7 @@ sizes, and other load diagnostics.
 
 > Local-first next-word and next-phrase suggestions tuned for short completions.
 
-<img src="assets/synarmo-context-aware-auto-suggest.png" alt="Synarmo interactive UI" width="100%">
+<img src="assets/synarmo-context-aware-auto-suggest-voice.png" alt="Synarmo interactive UI" width="100%">
 
 <p align="center"><em>Synarmo interactive browser UI for testing and tuning suggestions.</em></p>
 
