@@ -373,6 +373,16 @@ curl http://127.0.0.1:8765/health
 If the configured Hugging Face model is missing, startup downloads it before
 `/health` is ready.
 
+#### Model lifecycle
+
+The loaded model and its KV cache stay in memory for the lifetime of the
+service process; they are not unloaded after a request or when the browser UI
+is idle. A foreground `synarmo serve` process unloads the model when it exits
+(for example, with Ctrl-C). For a background service started with `make ux` or
+`make start`, run `make stop` to terminate that process and release the model
+memory. `make restart` stops the current background service, then starts a new
+one, which reloads the model with a fresh KV cache.
+
 ### Voice And Speech Output
 
 The Compose UI has a **Speak** button directly below the typed-text field that
@@ -463,6 +473,31 @@ come from `.env`. UI changes still apply to the current browser request; edit
 | Top P | 0.95 | Nucleus sampling value passed to the one-token llama.cpp probe. |
 | Logprobs | 24 | Number of top next-token log probabilities to request from llama.cpp for starter selection. |
 | Auto - Suggest on Spacebar | On | Automatically asks for new suggestions after typing a space. |
+
+#### llama-cpp-python sampler defaults
+
+Synarmo explicitly supplies the Compose `Temperature` and `Top P` values for
+the one-token probe. It deliberately leaves the remaining sampler parameters
+at the defaults provided by `llama-cpp-python`. In the development environment
+used for this project (`llama-cpp-python` 0.3.34), those defaults are:
+
+| Parameter | Default | Effect |
+| --- | ---: | --- |
+| Repeat penalty | 1.0 | Disabled; Synarmo does not penalize repeated tokens by default. |
+| Frequency penalty | 0.0 | Disabled. |
+| Presence penalty | 0.0 | Disabled. |
+| Top K | 40 | Considers the 40 highest-logit tokens before later sampling filters. |
+| Min P | 0.05 | Minimum relative-probability filter. |
+| Typical P | 1.0 | Disabled. |
+| Tail-free sampling (TFS Z) | 1.0 | Disabled. |
+| Mirostat mode | 0 | Disabled. |
+| Mirostat tau / eta | 5.0 / 0.1 | Used only when Mirostat is enabled. |
+
+These are library defaults, not Synarmo configuration settings, so they can
+change after upgrading `llama-cpp-python` (the project allows versions
+`>=0.2.90`). The second, deterministic phrase-expansion call explicitly uses
+`temperature=0.0` and `top_p=1.0`; the other sampler values above still remain
+at the installed library's defaults.
 
 | `.env` setting | Applies to |
 | --- | --- |
