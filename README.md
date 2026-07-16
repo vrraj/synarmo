@@ -26,7 +26,7 @@ sizes, and other load diagnostics.
 
 > Local-first next-word and next-phrase suggestions tuned for short completions.
 
-<img src="assets/synarmo-context-aware-auto-suggest.png" alt="Synarmo interactive UI" width="100%">
+<img src="assets/synarmo-context-aware-auto-suggest-voice.png" alt="Synarmo interactive UI" width="100%">
 
 <p align="center"><em>Synarmo interactive browser UI for testing and tuning suggestions.</em></p>
 
