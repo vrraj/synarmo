@@ -21,15 +21,20 @@ description: "A local-first, low-latency auto-suggest engine for personalized ne
 Synarmo (derived from *synarmozo* — "to fit together, to join closely") is a
 local-first, low-latency auto-suggest engine and Python package for
 personalized next-word and short-phrase predictions across messaging, chat, and
-assistive typing workflows.
+assistive typing workflows. It combines context-aware local inference, voice
+output APIs, and llama.cpp/GGUF support for swappable local models.
 
 Use it to embed short type-ahead suggestions in Python apps, run a local
 REST/WebSocket suggestion service, test auto-suggest behavior in a browser
 `/ui`, and evaluate different local GGUF models through llama.cpp.
 
+It also includes optional **speech output** for the full text being composed:
+instant on-device Browser TTS or server-side OpenAI TTS. This lets a user
+communicate their complete typed message at the click of a button.
+
 > Local-first next-word and next-phrase suggestions tuned for short completions.
 
-![Synarmo context-aware auto-suggest UI](https://raw.githubusercontent.com/vrraj/synarmo/main/assets/synarmo-context-aware-auto-suggest.jpeg)
+![Synarmo context-aware auto-suggest UI](https://raw.githubusercontent.com/vrraj/synarmo/main/assets/synarmo-context-aware-auto-suggest-voice.png)
 
 ## Why this exists
 
@@ -107,6 +112,8 @@ direction.
 - **FastAPI service mode** for REST, WebSocket, and browser UI clients
 - **Interactive `/ui`** for testing context, model behavior, and auto-suggest
   parameters
+- **Voice-assisted compose UI** with a **Speak** button that voices the complete
+  typed text through Browser TTS or optional OpenAI TTS
 
 ## Install
 

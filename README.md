@@ -14,17 +14,11 @@ It also includes optional **speech output** for the full text being composed:
 instant on-device Browser TTS or server-side OpenAI TTS. This lets a user
 communicate their complete typed message at the click of a button.
 
-Synarmo uses [uv](https://docs.astral.sh/uv/) for dependency management. Install
-`uv` first, then use one of the short setup paths below.
+
 
 The repository includes an
 [Interactive UI](#install---interactive-ui-git-clone) for evaluations and tuning
-API calls with context and parameters. When `SYNARMO_LLAMA_VERBOSE=1` is enabled
-in `.env`, native llama.cpp logs include prefill/prompt evaluation and
-generation throughput in tokens/sec, plus KV cache details, Metal/CUDA buffer
-sizes, and other load diagnostics.
-
-> Local-first next-word and next-phrase suggestions tuned for short completions.
+API calls with context and parameters. 
 
 <img src="assets/synarmo-context-aware-auto-suggest-voice.png" alt="Synarmo interactive UI" width="100%">
 
@@ -44,6 +38,9 @@ The primary path uses a local GGUF model for inference through llama.cpp. For no
 ---
 
 ## Install - PyPI Package
+
+**Note**: Synarmo uses [uv](https://docs.astral.sh/uv/) for dependency management. Install
+`uv` first, then use one of the short setup paths below.
 
 Use this when you want the published CLI:
 
