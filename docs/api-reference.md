@@ -1,7 +1,7 @@
 ---
 layout: default
 title: "API Reference | Synarmo"
-description: "Complete API documentation for SynarmoEngine, SynarmoConfig, and prediction APIs."
+description: "Complete API documentation for SynarmoEngine, SynarmoConfig, prediction, and speech APIs."
 ---
 
 # API Reference
@@ -19,6 +19,8 @@ This document provides the complete API reference for the Synarmo library, inclu
 - [Configuration API](#configuration-api)
 - [Suggestion API](#suggestion-api)
 - [Convenience Functions](#convenience-functions)
+- [Voice Output API](#voice-output-api)
+- [Service API](#service-api)
 - [Common Usage Patterns](#common-usage-patterns)
 
 ---
@@ -112,6 +114,26 @@ class Suggestion:
 | `text` | `str` | - | Suggested text completion |
 | `score` | `float` | - | Confidence score (0.0-1.0) |
 | `source` | `str` | "model" | Source of the suggestion |
+
+### `VoiceOutput`
+
+The result returned by `synarmo.speak()` and the underlying `VoiceService`.
+
+```python
+@dataclass(frozen=True, slots=True)
+class VoiceOutput:
+    backend: Literal["browser", "openai"]
+    text: str
+    audio: bytes | None = None
+    media_type: str | None = None
+```
+
+| Field | Description |
+|-------|-------------|
+| `backend` | Selected output mode. |
+| `text` | Normalized text submitted for speech. |
+| `audio` | WAV bytes for `openai`; `None` for `browser`. |
+| `media_type` | `audio/wav` for OpenAI output; otherwise `None`. |
 
 ---
 
@@ -445,6 +467,74 @@ suggestions = synarmo.suggest(
     backend="mock",
 )
 ```
+
+---
+
+## Voice Output API
+
+### `speak()`
+
+Create speech output for complete typed text without loading a Synarmo
+suggestion model.
+
+```python
+def speak(
+    text: str,
+    *,
+    output: Literal["browser", "openai"] | None = None,
+) -> VoiceOutput
+```
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `text` | `str` | - | Required text to speak. Empty text raises `ValueError`. |
+| `output` | `"browser" \| "openai" \| None` | `SYNARMO_VOICE_BACKEND` | Voice output mode. |
+
+Browser output returns normalized text for a browser client to speak using its
+native speech engine. OpenAI output calls the speech API server-side and
+returns `audio/wav` bytes. Install the `voice-openai` extra and set
+`OPENAI_API_KEY` before using OpenAI output.
+
+```python
+import synarmo
+
+browser_result = synarmo.speak("Please call my family.", output="browser")
+assert browser_result.audio is None
+
+openai_result = synarmo.speak("Please call my family.", output="openai")
+with open("speech.wav", "wb") as file:
+    file.write(openai_result.audio or b"")
+```
+
+Voice settings are loaded from `.env`:
+
+```dotenv
+SYNARMO_VOICE_BACKEND=browser
+OPENAI_API_KEY=
+SYNARMO_OPENAI_TTS_MODEL=gpt-4o-mini-tts
+SYNARMO_OPENAI_TTS_VOICE=marin
+# SYNARMO_OPENAI_TTS_INSTRUCTIONS=Speak warmly and clearly.
+```
+
+---
+
+## Service API
+
+### `POST /voice`
+
+Speak text through the local service. The REST field is named `backend` to
+match the service configuration.
+
+```json
+{"text":"Please call my family.","backend":"openai"}
+```
+
+- `backend: "browser"` returns JSON: `{"backend":"browser","text":"..."}`.
+- `backend: "openai"` returns an `audio/wav` response body.
+- Omitting `backend` uses `SYNARMO_VOICE_BACKEND`.
+
+Invalid or empty input, a missing optional OpenAI package, or an API failure
+returns HTTP 400 with a `detail` message.
 
 ---
 

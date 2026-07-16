@@ -14,6 +14,9 @@ from synarmo.config import (
     configured_llama_verbose,
     configured_n_gpu_layers,
     configured_top_p,
+    configured_voice_backend,
+    configured_openai_tts_model,
+    configured_openai_tts_voice,
     load_env_file,
 )
 
@@ -130,6 +133,20 @@ def test_configured_llama_verbose_reads_truthy_env(monkeypatch) -> None:
     monkeypatch.setenv("SYNARMO_LLAMA_VERBOSE", "yes")
 
     assert configured_llama_verbose() is True
+
+
+def test_configured_voice_defaults_to_browser(monkeypatch) -> None:
+    monkeypatch.delenv("SYNARMO_VOICE_BACKEND", raising=False)
+
+    assert configured_voice_backend() == "browser"
+
+
+def test_configured_openai_tts_defaults(monkeypatch) -> None:
+    monkeypatch.delenv("SYNARMO_OPENAI_TTS_MODEL", raising=False)
+    monkeypatch.delenv("SYNARMO_OPENAI_TTS_VOICE", raising=False)
+
+    assert configured_openai_tts_model() == "gpt-4o-mini-tts"
+    assert configured_openai_tts_voice() == "marin"
 
 
 def test_config_validates_sampling_and_word_limit() -> None:

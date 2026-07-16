@@ -1,6 +1,7 @@
 const typedText = document.getElementById("typed-text");
 const contextText = document.getElementById("context-text");
 const suggestBtn = document.getElementById("suggest-btn");
+const voiceBtn = document.getElementById("voice-btn");
 const clearBtn = document.getElementById("clear-btn");
 const suggestionsList = document.getElementById("suggestions-list");
 const suggestionStatus = document.getElementById("suggestion-status");
@@ -18,6 +19,7 @@ const temperatureInput = document.getElementById("temperature");
 const topPInput = document.getElementById("top-p");
 const logprobPoolInput = document.getElementById("logprob-pool");
 const suggestOnSpacebarInput = document.getElementById("suggest-on-spacebar");
+const voiceBackendInput = document.getElementById("voice-backend");
 const infrastructureMetrics = document.getElementById("infrastructure-metrics");
 const refreshInfrastructureBtn = document.getElementById("refresh-infrastructure-btn");
 let requestId = 0;
@@ -59,6 +61,67 @@ function setLoading(isLoading) {
   suggestBtn.disabled = isLoading;
   suggestionsList.classList.toggle("loading", isLoading);
   suggestionStatus.textContent = isLoading ? "Predicting..." : "Ready";
+}
+
+function stopVoice() {
+  window.speechSynthesis?.cancel();
+  voiceBtn.textContent = "Speak";
+  voiceBtn.setAttribute("aria-pressed", "false");
+}
+
+function speakInBrowser(text) {
+  if (!("speechSynthesis" in window)) {
+    throw new Error("Browser text-to-speech is not available.");
+  }
+  stopVoice();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.onend = stopVoice;
+  utterance.onerror = stopVoice;
+  voiceBtn.textContent = "Stop speaking";
+  voiceBtn.setAttribute("aria-pressed", "true");
+  window.speechSynthesis.speak(utterance);
+}
+
+async function speakTypedText() {
+  const text = typedText.value.trim();
+  if (!text) {
+    setError("Enter typed text before speaking.");
+    return;
+  }
+  if (voiceBtn.getAttribute("aria-pressed") === "true") {
+    stopVoice();
+    return;
+  }
+
+  setError("");
+  voiceBtn.disabled = true;
+  try {
+    const response = await fetch("/voice", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ text, backend: voiceBackendInput.value }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || `Voice request failed with ${response.status}`);
+    }
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      const data = await response.json();
+      if (data.backend !== "browser") {
+        throw new Error("Voice service did not return playable audio.");
+      }
+      speakInBrowser(data.text);
+      return;
+    }
+    const audio = new Audio(URL.createObjectURL(await response.blob()));
+    audio.onended = () => URL.revokeObjectURL(audio.src);
+    await audio.play();
+  } catch (error) {
+    setError(error.message || "Unable to generate voice output.");
+  } finally {
+    voiceBtn.disabled = false;
+  }
 }
 
 async function checkHealth() {
@@ -325,7 +388,9 @@ function titleCase(value) {
 }
 
 suggestBtn.addEventListener("click", () => fetchSuggestions());
+voiceBtn.addEventListener("click", speakTypedText);
 clearBtn.addEventListener("click", () => {
+  stopVoice();
   typedText.value = "";
   suggestionsList.innerHTML = '<div class="muted">Type something to begin</div>';
   lastSuggestionRequestText = "";

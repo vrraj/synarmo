@@ -44,6 +44,15 @@ def test_autocomplete_evaluation_endpoint_accepts_json_body() -> None:
     assert "request" not in parameter_names
 
 
+def test_voice_endpoint_accepts_json_body() -> None:
+    pytest.importorskip("fastapi")
+
+    app = create_app(SynarmoEngine.load(profile="service-voice-test"))
+    schema = app.openapi()
+
+    assert "requestBody" in schema["paths"]["/voice"]["post"]
+
+
 def test_ui_endpoints_render_static_assets() -> None:
     pytest.importorskip("fastapi")
     from fastapi.testclient import TestClient
@@ -62,6 +71,8 @@ def test_ui_endpoints_render_static_assets() -> None:
     assert "/static/css/synarmo.css" in response.text
     assert "/static/js/synarmo.js" in response.text
     assert "gpu-layers-value" in response.text
+    assert "voice-btn" in response.text
+    assert "voice-backend" in response.text
     assert "infrastructure-metrics" in response.text
     assert "refresh-infrastructure-btn" in response.text
     assert "<style>" not in response.text

@@ -11,7 +11,8 @@ for people who type to communicate.
 
 ### Synarmo Core
 
-The pip package contains only the AI engine:
+The pip package contains the reusable suggestion engine and a separate,
+UI-free voice-output module:
 
 - local LLM inference
 - model loading and lifecycle
@@ -21,14 +22,19 @@ The pip package contains only the AI engine:
 - suggestion generation
 - ranking and filtering
 - configuration
+- `synarmo.speak()` and `synarmo.voice.VoiceService` for Browser or OpenAI
+  speech output
 
 The public API should remain small:
 
 ```python
+import synarmo
 from synarmo import SynarmoEngine
 
 engine = SynarmoEngine.load(profile="user", backend="llama-cpp")
 engine.suggest(text=current_text, context=current_context)
+
+voice_result = synarmo.speak(current_text, output="browser")
 ```
 
 ### Synarmo Applications
@@ -57,6 +63,12 @@ User typing
   -> ModelBackend
   -> SuggestionRanker
   -> Suggestions
+
+User presses Speak
+  -> Application UI
+  -> synarmo.speak() or POST /voice
+  -> VoiceService
+  -> Browser instruction or OpenAI WAV audio
 ```
 
 ## Model Backends
@@ -95,6 +107,8 @@ Future backends:
 | `PromptBuilder` | Constructs prompts for the model |
 | `SuggestionRanker` | Ranks and filters generated suggestions |
 | `SynarmoConfig` | Configuration management with environment variable support |
+| `VoiceService` | Standalone Browser/OpenAI text-to-speech adapter; independent of suggestion-model lifecycle |
+| `VoiceOutput` | Normalized text plus optional WAV payload returned by voice output |
 
 | Infrastructure Component | Role |
 | --- | --- |
@@ -112,6 +126,11 @@ Future backends:
 | `LOCAL_MODELS_CACHE` | Local model cache directory |
 | `SYNARMO_N_GPU_LAYERS` | Number of model layers to offload; `0` is CPU-only, `-1` asks llama.cpp to offload all possible layers |
 | `SYNARMO_LLAMA_VERBOSE` | Enables native llama.cpp load/performance logs, including prefill and generation tokens/sec |
+| `SYNARMO_VOICE_BACKEND` | Default voice output: `browser` or `openai` |
+| `SYNARMO_OPENAI_TTS_MODEL` | OpenAI speech model used when `openai` is selected |
+| `SYNARMO_OPENAI_TTS_VOICE` | OpenAI voice used when `openai` is selected |
+| `SYNARMO_OPENAI_TTS_INSTRUCTIONS` | Optional OpenAI speech delivery instructions |
+| `OPENAI_API_KEY` | Server-side credential required only for OpenAI output; never sent to browser JavaScript |
 
 ### Service Layer
 
@@ -128,6 +147,7 @@ Future backends:
 | `GET /health` | Service health and model status |
 | `POST /suggest` | Generate suggestions over REST |
 | `POST /evaluate/autocomplete` | Evaluate auto-suggest candidates |
+| `POST /voice` | Return Browser speech instructions or OpenAI WAV output for full typed text |
 | `WebSocket /ws/suggest` | Real-time suggestion channel |
 | `GET /ui` | Browser-based UI |
 | `GET /docs` | FastAPI-generated API documentation |
@@ -146,6 +166,7 @@ Future backends:
 | Interface | Role |
 | --- | --- |
 | Python API | Embed suggestions in Python applications |
+| `synarmo.speak()` | Create Browser speech instructions or OpenAI WAV output from complete text |
 | Service mode | Run Synarmo as a local server for REST, WebSocket, and browser UI clients |
 | CLI | Run one-off suggestions, compose loop, or local service |
 | Configuration | `.env`, profile settings, and runtime configuration updates |
@@ -157,6 +178,19 @@ from synarmo import SynarmoEngine
 engine = SynarmoEngine.load(backend="llama-cpp")
 suggestions = engine.suggest("I want to", context="At home")
 ```
+
+Voice output is intentionally separate from suggestion inference:
+
+```python
+import synarmo
+
+result = synarmo.speak("I want to call my family.", output="browser")
+```
+
+Browser output is spoken by the client device; OpenAI output is generated on
+the server and returns WAV bytes. Synarmo does not load a local TTS model. The
+separate `synarmo-echo` repository is the future evaluation area for standalone
+voice providers and an MCP adapter.
 
 ## Performance Principles
 
@@ -170,6 +204,8 @@ suggestions = engine.suggest("I want to", context="At home")
 - Prefer WebSocket for live typing.
 - Keep ranking cheap and deterministic.
 - Separate latency-sensitive suggestion logic from admin/config APIs.
+- Keep voice output separate from the warm local suggestion model so Browser
+  speech has no model cost and OpenAI speech is loaded only on demand.
 
 ## iPhone Plan
 
@@ -180,5 +216,7 @@ reuse the same architecture:
 - Swift equivalents of memory, context assembly, prompt building, and ranking
 - same request/response schema as the local service
 - export/import user profiles so desktop training and mobile use can share data
+- use `AVSpeechSynthesizer` for native on-device iPhone speech rather than a
+  Python TTS runtime
 
 The Python package remains the reference implementation and evaluation harness.

@@ -24,10 +24,10 @@ Install the base package:
 pip install synarmo
 ```
 
-Install with llama.cpp and service dependencies:
+Install with llama.cpp, service, and OpenAI speech dependencies:
 
 ```bash
-pip install "synarmo[llama,service]"
+pip install "synarmo[llama,service,voice-openai]"
 ```
 
 ### Option 2: Install from Wheel File
@@ -45,7 +45,7 @@ pip install "synarmo[llama,service]"
 
 3. **Install with extras** if needed:
    ```bash
-   pip install "synarmo-0.x.x-py3-none-any.whl[llama,service]"
+pip install "synarmo-0.x.x-py3-none-any.whl[llama,service,voice-openai]"
    ```
 
 ### Option 3: Install from Source Distribution
@@ -71,7 +71,7 @@ pip install git+https://github.com/vrraj/synarmo.git
 With extras:
 
 ```bash
-pip install "synarmo[llama,service] @ git+https://github.com/vrraj/synarmo.git"
+pip install "synarmo[llama,service,voice-openai] @ git+https://github.com/vrraj/synarmo.git"
 ```
 
 ## Model Configuration
@@ -94,7 +94,9 @@ From a source checkout:
 cp .env.example .env
 ```
 
-For an installed package, create `.env` manually:
+For an installed package, run `synarmo setup --skip-model` to create `.env`,
+then add the OpenAI settings below if you plan to use API speech. You may also
+create `.env` manually:
 
 ```dotenv
 LOCAL_MODELS_CACHE=~/models/synarmo
@@ -103,6 +105,13 @@ SYNARMO_N_GPU_LAYERS=-1
 SYNARMO_LLAMA_VERBOSE=0
 SYNARMO_MODEL_REPO_ID=QuantFactory/Llama-3.2-1B-GGUF
 SYNARMO_MODEL=Llama-3.2-1B.Q4_K_M.gguf
+
+# Browser or openai. Browser is the default and needs no API key.
+SYNARMO_VOICE_BACKEND=browser
+# OPENAI_API_KEY=
+SYNARMO_OPENAI_TTS_MODEL=gpt-4o-mini-tts
+SYNARMO_OPENAI_TTS_VOICE=marin
+# SYNARMO_OPENAI_TTS_INSTRUCTIONS=Speak warmly and clearly.
 ```
 
 Download or verify the configured model:
@@ -201,6 +210,7 @@ entry only maps the name to the server's real LAN IP; it should not point at
 - `GET /health` - Health check endpoint
 - `POST /suggest` - Basic suggestions endpoint
 - `POST /evaluate/autocomplete` - Auto-suggest evaluation endpoint
+- `POST /voice` - Browser speech instruction or OpenAI WAV output for full text
 - `GET /ui` - Interactive verification UI
 - `WS /ws/suggest` - WebSocket endpoint for real-time suggestions
 
@@ -222,6 +232,24 @@ suggestions = engine.suggest(
 )
 print([s.text for s in suggestions])
 ```
+
+### Speech Library Usage
+
+`synarmo.speak()` takes full text and a voice output mode. It does not load the
+local suggestion model.
+
+```python
+import synarmo
+
+result = synarmo.speak("Please call my family.", output="openai")
+with open("speech.wav", "wb") as file:
+    file.write(result.audio or b"")
+```
+
+`output="browser"` returns normalized text with no audio bytes, so a browser
+or native client can use its own on-device speech engine. OpenAI output needs
+the `voice-openai` extra and `OPENAI_API_KEY` on the service or application
+host; never put that key in browser code.
 
 ### Integration with Your Application
 
@@ -261,6 +289,12 @@ async def get_suggestions(request: dict):
 ### For Service Mode:
 - FastAPI (install with `[service]` extra)
 - Uvicorn (install with `[service]` extra)
+- Jinja2 (installed with `[service]` extra for the browser UI)
+
+### For OpenAI Speech Output:
+- `openai` package (install with `[voice-openai]` extra)
+- `OPENAI_API_KEY` supplied through a protected `.env` file or deployment
+  secret store
 
 ### GPU and Performance Checks
 
@@ -412,7 +446,7 @@ Use a virtual environment to avoid permission issues:
 ```bash
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install "synarmo[llama,service]"
+   pip install "synarmo[llama,service,voice-openai]"
 ```
 
 ## Production Deployment
@@ -510,7 +544,7 @@ RUN apt-get update && apt-get install -y \
 
 # Copy requirements and install
 COPY pyproject.toml .
-RUN pip install --no-cache-dir "synarmo[llama,service]"
+RUN pip install --no-cache-dir "synarmo[llama,service,voice-openai]"
 
 # Copy application code
 COPY . .
@@ -547,7 +581,8 @@ docker run -p 8765:8765 \
 4. **Rate limit** API endpoints to prevent abuse
 5. **Keep models** and user profiles secure
 6. **Use environment variables** for sensitive configuration
-7. **Regularly update** dependencies for security patches
+7. **Keep `OPENAI_API_KEY` server-side**; never return it to Browser TTS clients
+8. **Regularly update** dependencies for security patches
 
 ## Monitoring
 

@@ -1,6 +1,8 @@
 from pathlib import Path
 
+from synarmo.config import VoiceBackendName
 from synarmo.engine import SynarmoEngine
+from synarmo.voice import VoiceService
 
 
 _UI_ROOT = Path(__file__).resolve().parent.parent / "ui"
@@ -10,8 +12,8 @@ _UI_STATIC_DIR = _UI_ROOT / "static"
 
 def create_app(engine: SynarmoEngine):
     try:
-        from fastapi import FastAPI, Request, WebSocket
-        from fastapi.responses import HTMLResponse, RedirectResponse
+        from fastapi import FastAPI, HTTPException, Request, WebSocket
+        from fastapi.responses import HTMLResponse, RedirectResponse, Response
         from fastapi.staticfiles import StaticFiles
         from fastapi.templating import Jinja2Templates
         from pydantic import BaseModel
@@ -19,6 +21,7 @@ def create_app(engine: SynarmoEngine):
         raise RuntimeError("Install service extras first: pip install synarmo[service]") from exc
 
     compose_defaults = _compose_defaults(engine)
+    voice = VoiceService()
 
     class SuggestRequest(BaseModel):
         text: str
@@ -27,6 +30,10 @@ def create_app(engine: SynarmoEngine):
     class SuggestResponse(BaseModel):
         suggestions: list[str]
         scores: list[float]
+
+    class VoiceRequest(BaseModel):
+        text: str
+        backend: VoiceBackendName | None = None
 
     class AutocompleteEvalRequest(BaseModel):
         text: str
@@ -67,6 +74,7 @@ def create_app(engine: SynarmoEngine):
         RedirectResponse=RedirectResponse,
         StaticFiles=StaticFiles,
         Jinja2Templates=Jinja2Templates,
+        voice_backend=voice.backend,
     )
 
     @app.get("/health")
@@ -80,6 +88,16 @@ def create_app(engine: SynarmoEngine):
             suggestions=[item.text for item in suggestions],
             scores=[item.score for item in suggestions],
         )
+
+    @app.post("/voice")
+    def voice_synthesize(request: VoiceRequest):
+        try:
+            output = voice.synthesize(request.text, backend=request.backend)
+        except (RuntimeError, ValueError) as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        if output.audio is None:
+            return {"backend": output.backend, "text": output.text}
+        return Response(content=output.audio, media_type=output.media_type or "audio/wav")
 
     @app.post("/evaluate/autocomplete", response_model=AutocompleteEvalResponse)
     def evaluate_autocomplete(request: AutocompleteEvalRequest) -> AutocompleteEvalResponse:
@@ -142,6 +160,7 @@ def _mount_ui(
     RedirectResponse,
     StaticFiles,
     Jinja2Templates,
+    voice_backend: VoiceBackendName,
 ) -> None:
     if not _UI_TEMPLATES_DIR.exists():
         return
@@ -156,7 +175,10 @@ def _mount_ui(
         return templates.TemplateResponse(
             request,
             "synarmo.html",
-            {"compose_defaults": _compose_defaults(engine)},
+            {
+                "compose_defaults": _compose_defaults(engine),
+                "voice_backend": voice_backend,
+            },
         )
 
     @app.get("/")

@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Literal
 
 BackendName = Literal["mock", "llama-cpp"]
+VoiceBackendName = Literal["browser", "openai"]
 
 DEFAULT_MODELS_CACHE = Path("~/models/synarmo")
 ENV_FILE = ".env"
@@ -21,6 +22,10 @@ TOP_P_ENV = "SYNARMO_TOP_P"
 LOGPROB_POOL_ENV = "SYNARMO_LOGPROB_POOL"
 N_GPU_LAYERS_ENV = "SYNARMO_N_GPU_LAYERS"
 LLAMA_VERBOSE_ENV = "SYNARMO_LLAMA_VERBOSE"
+VOICE_BACKEND_ENV = "SYNARMO_VOICE_BACKEND"
+OPENAI_TTS_MODEL_ENV = "SYNARMO_OPENAI_TTS_MODEL"
+OPENAI_TTS_VOICE_ENV = "SYNARMO_OPENAI_TTS_VOICE"
+OPENAI_TTS_INSTRUCTIONS_ENV = "SYNARMO_OPENAI_TTS_INSTRUCTIONS"
 
 
 def load_env_file(path: str | Path = ENV_FILE) -> None:
@@ -115,6 +120,26 @@ def configured_n_gpu_layers() -> int:
 def configured_llama_verbose() -> bool:
     value = os.getenv(LLAMA_VERBOSE_ENV)
     return value is not None and value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def configured_voice_backend() -> VoiceBackendName:
+    value = os.getenv(VOICE_BACKEND_ENV, "browser").strip().lower()
+    if value not in {"browser", "openai"}:
+        raise ValueError(f"{VOICE_BACKEND_ENV} must be browser or openai")
+    return value  # type: ignore[return-value]
+
+
+def configured_openai_tts_model() -> str:
+    return os.getenv(OPENAI_TTS_MODEL_ENV, "gpt-4o-mini-tts").strip()
+
+
+def configured_openai_tts_voice() -> str:
+    return os.getenv(OPENAI_TTS_VOICE_ENV, "marin").strip()
+
+
+def configured_openai_tts_instructions() -> str | None:
+    value = os.getenv(OPENAI_TTS_INSTRUCTIONS_ENV)
+    return value.strip() if value and value.strip() else None
 
 
 @dataclass(slots=True)
