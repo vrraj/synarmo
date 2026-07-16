@@ -19,11 +19,11 @@ communicate their complete typed message at the click of a button.
 The repository includes an
 [Interactive UI](#install---interactive-ui-git-clone) for evaluations and tuning
 API calls with context and parameters. 
-
+***
 <img src="assets/synarmo-context-aware-auto-suggest-voice.png" alt="Synarmo interactive UI" width="100%">
 
 <p align="center"><em>Synarmo interactive browser UI for testing and tuning suggestions.</em></p>
-
+***
 Synarmo is intended to be used as:
 
 - a PyPI package for predicting suggestions
