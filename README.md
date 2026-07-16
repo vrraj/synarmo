@@ -7,7 +7,7 @@
 Synarmo (derived from *synarmozo* — "to fit together, to join closely") is a
 local-first, low-latency auto-suggest engine and Python package for
 personalized next-word and short-phrase predictions across messaging, chat, and
-assistive typing workflows. It combines context-aware local inference, voice
+assistive typing workflows. It combines **context-aware local inference**, voice
 output APIs, and llama.cpp/GGUF support for swappable local models.
 
 It also includes optional **speech output** for the full text being composed:
