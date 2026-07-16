@@ -26,6 +26,8 @@ API calls with context and parameters.
 
 ***
 
+## Use cases
+
 Synarmo is intended to be used as:
 
 - a PyPI package for predicting suggestions
