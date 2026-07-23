@@ -470,7 +470,51 @@ lets you:
   top-p, and logprob pool
 - inspect how the service responds
 
-#### Compose Parameters
+#### Typing and request behavior
+
+With **Auto - Suggest on Spacebar** enabled, the browser UI requests suggestions
+after a newly typed space. If a newer request is made before an earlier one
+returns, the UI ignores the earlier response and only displays the latest
+result. The service still completes the earlier inference request; it is not
+actively cancelled by the browser UI.
+
+#### Context presets
+
+The **Contexts** tab stores reusable named situations in
+[`contexts.yaml`](contexts.yaml) in the directory where the service starts.
+Select a preset to copy it into Compose, then edit the Compose context freely
+for the current request. Those Compose edits do not overwrite the preset; use
+**Save Preset** in the Contexts tab to create or explicitly update one.
+
+Each entry uses a simple quoted `name` and `text` pair:
+
+```yaml
+contexts:
+  - name: "Doctor's office"
+    text: "At a medical appointment, asking for help."
+```
+
+### Native iOS compose behavior
+
+The native iOS app in [`ios/`](ios/) is separate from the Python service and
+browser UI. Its compose view uses the following type-ahead behavior:
+
+- A newly typed space schedules a suggestion request after 250 ms, using the
+  complete text up to that point.
+- Any additional text typed while inference is running immediately cancels the
+  active on-device llama.cpp prediction. The next request uses the latest text,
+  and stale results are never shown.
+- Suggestion buttons wrap within the available iPhone width with compact
+  spacing.
+- The downloaded model can be deleted from **Settings**. It can also be
+  unloaded from memory after a configurable idle period (10 minutes by
+  default) while remaining on device for a later, download-free reload.
+
+These cancellation and idle-unload behaviors are currently specific to the
+native iOS app; the browser UI/service keeps its model loaded until the service
+process exits, as described in [Model lifecycle](#model-lifecycle).
+
+### Compose Parameters
 
 When testing an installed package or the browser UI, these startup defaults can
 come from `.env`. UI changes still apply to the current browser request; edit

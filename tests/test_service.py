@@ -53,6 +53,24 @@ def test_voice_endpoint_accepts_json_body() -> None:
     assert "requestBody" in schema["paths"]["/voice"]["post"]
 
 
+def test_context_endpoints_store_reusable_presets(tmp_path) -> None:
+    pytest.importorskip("fastapi")
+    from fastapi.testclient import TestClient
+
+    app = create_app(SynarmoEngine.load(profile="service-contexts-test"), contexts_path=tmp_path / "contexts.yaml")
+    client = TestClient(app)
+
+    save = client.put(
+        "/contexts/Doctor%27s%20office",
+        json={"name": "Doctor's office", "text": "Asking for help at an appointment."},
+    )
+
+    assert save.status_code == 200
+    assert client.get("/contexts").json() == {
+        "contexts": [{"name": "Doctor's office", "text": "Asking for help at an appointment."}]
+    }
+
+
 def test_ui_endpoints_render_static_assets() -> None:
     pytest.importorskip("fastapi")
     from fastapi.testclient import TestClient

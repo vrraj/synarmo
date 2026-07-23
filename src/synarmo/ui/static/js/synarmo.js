@@ -22,8 +22,83 @@ const suggestOnSpacebarInput = document.getElementById("suggest-on-spacebar");
 const voiceBackendInput = document.getElementById("voice-backend");
 const infrastructureMetrics = document.getElementById("infrastructure-metrics");
 const refreshInfrastructureBtn = document.getElementById("refresh-infrastructure-btn");
+const composeTab = document.getElementById("compose-tab");
+const contextsTab = document.getElementById("contexts-tab");
+const composeTabButton = document.getElementById("compose-tab-button");
+const contextsTabButton = document.getElementById("contexts-tab-button");
+const contextPresetSelect = document.getElementById("context-preset-select");
+const contextPresetName = document.getElementById("context-preset-name");
+const contextPresetText = document.getElementById("context-preset-text");
+const useContextPresetBtn = document.getElementById("use-context-preset-btn");
+const saveContextPresetBtn = document.getElementById("save-context-preset-btn");
+const activeContextLabel = document.getElementById("active-context-label");
 let requestId = 0;
 let lastSuggestionRequestText = "";
+let contextPresets = [];
+
+function showTab(name) {
+  const contextsVisible = name === "contexts";
+  composeTab.hidden = contextsVisible;
+  contextsTab.hidden = !contextsVisible;
+  composeTabButton.classList.toggle("is-active", !contextsVisible);
+  contextsTabButton.classList.toggle("is-active", contextsVisible);
+  composeTabButton.setAttribute("aria-selected", String(!contextsVisible));
+  contextsTabButton.setAttribute("aria-selected", String(contextsVisible));
+}
+
+function selectedContextPreset() {
+  return contextPresets.find((item) => item.name === contextPresetSelect.value);
+}
+
+function renderContextPresets() {
+  const selected = contextPresetSelect.value;
+  contextPresetSelect.innerHTML = '<option value="">Select a preset</option>';
+  contextPresets.forEach((preset) => {
+    const option = document.createElement("option");
+    option.value = preset.name;
+    option.textContent = preset.name;
+    contextPresetSelect.appendChild(option);
+  });
+  contextPresetSelect.value = contextPresets.some((item) => item.name === selected) ? selected : "";
+}
+
+async function loadContextPresets() {
+  const response = await fetch("/contexts");
+  if (!response.ok) throw new Error(`Could not load contexts (${response.status}).`);
+  const data = await response.json();
+  contextPresets = data.contexts || [];
+  renderContextPresets();
+}
+
+function copySelectedContextToCompose() {
+  const preset = selectedContextPreset();
+  if (!preset) return;
+  contextText.value = preset.text;
+  activeContextLabel.textContent = `• ${preset.name}`;
+  showTab("compose");
+}
+
+async function saveContextPreset() {
+  const name = contextPresetName.value.trim();
+  const text = contextPresetText.value.trim();
+  if (!name || !text) {
+    setError("Enter a preset name and context before saving.");
+    return;
+  }
+  const response = await fetch(`/contexts/${encodeURIComponent(name)}`, {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ name, text }),
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    setError(error.detail || "Could not save the context preset.");
+    return;
+  }
+  await loadContextPresets();
+  contextPresetSelect.value = name;
+  setError("");
+}
 
 function updateCount() {
   const count = typedText.value.length;
@@ -402,7 +477,17 @@ typedText.addEventListener("input", maybeSuggestAfterSpace);
 candidateWordsInput.addEventListener("input", updateTokenRecommendation);
 candidateTokensInput.addEventListener("input", updateTokenRecommendation);
 refreshInfrastructureBtn.addEventListener("click", checkHealth);
+composeTabButton.addEventListener("click", () => showTab("compose"));
+contextsTabButton.addEventListener("click", () => showTab("contexts"));
+contextPresetSelect.addEventListener("change", () => {
+  const preset = selectedContextPreset();
+  contextPresetName.value = preset?.name || "";
+  contextPresetText.value = preset?.text || "";
+});
+useContextPresetBtn.addEventListener("click", copySelectedContextToCompose);
+saveContextPresetBtn.addEventListener("click", saveContextPreset);
 
 updateCount();
 updateTokenRecommendation();
 checkHealth();
+loadContextPresets().catch((error) => setError(error.message || "Could not load contexts."));

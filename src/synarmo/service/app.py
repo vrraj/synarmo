@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from synarmo.config import VoiceBackendName
+from synarmo.contexts import ContextPresetStore
 from synarmo.engine import SynarmoEngine
 from synarmo.voice import VoiceService
 
@@ -10,7 +11,7 @@ _UI_TEMPLATES_DIR = _UI_ROOT / "templates"
 _UI_STATIC_DIR = _UI_ROOT / "static"
 
 
-def create_app(engine: SynarmoEngine):
+def create_app(engine: SynarmoEngine, *, contexts_path: Path | None = None):
     try:
         from fastapi import FastAPI, HTTPException, Request, WebSocket
         from fastapi.responses import HTMLResponse, RedirectResponse, Response
@@ -22,6 +23,7 @@ def create_app(engine: SynarmoEngine):
 
     compose_defaults = _compose_defaults(engine)
     voice = VoiceService()
+    context_store = ContextPresetStore(contexts_path or Path.cwd() / "contexts.yaml")
 
     class SuggestRequest(BaseModel):
         text: str
@@ -34,6 +36,10 @@ def create_app(engine: SynarmoEngine):
     class VoiceRequest(BaseModel):
         text: str
         backend: VoiceBackendName | None = None
+
+    class ContextPresetRequest(BaseModel):
+        name: str
+        text: str
 
     class AutocompleteEvalRequest(BaseModel):
         text: str
@@ -98,6 +104,24 @@ def create_app(engine: SynarmoEngine):
         if output.audio is None:
             return {"backend": output.backend, "text": output.text}
         return Response(content=output.audio, media_type=output.media_type or "audio/wav")
+
+    @app.get("/contexts")
+    def list_contexts() -> dict[str, list[dict[str, str]]]:
+        try:
+            presets = context_store.list()
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return {"contexts": [{"name": item.name, "text": item.text} for item in presets]}
+
+    @app.put("/contexts/{name}")
+    def save_context(name: str, request: ContextPresetRequest) -> dict[str, dict[str, str]]:
+        if name != request.name:
+            raise HTTPException(status_code=400, detail="Context name must match the URL.")
+        try:
+            preset = context_store.save(request.name, request.text)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return {"context": {"name": preset.name, "text": preset.text}}
 
     @app.post("/evaluate/autocomplete", response_model=AutocompleteEvalResponse)
     def evaluate_autocomplete(request: AutocompleteEvalRequest) -> AutocompleteEvalResponse:

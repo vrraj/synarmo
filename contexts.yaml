@@ -1,0 +1,8 @@
+# Reusable Synarmo context presets.
+contexts:
+  - name: "At home"
+    text: "At home."
+  - name: "Doctors Office"
+    text: "At the doctor's office with Dr Suda. Discussing yearly health checkup"
+  - name: "FIFA"
+    text: "At home, watching FIFA world cup soccer match between portugal and spain. This is the Round of 16 and the winning team gets to go to the quarter finals. So far the teams seems even with spain having a slight edge"

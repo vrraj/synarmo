@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "synarmo"
-version = "0.1.0"
-description = "Local, personalized type-ahead suggestions for communication workflows."
+version = "0.1.9"
+description = "Synarmo is a local inference, low-latency auto-suggest ((incl. voice output) ) engine and Python package for personalized next-word and short-phrase prediction. Built for context-aware local inference, it provides service APIs, an extensible inference architecture, and llama.cpp/GGUF support for swappable local CPU or GPU-accelerated models."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
@@ -16,7 +16,7 @@ dependencies = []
 llama = ["llama-cpp-python>=0.2.90", "huggingface-hub>=0.23"]
 voice-openai = ["openai>=1.0"]
 service = ["fastapi>=0.111", "uvicorn[standard]>=0.30", "jinja2>=3.1"]
-dev = ["pytest>=8.2", "ruff>=0.5"]
+dev = ["pytest>=8.2", "ruff>=0.5", "httpx2"]
 
 [project.scripts]
 synarmo = "synarmo.cli:app"

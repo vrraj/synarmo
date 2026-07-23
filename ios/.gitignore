@@ -1,0 +1,12 @@
+# Xcode user and build products
+.DS_Store
+DerivedData/
+build/
+*.xcuserstate
+xcuserdata/
+
+# The downloaded GGUF model is intentionally never committed.
+Models/
+
+# Reproducibly fetched native runtime; never checked into this repository.
+Vendor/

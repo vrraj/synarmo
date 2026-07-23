@@ -1,0 +1,396 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		100000000000000000000001 /* SynarmoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000001 /* SynarmoApp.swift */; };
+		100000000000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000002 /* ContentView.swift */; };
+		100000000000000000000003 /* ComposeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000003 /* ComposeViewModel.swift */; };
+		100000000000000000000004 /* InferenceEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000004 /* InferenceEngine.swift */; };
+		100000000000000000000005 /* LlamaCppBridge.mm in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000005 /* LlamaCppBridge.mm */; };
+		100000000000000000000006 /* ModelDownloadService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000006 /* ModelDownloadService.swift */; };
+		100000000000000000000007 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000007 /* Models.swift */; };
+		100000000000000000000008 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000008 /* SettingsStore.swift */; };
+		100000000000000000000009 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000009 /* SettingsView.swift */; };
+		10000000000000000000000A /* SpeechService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20000000000000000000000A /* SpeechService.swift */; };
+		10000000000000000000000C /* SynarmoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20000000000000000000000C /* SynarmoTests.swift */; };
+		10000000000000000000000D /* Vendor/llama.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 200000000000000000000010 /* Vendor/llama.xcframework */; };
+		10000000000000000000000E /* Vendor/llama.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 200000000000000000000010 /* Vendor/llama.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		800000000000000000000002 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 900000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 500000000000000000000001;
+			remoteInfo = Synarmo;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		700000000000000000000006 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				10000000000000000000000E /* Vendor/llama.xcframework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		200000000000000000000001 /* SynarmoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SynarmoApp.swift; sourceTree = "<group>"; };
+		200000000000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		200000000000000000000003 /* ComposeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposeViewModel.swift; sourceTree = "<group>"; };
+		200000000000000000000004 /* InferenceEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InferenceEngine.swift; sourceTree = "<group>"; };
+		200000000000000000000005 /* LlamaCppBridge.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = LlamaCppBridge.mm; sourceTree = "<group>"; };
+		200000000000000000000006 /* ModelDownloadService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelDownloadService.swift; sourceTree = "<group>"; };
+		200000000000000000000007 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		200000000000000000000008 /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
+		200000000000000000000009 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		20000000000000000000000A /* SpeechService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechService.swift; sourceTree = "<group>"; };
+		20000000000000000000000B /* Supporting/Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Supporting/Info.plist; sourceTree = "<group>"; };
+		20000000000000000000000C /* SynarmoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SynarmoTests.swift; sourceTree = "<group>"; };
+		20000000000000000000000D /* LlamaCppBridge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LlamaCppBridge.h; sourceTree = "<group>"; };
+		20000000000000000000000E /* Synarmo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; path = Synarmo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		20000000000000000000000F /* SynarmoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = SynarmoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		200000000000000000000010 /* Vendor/llama.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = Vendor/llama.xcframework; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		300000000000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				10000000000000000000000D /* Vendor/llama.xcframework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		300000000000000000000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		400000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				400000000000000000000002 /* Synarmo */,
+				400000000000000000000003 /* SynarmoTests */,
+				200000000000000000000010 /* Vendor/llama.xcframework */,
+				400000000000000000000004 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		400000000000000000000002 /* Synarmo */ = {
+			isa = PBXGroup;
+			children = (
+				200000000000000000000001 /* SynarmoApp.swift */,
+				200000000000000000000002 /* ContentView.swift */,
+				200000000000000000000003 /* ComposeViewModel.swift */,
+				200000000000000000000004 /* InferenceEngine.swift */,
+				200000000000000000000005 /* LlamaCppBridge.mm */,
+				20000000000000000000000D /* LlamaCppBridge.h */,
+				200000000000000000000006 /* ModelDownloadService.swift */,
+				200000000000000000000007 /* Models.swift */,
+				200000000000000000000008 /* SettingsStore.swift */,
+				200000000000000000000009 /* SettingsView.swift */,
+				20000000000000000000000A /* SpeechService.swift */,
+				20000000000000000000000B /* Supporting/Info.plist */,
+			);
+			path = Synarmo;
+			sourceTree = "<group>";
+		};
+		400000000000000000000003 /* SynarmoTests */ = {
+			isa = PBXGroup;
+			children = (
+				20000000000000000000000C /* SynarmoTests.swift */,
+			);
+			path = SynarmoTests;
+			sourceTree = "<group>";
+		};
+		400000000000000000000004 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				20000000000000000000000E /* Synarmo.app */,
+				20000000000000000000000F /* SynarmoTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		500000000000000000000001 /* Synarmo */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 600000000000000000000002 /* Build configuration list for PBXNativeTarget "Synarmo" */;
+			buildPhases = (
+				700000000000000000000001 /* Sources */,
+				300000000000000000000001 /* Frameworks */,
+				700000000000000000000002 /* Resources */,
+				700000000000000000000003 /* No bundled model */,
+				700000000000000000000006 /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Synarmo;
+			productName = Synarmo;
+			productReference = 20000000000000000000000E /* Synarmo.app */;
+			productType = "com.apple.product-type.application";
+		};
+		500000000000000000000002 /* SynarmoTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 600000000000000000000003 /* Build configuration list for PBXNativeTarget "SynarmoTests" */;
+			buildPhases = (
+				700000000000000000000004 /* Sources */,
+				300000000000000000000002 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				800000000000000000000001 /* PBXTargetDependency */,
+			);
+			name = SynarmoTests;
+			productName = SynarmoTests;
+			productReference = 20000000000000000000000F /* SynarmoTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		900000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					500000000000000000000001 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+					500000000000000000000002 = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = 500000000000000000000001;
+					};
+				};
+			};
+			buildConfigurationList = 600000000000000000000001 /* Build configuration list for PBXProject "Synarmo" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 400000000000000000000001;
+			productRefGroup = 400000000000000000000004 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				500000000000000000000001 /* Synarmo */,
+				500000000000000000000002 /* SynarmoTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		700000000000000000000002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		700000000000000000000003 /* No bundled model */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "No bundled model";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# GGUF model downloads at first launch; it is never part of the app bundle.\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		700000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				100000000000000000000001 /* SynarmoApp.swift in Sources */,
+				100000000000000000000002 /* ContentView.swift in Sources */,
+				100000000000000000000003 /* ComposeViewModel.swift in Sources */,
+				100000000000000000000004 /* InferenceEngine.swift in Sources */,
+				100000000000000000000005 /* LlamaCppBridge.mm in Sources */,
+				100000000000000000000006 /* ModelDownloadService.swift in Sources */,
+				100000000000000000000007 /* Models.swift in Sources */,
+				100000000000000000000008 /* SettingsStore.swift in Sources */,
+				100000000000000000000009 /* SettingsView.swift in Sources */,
+				10000000000000000000000A /* SpeechService.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		700000000000000000000004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				10000000000000000000000C /* SynarmoTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		800000000000000000000001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 500000000000000000000001 /* Synarmo */;
+			targetProxy = 800000000000000000000002 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		A000000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				SDKROOT = iphoneos;
+			};
+			name = Debug;
+		};
+		A000000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				SDKROOT = iphoneos;
+			};
+			name = Release;
+		};
+		A000000000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7FZ9RZM26F;
+				ENABLE_TESTABILITY = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = "SYNARMO_LLAMA_CPP=1";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Synarmo/Supporting/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.synarmo.ios;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = Synarmo/LlamaCppBridge.h;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A000000000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7FZ9RZM26F;
+				GCC_PREPROCESSOR_DEFINITIONS = "SYNARMO_LLAMA_CPP=1";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Synarmo/Supporting/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.synarmo.ios;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = Synarmo/LlamaCppBridge.h;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		A000000000000000000000005 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				PRODUCT_BUNDLE_IDENTIFIER = com.synarmo.ios.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Synarmo.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Synarmo";
+			};
+			name = Debug;
+		};
+		A000000000000000000000006 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				PRODUCT_BUNDLE_IDENTIFIER = com.synarmo.ios.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Synarmo.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Synarmo";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		600000000000000000000001 /* Build configuration list for PBXProject "Synarmo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A000000000000000000000001 /* Debug */,
+				A000000000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		600000000000000000000002 /* Build configuration list for PBXNativeTarget "Synarmo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A000000000000000000000003 /* Debug */,
+				A000000000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		600000000000000000000003 /* Build configuration list for PBXNativeTarget "SynarmoTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A000000000000000000000005 /* Debug */,
+				A000000000000000000000006 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 900000000000000000000001 /* Project object */;
+}

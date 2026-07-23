@@ -18,7 +18,10 @@
 
         <section class="workspace-card">
           <div class="tabs">
-            <button class="tab-button" type="button">Compose</button>
+            <div class="tab-list" role="tablist" aria-label="Workspace">
+              <button class="tab-button is-active" id="compose-tab-button" type="button" role="tab" aria-selected="true" aria-controls="compose-tab">Compose</button>
+              <button class="tab-button" id="contexts-tab-button" type="button" role="tab" aria-selected="false" aria-controls="contexts-tab">Contexts</button>
+            </div>
             <div id="service-status" class="service-status" aria-live="polite">
               <span class="status-field">
                 <span class="status-label">Service status:</span>
@@ -35,7 +38,7 @@
             </div>
           </div>
 
-          <div class="compose-layout">
+          <div class="compose-layout" id="compose-tab" role="tabpanel" aria-labelledby="compose-tab-button">
             <section class="compose-panel">
               <div class="compose-heading">
                 <label for="typed-text">Typed Text <span class="muted">(spacebar sets off prediction engine)</span></label>
@@ -54,7 +57,7 @@
                 <div class="muted">Type something to begin</div>
               </div>
 
-              <label class="context-label" for="context-text">Context</label>
+              <label class="context-label" for="context-text">Context <span id="active-context-label" class="muted"></span></label>
               <textarea id="context-text" rows="5">At home, watching FIFA world cup soccer match between portugal and spain. This is the Round of 16 and the winning team gets to go to the quarter finals. So far the teams seems even with spain having a slight edge</textarea>
 
               <div class="inline-actions">
@@ -165,6 +168,23 @@
               </div>
             </aside>
           </div>
+
+          <section class="contexts-panel" id="contexts-tab" role="tabpanel" aria-labelledby="contexts-tab-button" hidden>
+            <h2>Context Presets</h2>
+            <p class="muted">Select a preset to copy it into Compose. Compose edits are not saved here automatically.</p>
+            <label for="context-preset-select">Saved presets</label>
+            <select id="context-preset-select"><option value="">Select a preset</option></select>
+            <div class="inline-actions">
+              <button id="use-context-preset-btn" type="button">Use in Compose</button>
+            </div>
+            <label for="context-preset-name">Preset name</label>
+            <input id="context-preset-name" type="text" placeholder="Doctor's office" />
+            <label for="context-preset-text">Preset context</label>
+            <textarea id="context-preset-text" rows="6" placeholder="Describe the situation this preset should cover."></textarea>
+            <div class="inline-actions">
+              <button id="save-context-preset-btn" type="button">Save Preset</button>
+            </div>
+          </section>
 
           <details class="infrastructure-panel">
             <summary>Infrastructure diagnostics</summary>
