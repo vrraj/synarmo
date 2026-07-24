@@ -47,17 +47,34 @@ body {
   margin-bottom: 28px;
 }
 
-.page-title {
-  font-size: 24px;
-  font-weight: 600;
-  line-height: 1.1;
-  margin: 0 0 2px;
-  color: var(--color-strong);
+.brand-lockup {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
 }
 
-.page-title-sub {
+.brand-icon {
+  border-radius: 10px;
+  display: block;
+  height: 42px;
+  width: 42px;
+}
+
+.brand-name {
+  color: var(--color-strong);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.page-title {
+  font-size: 24px;
   font-weight: 400;
-  color: var(--color-muted);
+  line-height: 1.1;
+  margin: 0 0 6px;
+  color: var(--color-strong);
 }
 
 .page-subtitle {
