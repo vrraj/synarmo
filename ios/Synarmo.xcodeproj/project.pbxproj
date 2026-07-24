@@ -20,6 +20,7 @@
 		10000000000000000000000C /* SynarmoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20000000000000000000000C /* SynarmoTests.swift */; };
 		10000000000000000000000D /* Vendor/llama.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 200000000000000000000010 /* Vendor/llama.xcframework */; };
 		10000000000000000000000E /* Vendor/llama.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 200000000000000000000010 /* Vendor/llama.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		10000000000000000000000F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000011 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -63,6 +64,7 @@
 		20000000000000000000000E /* Synarmo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; path = Synarmo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		20000000000000000000000F /* SynarmoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = SynarmoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		200000000000000000000010 /* Vendor/llama.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = Vendor/llama.xcframework; sourceTree = "<group>"; };
+		200000000000000000000011 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -108,6 +110,7 @@
 				200000000000000000000008 /* SettingsStore.swift */,
 				200000000000000000000009 /* SettingsView.swift */,
 				20000000000000000000000A /* SpeechService.swift */,
+				200000000000000000000011 /* Assets.xcassets */,
 				20000000000000000000000B /* Supporting/Info.plist */,
 			);
 			path = Synarmo;
@@ -210,6 +213,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				10000000000000000000000F /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -296,6 +300,7 @@
 		A000000000000000000000003 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 7FZ9RZM26F;
@@ -316,6 +321,7 @@
 		A000000000000000000000004 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 7FZ9RZM26F;
